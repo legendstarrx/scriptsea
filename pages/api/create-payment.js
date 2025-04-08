@@ -1,8 +1,8 @@
 import { Flutterwave } from 'flutterwave-node-v3';
 
 const flw = new Flutterwave(
-  process.env.FLW_PUBLIC_KEY,
-  process.env.FLW_SECRET_KEY
+  process.env.FLUTTERWAVE_PUBLIC_KEY,
+  process.env.FLUTTERWAVE_SECRET_KEY
 );
 
 export default async function handler(req, res) {
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       description: "Upgrade to Pro plan",
       amount: amount,
       currency: "USD",
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+      redirect_url: `https://scriptsea.com/payment-success`,
       tx_ref: tx_ref,
       customer: {
         email: req.body.email,
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       },
       customizations: {
         title: "ScriptSea Pro",
-        logo: "https://your-logo-url.com/logo.png"
+        logo: "https://scriptsea.com/logo.png"
       }
     });
 

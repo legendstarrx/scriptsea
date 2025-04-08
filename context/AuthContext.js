@@ -97,6 +97,16 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    if (user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      // Update user profile with admin status
+      const userRef = doc(db, 'users', user.uid);
+      updateDoc(userRef, {
+        isAdmin: true
+      });
+    }
+  }, [user]);
+
   const signup = async (email, password, displayName) => {
     try {
       console.log('Starting signup process...');
