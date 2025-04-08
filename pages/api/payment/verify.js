@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       // Verify transaction with FlutterWave
       const verifyResponse = await fetch(`https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`, {
         headers: {
-          'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`
+          'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`
         }
       });
 
@@ -28,15 +28,15 @@ export default async function handler(req, res) {
         });
 
         // Redirect to success page
-        res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=success`);
+        res.redirect('https://scriptsea.com/dashboard?payment=success');
       } else {
-        res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=failed`);
+        res.redirect('https://scriptsea.com/dashboard?payment=failed');
       }
     } catch (error) {
       console.error('Payment verification error:', error);
-      res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=error`);
+      res.redirect('https://scriptsea.com/dashboard?payment=error');
     }
   } else {
-    res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=cancelled`);
+    res.redirect('https://scriptsea.com/dashboard?payment=cancelled');
   }
 } 

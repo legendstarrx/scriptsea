@@ -2,6 +2,18 @@ import '../styles/globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import Head from 'next/head';
 import { useEffect } from 'react';
+import { initializeApp, getApps } from 'firebase/app';
+
+// Update your Firebase config
+const firebaseConfig = {
+  // ... other config options ...
+  authDomain: "scriptsea.com", // Update this to your domain
+};
+
+// Initialize Firebase with custom domain
+if (!getApps().length) {
+  initializeApp(firebaseConfig);
+}
 
 function MyApp({ Component, pageProps }) {
   // Load Flutter payment script
