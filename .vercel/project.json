@@ -1,0 +1,6 @@
+{"projectId":"prj_FftCSqzOsLuDl8PcF0l3poJYeU2Y","orgId":"team_VPyBt2EDXaKfBbV2KnPAl1X9",
+"buildCommand": "npm run build",
+"devCommand": "npm run dev",
+"installCommand": "npm install",
+"framework": "nextjs",
+"outputDirectory": ".next"}
