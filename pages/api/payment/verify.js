@@ -23,8 +23,13 @@ export default async function handler(req, res) {
         // Update user's subscription in Firestore
         const userRef = doc(db, 'users', tx_ref.split('-')[0]); // Extract user ID from tx_ref
         await updateDoc(userRef, {
-          subscription: verifyData.data.amount === 499 ? 'pro-monthly' : 'pro-yearly',
-          subscriptionEndDate: new Date(Date.now() + (verifyData.data.amount === 499 ? 30 : 365) * 24 * 60 * 60 * 1000)
+          subscription: 'pro',
+          subscriptionType: verifyData.data.amount === 499 ? 'monthly' : 'yearly',
+          scriptsRemaining: 100,
+          subscriptionEnd: new Date(Date.now() + (verifyData.data.amount === 499 ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString(),
+          lastPayment: new Date().toISOString(),
+          paymentAmount: verifyData.data.amount,
+          paymentCurrency: verifyData.data.currency
         });
 
         // Redirect to success page
