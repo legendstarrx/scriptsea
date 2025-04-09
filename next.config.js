@@ -88,6 +88,21 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: 'scriptsea.com'
+          }
+        ],
+        destination: 'https://www.scriptsea.com',
+        permanent: true
+      }
+    ];
+  },
 };
 
 module.exports = nextConfig;

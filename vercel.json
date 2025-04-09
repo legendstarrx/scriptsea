@@ -10,7 +10,13 @@
   },
   "redirects": [
     {
-      "source": "https://scriptsea.com/:path*",
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "scriptsea.com"
+        }
+      ],
       "destination": "https://www.scriptsea.com/:path*",
       "permanent": true
     }
