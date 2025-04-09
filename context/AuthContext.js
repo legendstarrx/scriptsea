@@ -13,7 +13,8 @@ import {
   GoogleAuthProvider,
   updateProfile,
   onAuthStateChanged,
-  deleteUser
+  deleteUser,
+  getAuth
 } from 'firebase/auth';
 
 const AuthContext = createContext();
@@ -198,6 +199,10 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
+      // Use custom domain for auth
+      const auth = getAuth();
+      auth.tenantId = 'scriptsea.com';
+      
       const result = await signInWithPopup(auth, provider);
       
       // Check if user document exists, if not create it with correct initial values
@@ -228,6 +233,7 @@ export function AuthProvider({ children }) {
       
       return result.user;
     } catch (error) {
+      console.error('Google sign-in error:', error);
       throw error;
     }
   };
