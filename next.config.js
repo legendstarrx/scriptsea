@@ -29,7 +29,14 @@ const nextConfig = {
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self' https://*.scriptsea.com https://*.firebaseapp.com https://*.googleapis.com; script-src 'self' 'unsafe-inline' https://*.firebaseapp.com https://*.googleapis.com https://checkout.flutterwave.com; connect-src 'self' https://*.scriptsea.com https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com;"
+            value: [
+              "default-src 'self' https://*.scriptsea.com https://*.firebaseapp.com https://*.googleapis.com",
+              "script-src 'self' 'unsafe-inline' https://*.firebaseapp.com https://*.googleapis.com https://checkout.flutterwave.com",
+              "connect-src 'self' https://*.scriptsea.com https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com",
+              "img-src 'self' https://*.scriptsea.com https://*.firebaseapp.com data:",
+              "style-src 'self' 'unsafe-inline'",
+              "font-src 'self' data:",
+            ].join('; ')
           }
         ]
       }
