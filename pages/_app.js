@@ -43,7 +43,14 @@ function MyApp({ Component, pageProps }) {
           <title>ScriptSea - AI Script Generator</title>
           <meta name="description" content="Generate professional scripts with AI" />
           <link rel="icon" href="/favicon.ico" />
-          <meta httpEquiv="Content-Security-Policy" content="default-src 'self' https://*.scriptsea.com https://*.firebaseapp.com https://*.googleapis.com https://checkout.flutterwave.com; script-src 'self' 'unsafe-inline' https://checkout.flutterwave.com https://*.firebaseapp.com https://*.googleapis.com; connect-src 'self' https://*.scriptsea.com https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com;" />
+          <meta httpEquiv="Content-Security-Policy" content={`
+            default-src 'self' https://*.scriptsea.com https://*.firebaseapp.com https://*.googleapis.com;
+            script-src 'self' 'unsafe-inline' https://*.firebaseapp.com https://*.googleapis.com https://checkout.flutterwave.com;
+            connect-src 'self' https://*.scriptsea.com https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com;
+            img-src 'self' https://*.scriptsea.com https://*.firebaseapp.com data:;
+            style-src 'self' 'unsafe-inline';
+            font-src 'self' data:;
+          `.replace(/\s+/g, ' ').trim()} />
         </Head>
         <Component {...pageProps} />
       </AuthProvider>
