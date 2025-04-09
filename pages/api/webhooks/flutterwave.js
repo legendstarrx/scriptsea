@@ -1,10 +1,29 @@
-import { db } from '../../../lib/firebase';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { getIP } from '../../../utils/request';
 
 // Load environment variables
 const WEBHOOK_HASH = process.env.FLUTTERWAVE_WEBHOOK_HASH;
 const TEST_SECRET_KEY = process.env.FLUTTERWAVE_TEST_SECRET_KEY;
+
+if (!getApps().length) {
+  try {
+    initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      }),
+      databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
+    });
+  } catch (error) {
+    console.error('Firebase Admin initialization error:', error);
+    throw new Error('Failed to initialize Firebase Admin');
+  }
+}
+
+const db = getFirestore();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
