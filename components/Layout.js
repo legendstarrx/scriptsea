@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import MobileNav from './MobileNav';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
+import Link from 'next/link';
 
 const Layout = ({ children, handleLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -78,7 +79,7 @@ const Layout = ({ children, handleLogout }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <a href="/" style={{
+          <Link href="/" style={{
             fontSize: '1.5rem',
             fontWeight: 'bold',
             background: 'linear-gradient(135deg, #FF3366, #FF6B6B)',
@@ -87,7 +88,7 @@ const Layout = ({ children, handleLogout }) => {
             textDecoration: 'none'
           }}>
             ScriptSea
-          </a>
+          </Link>
 
           {/* Mobile Menu Button */}
           <button

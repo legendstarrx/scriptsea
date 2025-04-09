@@ -11,7 +11,7 @@ const AdminPanel = () => {
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
   const loadUsers = async () => {
     try {
