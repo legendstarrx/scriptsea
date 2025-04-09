@@ -28,15 +28,15 @@ export default async function handler(req, res) {
         });
 
         // Update redirect URL to use scriptsea.com
-        res.redirect('https://scriptsea.com/dashboard?payment=success');
+        res.redirect('https://www.scriptsea.com/dashboard?payment=success');
       } else {
-        res.redirect('https://scriptsea.com/dashboard?payment=failed');
+        res.redirect('https://www.scriptsea.com/dashboard?payment=failed');
       }
     } catch (error) {
       console.error('Payment verification error:', error);
-      res.redirect('https://scriptsea.com/dashboard?payment=error');
+      res.redirect('https://www.scriptsea.com/dashboard?payment=error');
     }
   } else {
-    res.redirect('https://scriptsea.com/dashboard?payment=cancelled');
+    res.redirect('https://www.scriptsea.com/dashboard?payment=cancelled');
   }
 } 

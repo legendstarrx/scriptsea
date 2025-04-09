@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   env: {
-    NEXT_PUBLIC_BASE_URL: 'https://scriptsea.com'
+    NEXT_PUBLIC_BASE_URL: 'https://www.scriptsea.com'
   },
   // Optimize build performance
   webpack: (config, { dev, isServer }) => {
@@ -37,7 +37,7 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production'
   },
   images: {
-    domains: ['scriptsea.com'],
+    domains: ['www.scriptsea.com'],
     unoptimized: true
   },
   output: 'standalone',
@@ -47,7 +47,22 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
     largePageDataBytes: 128 * 1000, // Increase the threshold for page data size
-  }
+  },
+  // Add rewrites for www subdomain
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        destination: 'https://www.scriptsea.com/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'scriptsea.com',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

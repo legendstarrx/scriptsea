@@ -9,7 +9,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 // Update your Firebase config
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: "scriptsea.com",
+  authDomain: "www.scriptsea.com",
   projectId: process.env.FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
@@ -65,7 +65,7 @@ function MyApp({ Component, pageProps }) {
           <meta name="description" content="Generate professional scripts with AI" />
           <link rel="icon" href="/favicon.ico" />
           {/* Add security headers */}
-          <meta httpEquiv="Content-Security-Policy" content="default-src 'self' https://scriptsea.com https://checkout.flutterwave.com; script-src 'self' 'unsafe-inline' https://checkout.flutterwave.com;" />
+          <meta httpEquiv="Content-Security-Policy" content="default-src 'self' https://www.scriptsea.com https://checkout.flutterwave.com; script-src 'self' 'unsafe-inline' https://checkout.flutterwave.com;" />
         </Head>
         <Component {...pageProps} />
       </AuthProvider>

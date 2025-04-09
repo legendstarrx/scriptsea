@@ -6,6 +6,13 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "env": {
-    "NEXT_PUBLIC_BASE_URL": "https://scriptsea.com"
-  }
+    "NEXT_PUBLIC_BASE_URL": "https://www.scriptsea.com"
+  },
+  "redirects": [
+    {
+      "source": "https://scriptsea.com/:path*",
+      "destination": "https://www.scriptsea.com/:path*",
+      "permanent": true
+    }
+  ]
 } 
