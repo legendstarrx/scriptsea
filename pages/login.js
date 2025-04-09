@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 
 export default function Login() {
   const router = useRouter();
-  const { user, signIn } = useAuth();
+  const { login, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -20,18 +20,12 @@ export default function Login() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetMessage, setResetMessage] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      router.push('/dashboard');
-    }
-  }, [user, router]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      await signIn();
+      await login(formData.email, formData.password);
       setMessage({
         type: 'success',
         text: 'Login successful! Redirecting...'
@@ -50,12 +44,25 @@ export default function Login() {
     }
   };
 
-  const handleLogin = async () => {
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
     try {
-      await signIn();
-      router.push('/dashboard');
+      await signInWithGoogle();
+      setMessage({
+        type: 'success',
+        text: 'Login successful! Redirecting...'
+      });
+      
+      setTimeout(() => {
+        router.push('/generate');
+      }, 1500);
     } catch (error) {
-      console.error('Login failed:', error);
+      setMessage({
+        type: 'error',
+        text: error.message || 'Google sign-in failed. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -214,7 +221,7 @@ export default function Login() {
 
             <button
               type="button"
-              onClick={handleLogin}
+              onClick={handleGoogleSignIn}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -232,11 +239,11 @@ export default function Login() {
               }}
             >
               <img
-                src="/google-icon.png"
+                src="https://www.google.com/favicon.ico"
                 alt="Google"
                 style={{ width: '20px', height: '20px' }}
               />
-              Continue with Google
+              Sign in with Google
             </button>
 
             <p style={{

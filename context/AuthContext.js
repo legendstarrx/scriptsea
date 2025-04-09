@@ -1,10 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
+  signOut,
   sendPasswordResetEmail,
   updatePassword,
   reauthenticateWithCredential,
@@ -46,38 +46,55 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
-          // Get or create user document in Firestore
-          const userRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userRef);
-
-          if (!userDoc.exists()) {
-            // Create new user document if it doesn't exist
-            await setDoc(userRef, {
-              email: firebaseUser.email,
-              name: firebaseUser.displayName,
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Get additional user data from Firestore
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userData = userDoc.data();
+          
+          // Always check and update admin status
+          const isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+          
+          if (userData) {
+            // Update admin status if it's different
+            if (userData.isAdmin !== isAdmin) {
+              await updateDoc(doc(db, 'users', user.uid), { isAdmin });
+              userData.isAdmin = isAdmin;
+            }
+            setUserProfile(userData);
+          } else {
+            // Create default profile if none exists
+            const defaultProfile = {
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
               subscription: 'free',
               scriptsRemaining: 3,
+              scriptsGenerated: 0,
+              isAdmin,
               createdAt: new Date().toISOString()
-            });
+            };
+            await setDoc(doc(db, 'users', user.uid), defaultProfile);
+            setUserProfile(defaultProfile);
           }
-
-          // Combine Firebase user with Firestore data
-          const userData = userDoc.exists() ? userDoc.data() : {};
-          setUser({ ...firebaseUser, ...userData });
-        } else {
-          setUser(null);
+          
+          setUser({
+            ...user,
+            ...userData
+          });
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUser(user); // Set basic user data if Firestore fetch fails
         }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
-      } finally {
-        setLoading(false);
+      } else {
+        setUser(null);
+        setUserProfile(null);
       }
+      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
   const signup = async (email, password, displayName) => {
@@ -205,11 +222,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const signOut = async () => {
+  const logout = async () => {
     try {
-      await firebaseSignOut(auth);
+      await signOut(auth);
     } catch (error) {
-      console.error('Sign out error:', error);
       throw error;
     }
   };
@@ -319,7 +335,7 @@ export function AuthProvider({ children }) {
     signup,
     login,
     signInWithGoogle,
-    signOut,
+    logout,
     resetPassword,
     updateUserPassword,
     updateUserProfile,
@@ -336,4 +352,10 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext); 
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+} 
