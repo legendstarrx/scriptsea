@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       // Verify transaction with FlutterWave
       const verifyResponse = await fetch(`https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`, {
         headers: {
-          'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`
+          'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`
         }
       });
 
@@ -23,16 +23,11 @@ export default async function handler(req, res) {
         // Update user's subscription in Firestore
         const userRef = doc(db, 'users', tx_ref.split('-')[0]); // Extract user ID from tx_ref
         await updateDoc(userRef, {
-          subscription: 'pro',
-          subscriptionType: verifyData.data.amount === 499 ? 'monthly' : 'yearly',
-          scriptsRemaining: 100,
-          subscriptionEnd: new Date(Date.now() + (verifyData.data.amount === 499 ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString(),
-          lastPayment: new Date().toISOString(),
-          paymentAmount: verifyData.data.amount,
-          paymentCurrency: verifyData.data.currency
+          subscription: verifyData.data.amount === 499 ? 'pro-monthly' : 'pro-yearly',
+          subscriptionEndDate: new Date(Date.now() + (verifyData.data.amount === 499 ? 30 : 365) * 24 * 60 * 60 * 1000)
         });
 
-        // Redirect to success page
+        // Update redirect URL to use scriptsea.com
         res.redirect('https://scriptsea.com/dashboard?payment=success');
       } else {
         res.redirect('https://scriptsea.com/dashboard?payment=failed');
