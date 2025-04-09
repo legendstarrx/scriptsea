@@ -13,33 +13,41 @@ export default async function handler(req, res) {
   try {
     const { plan, email, name } = req.body;
     
-    // Create payment link for subscription
-    const response = await flw.PaymentPlan.create({
+    // Create payment plan first
+    const planResponse = await flw.PaymentPlan.create({
       name: `ScriptSea Pro ${plan === 'monthly' ? 'Monthly' : 'Yearly'}`,
-      amount: plan === 'monthly' ? 4.99 : 49.99,
-      interval: plan === 'monthly' ? 'monthly' : 'annually',
+      amount: plan === 'monthly' ? 499 : 4999, // Amount in cents
+      interval: plan === 'monthly' ? 'monthly' : 'yearly',
       currency: 'USD',
-      duration: 12 // Number of payments before subscription ends
+      duration: 12
     });
 
+    if (!planResponse.data) {
+      throw new Error('Failed to create payment plan');
+    }
+
     // Create payment link
-    const payment = await flw.Charge.create({
-      payment_plan: response.data.id,
+    const paymentResponse = await flw.Payment.initiate({
+      tx_ref: `sub_${Date.now()}_${email}`,
+      amount: plan === 'monthly' ? 4.99 : 49.99,
+      currency: 'USD',
+      payment_options: 'card',
       customer: {
         email: email,
         name: name
       },
+      payment_plan: planResponse.data.id,
       customizations: {
         title: 'ScriptSea Pro Subscription',
         description: `${plan === 'monthly' ? 'Monthly' : 'Yearly'} Pro Plan`,
         logo: 'https://scriptsea.com/logo.png'
       },
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`
+      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`
     });
 
     return res.status(200).json({ 
-      paymentLink: payment.data.link,
-      planId: response.data.id 
+      paymentLink: paymentResponse.data.link,
+      planId: planResponse.data.id 
     });
   } catch (error) {
     console.error('Subscription creation error:', error);
