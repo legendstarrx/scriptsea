@@ -9,54 +9,18 @@ export default function SubscriptionModal({ onClose, user }) {
     setError('');
 
     try {
-      const amount = plan === 'monthly' ? 499 : 4999; // Amount in cents
+      // Use direct payment links
+      const paymentLink = plan === 'monthly' 
+        ? 'https://flutterwave.com/pay/vsxo1pgmcjhl'
+        : 'https://flutterwave.com/pay/x1wjudjheco3';
       
-      // Configure Flutterwave payment
-      const config = {
-        public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
-        tx_ref: `tx_${user.email}_${Date.now()}`,
-        amount: amount / 100, // Convert cents to dollars
-        currency: "USD",
-        payment_options: "card",
-        customer: {
-          email: user.email,
-          name: user.displayName || user.email
-        },
-        customizations: {
-          title: "ScriptSea Pro Subscription",
-          description: `${plan === 'monthly' ? 'Monthly' : 'Yearly'} Pro Plan`,
-          logo: "https://scriptsea.com/logo.png"
-        },
-        callback: function(response) {
-          // Close payment modal
-          if (response.status === "successful") {
-            // Verify the transaction on the server
-            fetch(`/api/payment/verify?transaction_id=${response.transaction_id}&tx_ref=${response.tx_ref}&status=successful`)
-              .then(res => res.json())
-              .then(data => {
-                if (data.status === 'success') {
-                  window.location.href = '/dashboard?payment=success';
-                }
-              })
-              .catch(err => console.error('Verification error:', err));
-          }
-        },
-        onclose: function() {
-          setLoading(false);
-          onClose();
-        }
-      };
-
-      // Initialize payment
-      const FlutterwaveCheckout = window.FlutterwaveCheckout;
-      if (FlutterwaveCheckout) {
-        FlutterwaveCheckout(config);
-      } else {
-        throw new Error('Flutterwave not initialized');
-      }
+      window.open(paymentLink, '_blank');
+      setLoading(false);
+      onClose();
     } catch (error) {
       console.error('Payment error:', error);
-      setError('Failed to initialize payment. Please try again.');
+      setError('Failed to open payment page. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -165,7 +129,7 @@ export default function SubscriptionModal({ onClose, user }) {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: loading ? 'not-allowed' : 'pointer',
                 fontSize: '1rem',
                 fontWeight: '500',
                 opacity: loading ? 0.7 : 1
@@ -232,7 +196,7 @@ export default function SubscriptionModal({ onClose, user }) {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: loading ? 'not-allowed' : 'pointer',
                 fontSize: '1rem',
                 fontWeight: '500',
                 opacity: loading ? 0.7 : 1
