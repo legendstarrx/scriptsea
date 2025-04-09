@@ -6,13 +6,18 @@ import { initializeApp, getApps } from 'firebase/app';
 
 // Update your Firebase config
 const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: "scriptsea.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   // ... other config options ...
-  authDomain: "scriptsea.com", // Update this to your domain
 };
 
-// Initialize Firebase with custom domain
+// Add custom auth domain
 if (!getApps().length) {
-  initializeApp(firebaseConfig);
+  initializeApp({
+    ...firebaseConfig,
+    authDomain: "scriptsea.com"
+  });
 }
 
 function MyApp({ Component, pageProps }) {
