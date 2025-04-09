@@ -1263,7 +1263,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               </span>
               {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
                 <button
-                  onClick={() => router.push('/subscription')}
+                  onClick={() => setShowSubscriptionModal(true)}
                   style={{
                     marginLeft: '10px',
                     padding: '6px 12px',

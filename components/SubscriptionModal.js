@@ -14,7 +14,7 @@ export default function SubscriptionModal({ onClose, user }) {
         ? 'https://flutterwave.com/pay/vsxo1pgmcjhl'
         : 'https://flutterwave.com/pay/x1wjudjheco3';
       
-        
+      window.open(paymentLink, '_blank');
       onClose();
     } catch (error) {
       console.error('Payment error:', error);

@@ -21,10 +21,17 @@ export default async function handler(req, res) {
 
       if (verifyData.status === 'success' && verifyData.data.status === 'successful') {
         // Update user's subscription in Firestore
-        const userRef = doc(db, 'users', tx_ref.split('-')[0]); // Extract user ID from tx_ref
+        const userRef = doc(db, 'users', tx_ref.split('-')[0]);
+        const isYearlyPlan = verifyData.data.amount === 4999;
+        
         await updateDoc(userRef, {
-          subscription: verifyData.data.amount === 499 ? 'pro-monthly' : 'pro-yearly',
-          subscriptionEndDate: new Date(Date.now() + (verifyData.data.amount === 499 ? 30 : 365) * 24 * 60 * 60 * 1000)
+          subscription: 'pro',
+          scriptsRemaining: 100,
+          subscriptionEnd: new Date(Date.now() + (isYearlyPlan ? 365 : 30) * 24 * 60 * 60 * 1000),
+          lastPayment: new Date(),
+          paymentAmount: verifyData.data.amount,
+          paymentCurrency: verifyData.data.currency,
+          subscriptionType: isYearlyPlan ? 'yearly' : 'monthly'
         });
 
         // Redirect to success page
