@@ -1,79 +1,54 @@
-// Function to get IP address from request
+export const getIpAddress = (req) => {
+  return req.headers['x-forwarded-for'] || 
+         req.headers['x-real-ip'] || 
+         req.socket.remoteAddress || 
+         'unknown';
+};
+
+export const isValidRequest = (req) => {
+  return req.headers && 
+         req.method && 
+         req.url;
+};
+
+// Get client IP address from request
 export const getIP = (req) => {
   let ip;
   
+  // Get IP from various headers
   if (req.headers['x-forwarded-for']) {
     ip = req.headers['x-forwarded-for'].split(',')[0];
   } else if (req.headers['x-real-ip']) {
     ip = req.headers['x-real-ip'];
-  } else {
+  } else if (req.connection && req.connection.remoteAddress) {
     ip = req.connection.remoteAddress;
+  } else if (req.socket && req.socket.remoteAddress) {
+    ip = req.socket.remoteAddress;
+  } else {
+    ip = '0.0.0.0';
   }
 
-  // Clean up IPv6 formatting
-  if (ip.substr(0, 7) === '::ffff:') {
-    ip = ip.substr(7);
-  }
-
-  return ip;
+  // Clean the IP address
+  return ip.replace(/::ffff:/, '');
 };
 
-// Function to get user agent from request
+// Get user agent from request
 export const getUserAgent = (req) => {
   return req.headers['user-agent'] || 'Unknown';
 };
 
-// Function to get request origin
+// Get request origin
 export const getOrigin = (req) => {
   return req.headers.origin || req.headers.referer || 'Unknown';
 };
 
-// Function to get request method
-export const getMethod = (req) => {
-  return req.method;
+// Validate request method
+export const validateMethod = (req, allowedMethods = ['POST']) => {
+  return allowedMethods.includes(req.method);
 };
 
-// Helper function to parse request body
-export const parseBody = async (req) => {
-  if (typeof req.body === 'string') {
-    try {
-      return JSON.parse(req.body);
-    } catch (e) {
-      return req.body;
-    }
-  }
-  return req.body;
-};
-
-// Helper function to validate required fields
-export const validateFields = (body, requiredFields) => {
-  const missingFields = requiredFields.filter(field => !body[field]);
-  if (missingFields.length > 0) {
-    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-  }
-  return true;
-};
-
-// Helper function to sanitize response data
-export const sanitizeResponse = (data) => {
-  // Remove sensitive fields
-  const sanitized = { ...data };
-  const sensitiveFields = ['password', 'token', 'secret', 'key'];
-  
-  sensitiveFields.forEach(field => {
-    if (sanitized[field]) delete sanitized[field];
-  });
-  
-  return sanitized;
-};
-
-// Export all utility functions
-export default {
-  getIP,
-  getUserAgent,
-  getOrigin,
-  getMethod,
-  parseBody,
-  validateFields,
-  sanitizeResponse
+// Basic rate limiting check (you might want to use a proper rate limiting solution)
+export const checkRateLimit = async (ip, limit = 100, window = 3600000) => {
+  // Implementation would depend on your database/caching solution
+  return true; // Placeholder return
 }; 
