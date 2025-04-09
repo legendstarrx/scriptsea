@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       },
       customizations: {
         title: "ScriptSea Pro",
-        logo: "https://your-logo-url.com/logo.png"
+        logo: "https://www.scriptsea.com/logo.png"
       }
     });
 
