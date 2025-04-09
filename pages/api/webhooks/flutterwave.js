@@ -20,38 +20,53 @@ export default async function handler(req, res) {
     const event = req.body;
     
     if (event.event === 'charge.completed' && event.data.status === 'successful') {
-      const { customer, amount, currency, tx_ref, id: transactionId } = event.data;
-      const planType = event.data.meta.plan_type;
-      const isYearlyPlan = planType === 'yearly';
+      // Verify the transaction
+      const verifyResponse = await fetch(
+        `https://api.flutterwave.com/v3/transactions/${event.data.id}/verify`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`
+          }
+        }
+      );
 
-      // Update user subscription
-      const userRef = doc(db, 'users', customer.email);
-      await updateDoc(userRef, {
-        subscription: 'pro',
-        scriptsRemaining: 100,
-        subscriptionEnd: new Date(Date.now() + (isYearlyPlan ? 365 : 30) * 24 * 60 * 60 * 1000),
-        lastPayment: new Date(),
-        paymentAmount: amount,
-        paymentCurrency: currency,
-        subscriptionType: isYearlyPlan ? 'yearly' : 'monthly',
-        transactionId: transactionId
-      });
+      const verifyData = await verifyResponse.json();
+      
+      if (verifyData.status === 'success' && verifyData.data.status === 'successful') {
+        const { customer, amount, currency } = event.data;
+        const planType = event.data.meta.plan_type;
+        const isYearlyPlan = planType === 'yearly';
+        const userEmail = event.data.meta.user_email;
 
-      // Log payment
-      await addDoc(collection(db, 'payments'), {
-        userId: customer.email,
-        userEmail: customer.email,
-        amount: amount,
-        currency: currency,
-        status: 'successful',
-        type: isYearlyPlan ? 'yearly' : 'monthly',
-        transactionId: transactionId,
-        transactionRef: tx_ref,
-        date: new Date(),
-        paymentMethod: event.data.payment_type
-      });
+        // Update user subscription
+        const userRef = doc(db, 'users', userEmail);
+        await updateDoc(userRef, {
+          subscription: 'pro',
+          scriptsRemaining: 100,
+          subscriptionEnd: new Date(Date.now() + (isYearlyPlan ? 365 : 30) * 24 * 60 * 60 * 1000),
+          lastPayment: new Date(),
+          paymentAmount: amount,
+          paymentCurrency: currency,
+          subscriptionType: isYearlyPlan ? 'yearly' : 'monthly',
+          transactionId: event.data.id
+        });
 
-      return res.status(200).json({ success: true });
+        // Log payment
+        await addDoc(collection(db, 'payments'), {
+          userId: userEmail,
+          userEmail: userEmail,
+          amount: amount,
+          currency: currency,
+          status: 'successful',
+          type: isYearlyPlan ? 'yearly' : 'monthly',
+          transactionId: event.data.id,
+          transactionRef: event.data.tx_ref,
+          date: new Date(),
+          paymentMethod: event.data.payment_type
+        });
+
+        return res.status(200).json({ success: true });
+      }
     }
 
     return res.status(200).json({ received: true });
