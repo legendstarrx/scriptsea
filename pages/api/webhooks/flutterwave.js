@@ -22,7 +22,13 @@ export default async function handler(req, res) {
     console.log('Received webhook event:', event.event);
 
     // Handle successful payment
-    if (event.event === 'charge.completed' && event.data.status === 'successful') {
+    if (event.event === 'charge.completed') {
+      const { customer, amount, currency, tx_ref } = event.data;
+      
+      // Extract user email from tx_ref
+      const userEmail = tx_ref.split('_')[1];
+      
+      // Verify transaction with FlutterWave
       const verifyResponse = await fetch(
         `https://api.flutterwave.com/v3/transactions/${event.data.id}/verify`,
         {
@@ -36,17 +42,15 @@ export default async function handler(req, res) {
 
       const verification = await verifyResponse.json();
       
-      if (verification.status === 'success') {
-        const { customer, amount, currency } = event.data;
-        
-        // Determine subscription type based on amount in cents
+      if (verification.status === 'success' && verification.data.status === 'successful') {
+        // Determine subscription type based on amount
         const isYearlyPlan = amount === 4999; // $49.99
         const isMonthlyPlan = amount === 499;  // $4.99
 
         if (isMonthlyPlan || isYearlyPlan) {
           // Update user subscription in Firestore
           const usersRef = collection(db, 'users');
-          const userDoc = doc(usersRef, customer.email);
+          const userDoc = doc(usersRef, userEmail);
 
           await updateDoc(userDoc, {
             subscription: 'pro',
@@ -58,23 +62,21 @@ export default async function handler(req, res) {
             subscriptionType: isYearlyPlan ? 'yearly' : 'monthly'
           });
 
-          // Log successful payment
+          // Log payment
           const paymentsRef = collection(db, 'payments');
           await addDoc(paymentsRef, {
-            userId: customer.email,
-            userEmail: customer.email,
+            userId: userEmail,
+            userEmail: userEmail,
             amount: amount,
             currency: currency,
             status: 'successful',
             type: isYearlyPlan ? 'yearly' : 'monthly',
             transactionId: event.data.id,
-            transactionRef: event.data.tx_ref,
+            transactionRef: tx_ref,
             date: new Date(),
             paymentMethod: event.data.payment_type,
             verificationResponse: verification.data
           });
-
-          return res.status(200).json({ success: true });
         }
       }
     }
