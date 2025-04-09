@@ -17,6 +17,7 @@
     "critters": "^0.0.23",
     "docx": "^9.3.0",
     "dotenv": "^16.4.7",
+    "express-rate-limit": "^7.5.0",
     "file-saver": "^2.0.5",
     "firebase": "^11.6.0",
     "firebase-admin": "^13.2.0",
