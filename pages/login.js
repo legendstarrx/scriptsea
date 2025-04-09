@@ -8,7 +8,7 @@ import Footer from '../components/Footer';
 
 export default function Login() {
   const router = useRouter();
-  const { login, signInWithGoogle, user } = useAuth();
+  const { user, signIn } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -31,7 +31,7 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      await login(formData.email, formData.password);
+      await signIn();
       setMessage({
         type: 'success',
         text: 'Login successful! Redirecting...'
@@ -50,14 +50,12 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleLogin = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      await signIn();
       router.push('/dashboard');
     } catch (error) {
-      console.error('Login error:', error);
-      // Handle error appropriately
+      console.error('Login failed:', error);
     }
   };
 
@@ -216,7 +214,7 @@ export default function Login() {
 
             <button
               type="button"
-              onClick={handleGoogleLogin}
+              onClick={handleLogin}
               style={{
                 width: '100%',
                 padding: '0.75rem',

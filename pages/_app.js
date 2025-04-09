@@ -1,23 +1,8 @@
 import '../styles/globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import Head from 'next/head';
-import { useEffect } from 'react';
 
 function MyApp({ Component, pageProps }) {
-  // Load Flutter payment script
-  useEffect(() => {
-    const loadFlutterScript = () => {
-      if (typeof window !== 'undefined' && !window.FlutterwaveCheckout) {
-        const script = document.createElement('script');
-        script.src = 'https://checkout.flutterwave.com/v3.js';
-        script.async = true;
-        document.body.appendChild(script);
-      }
-    };
-
-    loadFlutterScript();
-  }, []);
-
   return (
     <AuthProvider>
       <Head>
