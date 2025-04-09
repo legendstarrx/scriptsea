@@ -27,7 +27,10 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' }
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self' https://*.scriptsea.com https://*.firebaseapp.com https://*.googleapis.com; script-src 'self' 'unsafe-inline' https://*.firebaseapp.com https://*.googleapis.com https://checkout.flutterwave.com; connect-src 'self' https://*.scriptsea.com https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com;"
+          }
         ]
       }
     ];
