@@ -43,7 +43,7 @@ export default function Home() {
               marginBottom: '2rem',
               lineHeight: '1.6'
             }}>
-              Transform your ideas into engaging video scripts with AI. Perfect for YouTube, TikTok, Instagram, and more!
+              Transform your ideas into engaging video scripts with AI. Perfect for YouTube, TikTok, Instagram, and moree!
             </p>
             <button
               onClick={() => router.push('/generate')}
