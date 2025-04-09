@@ -15,6 +15,21 @@ const nextConfig = {
         'react-dom': 'preact/compat'
       });
     }
+    if (isServer) {
+      // Validate required environment variables during build
+      const requiredVars = [
+        'NEXT_PUBLIC_FIREBASE_API_KEY',
+        'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+        'FIREBASE_PRIVATE_KEY',
+        'FIREBASE_CLIENT_EMAIL'
+      ];
+
+      requiredVars.forEach(varName => {
+        if (!process.env[varName]) {
+          throw new Error(`Missing required environment variable: ${varName}`);
+        }
+      });
+    }
     return config;
   },
   // Security headers
