@@ -27,16 +27,16 @@ export default async function handler(req, res) {
           subscriptionEndDate: new Date(Date.now() + (verifyData.data.amount === 499 ? 30 : 365) * 24 * 60 * 60 * 1000)
         });
 
-        // Update redirect URL to use scriptsea.com
-        res.redirect('https://www.scriptsea.com/dashboard?payment=success');
+        // Redirect to success page
+        res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=success`);
       } else {
-        res.redirect('https://www.scriptsea.com/dashboard?payment=failed');
+        res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=failed`);
       }
     } catch (error) {
       console.error('Payment verification error:', error);
-      res.redirect('https://www.scriptsea.com/dashboard?payment=error');
+      res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=error`);
     }
   } else {
-    res.redirect('https://www.scriptsea.com/dashboard?payment=cancelled');
+    res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=cancelled`);
   }
 } 
