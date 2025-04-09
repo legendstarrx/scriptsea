@@ -23,16 +23,17 @@ export default function SubscriptionModal({ onClose, userProfile }) {
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
       const data = await response.json();
       
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create subscription');
+      }
+
       if (data.success && data.paymentLink) {
+        // Open payment link in same window
         window.location.href = data.paymentLink;
       } else {
-        throw new Error(data.error || 'Failed to get payment link');
+        throw new Error('Invalid response from server');
       }
     } catch (error) {
       console.error('Subscription error:', error);
