@@ -1,25 +1,38 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
-export default function SubscriptionModal({ onClose, user }) {
+export default function SubscriptionModal({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   const handleUpgrade = async (plan) => {
     setLoading(true);
     setError('');
 
     try {
-      // Use direct payment links
-      const paymentLink = plan === 'monthly' 
-        ? 'https://flutterwave.com/pay/vsxo1pgmcjhl'
-        : 'https://flutterwave.com/pay/x1wjudjheco3';
+      const response = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: plan,
+          email: user.email,
+          name: user.displayName || user.email
+        })
+      });
+
+      const data = await response.json();
       
-      window.open(paymentLink, '_blank');
-      setLoading(false);
-      onClose();
+      if (data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        throw new Error('No payment link received');
+      }
     } catch (error) {
-      console.error('Payment error:', error);
-      setError('Failed to open payment page. Please try again.');
+      console.error('Subscription error:', error);
+      setError('Failed to create subscription. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -40,102 +53,45 @@ export default function SubscriptionModal({ onClose, user }) {
     }}>
       <div style={{
         background: 'white',
-        borderRadius: '20px',
         padding: '30px',
-        maxWidth: '500px',
-        width: '90%',
-        position: 'relative'
+        borderRadius: '12px',
+        maxWidth: '600px',
+        width: '90%'
       }}>
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            background: 'none',
-            border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            color: '#666'
-          }}
-        >
-          ×
-        </button>
-
-        <h2 style={{
-          fontSize: '1.5rem',
-          color: '#333',
-          marginBottom: '20px',
-          textAlign: 'center'
-        }}>
-          Upgrade to Pro
-        </h2>
-
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Upgrade to Pro</h2>
+        
         {error && (
-          <div style={{
-            padding: '12px',
-            backgroundColor: '#FFF2F2',
-            color: '#FF3366',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '0.9rem'
-          }}>
+          <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>
             {error}
           </div>
         )}
 
-        <div style={{
-          display: 'grid',
-          gap: '20px',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))'
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           {/* Monthly Plan */}
           <div style={{
             padding: '20px',
-            border: '2px solid #FF3366',
+            border: '1px solid #ddd',
             borderRadius: '12px',
             textAlign: 'center'
           }}>
-            <h3 style={{ fontSize: '1.2rem', color: '#333', marginBottom: '10px' }}>
-              Monthly Pro Plan
-            </h3>
-            <div style={{ fontSize: '2rem', color: '#FF3366', marginBottom: '10px' }}>
-              $4.99
-              <span style={{ fontSize: '1rem', color: '#666' }}>/month</span>
+            <h3>Monthly Pro Plan</h3>
+            <div style={{ fontSize: '24px', margin: '15px 0' }}>
+              $4.99<span style={{ fontSize: '14px' }}>/month</span>
             </div>
-            <ul style={{
-              listStyle: 'none',
-              padding: 0,
-              margin: '20px 0',
-              textAlign: 'left'
-            }}>
-              <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ <span>100 scripts per month</span>
-              </li>
-              <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ <span>Priority support</span>
-              </li>
-              <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ <span>Advanced features</span>
-              </li>
-            </ul>
             <button
               onClick={() => handleUpgrade('monthly')}
               disabled={loading}
               style={{
                 width: '100%',
-                padding: '12px',
-                backgroundColor: '#FF3366',
+                padding: '10px',
+                backgroundColor: loading ? '#ccc' : '#FF3366',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
-                fontWeight: '500',
-                opacity: loading ? 0.7 : 1
+                borderRadius: '6px',
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Processing...' : 'Upgrade Monthly'}
+              {loading ? 'Processing...' : 'Subscribe Monthly'}
             </button>
           </div>
 
@@ -144,68 +100,43 @@ export default function SubscriptionModal({ onClose, user }) {
             padding: '20px',
             border: '2px solid #FF3366',
             borderRadius: '12px',
-            textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden'
+            textAlign: 'center'
           }}>
-            <div style={{
-              position: 'absolute',
-              top: '10px',
-              right: '-30px',
-              transform: 'rotate(45deg)',
-              backgroundColor: '#FF3366',
-              color: 'white',
-              padding: '5px 40px',
-              fontSize: '0.8rem'
-            }}>
-              Save 17%
+            <h3>Yearly Pro Plan</h3>
+            <div style={{ fontSize: '24px', margin: '15px 0' }}>
+              $49.99<span style={{ fontSize: '14px' }}>/year</span>
             </div>
-            <h3 style={{ fontSize: '1.2rem', color: '#333', marginBottom: '10px' }}>
-              Yearly Pro Plan
-            </h3>
-            <div style={{ fontSize: '2rem', color: '#FF3366', marginBottom: '10px' }}>
-              $49.99
-              <span style={{ fontSize: '1rem', color: '#666' }}>/year</span>
-            </div>
-            <ul style={{
-              listStyle: 'none',
-              padding: 0,
-              margin: '20px 0',
-              textAlign: 'left'
-            }}>
-              <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ <span>100 scripts per month</span>
-              </li>
-              <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ <span>Priority support</span>
-              </li>
-              <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ <span>Advanced features</span>
-              </li>
-              <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✓ <span>2 months free</span>
-              </li>
-            </ul>
             <button
               onClick={() => handleUpgrade('yearly')}
               disabled={loading}
               style={{
                 width: '100%',
-                padding: '12px',
-                backgroundColor: '#FF3366',
+                padding: '10px',
+                backgroundColor: loading ? '#ccc' : '#FF3366',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
-                fontWeight: '500',
-                opacity: loading ? 0.7 : 1
+                borderRadius: '6px',
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Processing...' : 'Upgrade Yearly'}
+              {loading ? 'Processing...' : 'Subscribe Yearly'}
             </button>
           </div>
         </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: '20px',
+            padding: '10px',
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            color: '#666'
+          }}
+        >
+          Close
+        </button>
       </div>
     </div>
   );
