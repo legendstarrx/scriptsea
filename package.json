@@ -10,10 +10,6 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
-    "@stripe/react-stripe-js": "^3.6.0",
-    "@stripe/stripe-js": "^7.0.0",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.4",
     "critters": "^0.0.23",
     "docx": "^9.3.0",
     "dotenv": "^16.4.7",
