@@ -23,15 +23,12 @@ export default async function handler(req, res) {
 
     // Handle successful payment
     if (event.event === 'charge.completed' && event.data.status === 'successful') {
-      const { customer, amount, currency } = event.data;
-      
-      // Verify transaction with FlutterWave
       const verifyResponse = await fetch(
         `https://api.flutterwave.com/v3/transactions/${event.data.id}/verify`,
         {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${TEST_SECRET_KEY}`,
+            Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
             'Content-Type': 'application/json',
           },
         }
@@ -39,44 +36,46 @@ export default async function handler(req, res) {
 
       const verification = await verifyResponse.json();
       
-      if (verification.status !== 'success') {
-        console.error('Transaction verification failed:', verification);
-        return res.status(400).json({ message: 'Transaction verification failed' });
-      }
+      if (verification.status === 'success') {
+        const { customer, amount, currency } = event.data;
+        
+        // Determine subscription type based on amount in cents
+        const isYearlyPlan = amount === 4999; // $49.99
+        const isMonthlyPlan = amount === 499;  // $4.99
 
-      // Determine subscription type based on amount
-      const isYearlyPlan = amount === 4999; // $49.99
-      const isMonthlyPlan = amount === 499;  // $4.99
+        if (isMonthlyPlan || isYearlyPlan) {
+          // Update user subscription in Firestore
+          const usersRef = collection(db, 'users');
+          const userDoc = doc(usersRef, customer.email);
 
-      if (isMonthlyPlan || isYearlyPlan) {
-        // Update user subscription in Firestore
-        const usersRef = collection(db, 'users');
-        const userDoc = doc(usersRef, customer.email);
+          await updateDoc(userDoc, {
+            subscription: 'pro',
+            scriptsRemaining: 100,
+            subscriptionEnd: new Date(Date.now() + (isYearlyPlan ? 365 : 30) * 24 * 60 * 60 * 1000),
+            lastPayment: new Date(),
+            paymentAmount: amount,
+            paymentCurrency: currency,
+            subscriptionType: isYearlyPlan ? 'yearly' : 'monthly'
+          });
 
-        await updateDoc(userDoc, {
-          subscription: 'pro',
-          scriptsRemaining: 100,
-          subscriptionEnd: new Date(Date.now() + (isYearlyPlan ? 365 : 30) * 24 * 60 * 60 * 1000),
-          lastPayment: new Date(),
-          paymentAmount: amount,
-          paymentCurrency: currency
-        });
+          // Log successful payment
+          const paymentsRef = collection(db, 'payments');
+          await addDoc(paymentsRef, {
+            userId: customer.email,
+            userEmail: customer.email,
+            amount: amount,
+            currency: currency,
+            status: 'successful',
+            type: isYearlyPlan ? 'yearly' : 'monthly',
+            transactionId: event.data.id,
+            transactionRef: event.data.tx_ref,
+            date: new Date(),
+            paymentMethod: event.data.payment_type,
+            verificationResponse: verification.data
+          });
 
-        // Log payment in payment history
-        const paymentsRef = collection(db, 'payments');
-        await addDoc(paymentsRef, {
-          userId: customer.email,
-          userEmail: customer.email,
-          amount: amount,
-          currency: currency,
-          status: 'successful',
-          type: isYearlyPlan ? 'yearly' : 'monthly',
-          transactionId: event.data.id,
-          transactionRef: event.data.tx_ref,
-          date: new Date(),
-          paymentMethod: event.data.payment_type,
-          verificationResponse: verification.data
-        });
+          return res.status(200).json({ success: true });
+        }
       }
     }
 
