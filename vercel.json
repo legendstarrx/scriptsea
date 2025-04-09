@@ -1,24 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "outputDirectory": ".next",
-  "env": {
-    "NEXT_PUBLIC_BASE_URL": "https://www.scriptsea.com"
-  },
-  "redirects": [
+  "builds": [
     {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "scriptsea.com"
-        }
-      ],
-      "destination": "https://www.scriptsea.com/:path*",
-      "permanent": true
+      "src": "package.json",
+      "use": "@vercel/next",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     }
   ]
 } 

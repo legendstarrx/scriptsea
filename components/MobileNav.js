@@ -1,6 +1,5 @@
 import React from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 
 const MobileNav = ({ isMenuOpen, setIsMenuOpen, handleLogout }) => {
   const router = useRouter();
@@ -42,7 +41,7 @@ const MobileNav = ({ isMenuOpen, setIsMenuOpen, handleLogout }) => {
     <>
       <div className="mobile-nav">
         <div className="mobile-header">
-          <Link href="/" className="logo">ScriptSea</Link>
+          <a href="/" className="logo">ScriptSea</a>
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="menu-button">
             {isMenuOpen ? 'Close' : 'Menu'}
           </button>
