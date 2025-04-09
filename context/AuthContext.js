@@ -13,8 +13,7 @@ import {
   GoogleAuthProvider,
   updateProfile,
   onAuthStateChanged,
-  deleteUser,
-  getAuth
+  deleteUser
 } from 'firebase/auth';
 
 const AuthContext = createContext();
@@ -97,16 +96,6 @@ export function AuthProvider({ children }) {
 
     return unsubscribe;
   }, []);
-
-  useEffect(() => {
-    if (user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-      // Update user profile with admin status
-      const userRef = doc(db, 'users', user.uid);
-      updateDoc(userRef, {
-        isAdmin: true
-      });
-    }
-  }, [user]);
 
   const signup = async (email, password, displayName) => {
     try {
@@ -199,10 +188,6 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      // Use custom domain for auth
-      const auth = getAuth();
-      auth.tenantId = 'scriptsea.com';
-      
       const result = await signInWithPopup(auth, provider);
       
       // Check if user document exists, if not create it with correct initial values
@@ -233,7 +218,6 @@ export function AuthProvider({ children }) {
       
       return result.user;
     } catch (error) {
-      console.error('Google sign-in error:', error);
       throw error;
     }
   };

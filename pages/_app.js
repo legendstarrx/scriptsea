@@ -6,22 +6,17 @@ import { initializeApp, getApps } from 'firebase/app';
 
 // Update your Firebase config
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: "scriptsea.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   // ... other config options ...
+  authDomain: "scriptsea.com", // Update this to your domain
 };
 
-// Add custom auth domain
+// Initialize Firebase with custom domain
 if (!getApps().length) {
-  initializeApp({
-    ...firebaseConfig,
-    authDomain: "scriptsea.com"
-  });
+  initializeApp(firebaseConfig);
 }
 
 function MyApp({ Component, pageProps }) {
-  // Load Flutter payment script
+  // Load Flutter payment script securely
   useEffect(() => {
     const loadFlutterScript = () => {
       if (typeof window !== 'undefined' && !window.FlutterwaveCheckout) {
@@ -42,6 +37,8 @@ function MyApp({ Component, pageProps }) {
         <title>ScriptSea - AI Script Generator</title>
         <meta name="description" content="Generate professional scripts with AI" />
         <link rel="icon" href="/favicon.ico" />
+        {/* Add security headers */}
+        <meta httpEquiv="Content-Security-Policy" content="default-src 'self' https://scriptsea.com https://checkout.flutterwave.com; script-src 'self' 'unsafe-inline' https://checkout.flutterwave.com;" />
       </Head>
       <Component {...pageProps} />
     </AuthProvider>
