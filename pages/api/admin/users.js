@@ -2,6 +2,7 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { validateAdminRequest } from './middleware';
+import { withRateLimit } from './rate-limit';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -28,9 +29,8 @@ if (!getApps().length) {
 const db = getFirestore();
 const auth = getAuth();
 
-export default async function handler(req, res) {
+const handler = async (req, res) => {
   try {
-    // Validate admin access
     await validateAdminRequest(req);
   } catch (error) {
     return res.status(401).json({ error: 'Unauthorized access' });
@@ -51,4 +51,6 @@ export default async function handler(req, res) {
     console.error('Error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
-} 
+};
+
+export default withRateLimit(handler); 
