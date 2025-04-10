@@ -25,15 +25,10 @@ export default function SubscriptionModal({ onClose, userProfile }) {
 
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create subscription');
-      }
-
       if (data.success && data.paymentLink) {
-        // Open payment link in same window
         window.location.href = data.paymentLink;
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error(data.message || 'Failed to create subscription');
       }
     } catch (error) {
       console.error('Subscription error:', error);
