@@ -280,137 +280,10 @@ const GeneratePageNav = () => {
 
       {/* Subscription Modal */}
       {showSubscriptionModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1001
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '30px',
-            maxWidth: '500px',
-            width: '90%',
-            position: 'relative'
-          }}>
-            <button
-              onClick={() => setShowSubscriptionModal(false)}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer'
-              }}
-            >
-              ×
-            </button>
-
-            <h2 style={{ marginBottom: '20px' }}>Upgrade to Pro</h2>
-
-            {/* Show current plan */}
-            <div style={{
-              padding: '12px',
-              backgroundColor: '#E8F5E9',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              textAlign: 'center'
-            }}>
-              <p>Current Plan: {userProfile?.subscription || 'Free'}</p>
-              {userProfile?.subscription === 'pro' && (
-                <>
-                  <p>Type: {userProfile.subscriptionType || 'Monthly'}</p>
-                  <p>Scripts Remaining: {userProfile.scriptsRemaining || 0}</p>
-                  {userProfile.subscriptionEnd && (
-                    <p>Renews: {new Date(userProfile.subscriptionEnd).toLocaleDateString()}</p>
-                  )}
-                </>
-              )}
-            </div>
-
-            {error && (
-              <div style={{
-                padding: '12px',
-                backgroundColor: '#FFF2F2',
-                color: '#FF3366',
-                borderRadius: '8px',
-                marginBottom: '20px'
-              }}>
-                {error}
-              </div>
-            )}
-
-            <div style={{
-              display: 'grid',
-              gap: '20px',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))'
-            }}>
-              <button
-                onClick={() => handleUpgrade('monthly')}
-                disabled={loading}
-                style={{
-                  padding: '20px',
-                  backgroundColor: '#f8f9ff',
-                  border: '2px solid #FF3366',
-                  borderRadius: '12px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  opacity: loading ? 0.7 : 1
-                }}
-              >
-                {loading ? 'Processing...' : (
-                  <>
-                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
-                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$4.99</p>
-                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed monthly</p>
-                    <ul style={{ textAlign: 'left', margin: '15px 0', color: '#666' }}>
-                      <li>✓ 100 scripts per month</li>
-                      <li>✓ Priority support</li>
-                      <li>✓ Advanced features</li>
-                    </ul>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => handleUpgrade('yearly')}
-                disabled={loading}
-                style={{
-                  padding: '20px',
-                  backgroundColor: '#f8f9ff',
-                  border: '2px solid #FF3366',
-                  borderRadius: '12px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  opacity: loading ? 0.7 : 1
-                }}
-              >
-                {loading ? 'Processing...' : (
-                  <>
-                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
-                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$49.99</p>
-                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed annually</p>
-                    <ul style={{ textAlign: 'left', margin: '15px 0', color: '#666' }}>
-                      <li>✓ 100 scripts per month</li>
-                      <li>✓ Priority support</li>
-                      <li>✓ Advanced features</li>
-                      <li>✓ 2 months free</li>
-                    </ul>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <SubscriptionModal
+          onClose={() => setShowSubscriptionModal(false)}
+          userProfile={userProfile}
+        />
       )}
 
       {/* Profile Modal */}
@@ -476,7 +349,7 @@ export default function Generate() {
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState(null);
 
-  // Fetch user profile when component mounts or user changes
+  // Fetch user profile when component mounts
   useEffect(() => {
     if (user) {
       const fetchUserProfile = async () => {
