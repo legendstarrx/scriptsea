@@ -43,7 +43,61 @@ export default function SubscriptionModal({ onClose, userProfile }) {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/cancel-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          subscriptionId: userProfile.subscriptionId
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setError('Subscription cancelled successfully');
+        setTimeout(() => onClose(), 2000);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      setError('Failed to cancel subscription. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderContent = () => {
+    if (userProfile?.subscription === 'pro') {
+      return (
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>
+            You are a Pro User ({userProfile.subscriptionType} Plan)
+          </h3>
+          <p>Next payment date: {new Date(userProfile.nextPaymentDate).toLocaleDateString()}</p>
+          <button
+            onClick={handleCancelSubscription}
+            disabled={loading}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              backgroundColor: '#ff4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {loading ? 'Processing...' : 'Cancel Subscription'}
+          </button>
+        </div>
+      );
+    }
+
     if (userProfile?.subscription === 'pro' && userProfile?.subscriptionType === 'yearly') {
       return (
         <div style={{ textAlign: 'center', padding: '20px' }}>

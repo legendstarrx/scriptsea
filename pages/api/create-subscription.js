@@ -1,4 +1,10 @@
 import axios from 'axios';
+import { db } from '../../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+
+const PAYSTACK_SECRET_KEY = 'sk_live_3917d76c2e7443aade1cbe0f540244108364711f';
+const MONTHLY_PLAN = 'PLN_2k30q94zztr27aq';
+const YEARLY_PLAN = 'PLN_1y9d4qq8g9qmjos';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,44 +14,29 @@ export default async function handler(req, res) {
   try {
     const { plan, email, name } = req.body;
     
-    // Set up payment details (amount in cents)
-    const amount = plan === 'monthly' ? '499' : '4999'; // $4.99 or $49.99
-    const tx_ref = `sub_${Date.now()}_${email.split('@')[0]}`;
-
-    const payload = {
-      tx_ref: tx_ref,
-      amount: amount,
-      currency: 'USD',
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
-      customer: {
-        email: email,
-        name: name
-      },
-      customizations: {
-        title: 'ScriptSea Pro Subscription',
-        description: `${plan === 'monthly' ? 'Monthly' : 'Yearly'} Pro Plan`,
-        logo: 'https://scriptsea.com/logo.png'
-      },
-      meta: {
-        plan_type: plan,
-        user_email: email
-      }
-    };
-
+    // Initialize Paystack subscription
     const response = await axios({
       method: 'post',
-      url: 'https://api.flutterwave.com/v3/payments',
+      url: 'https://api.paystack.co/transaction/initialize',
       headers: { 
-        Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
+        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json'
       },
-      data: payload
+      data: {
+        email: email,
+        plan: plan === 'monthly' ? MONTHLY_PLAN : YEARLY_PLAN,
+        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+        metadata: {
+          name: name,
+          plan_type: plan
+        }
+      }
     });
 
-    if (response.data.status === 'success') {
+    if (response.data.status) {
       return res.status(200).json({
         success: true,
-        paymentLink: response.data.data.link
+        paymentLink: response.data.data.authorization_url
       });
     } else {
       throw new Error(response.data.message || 'Failed to create payment link');
