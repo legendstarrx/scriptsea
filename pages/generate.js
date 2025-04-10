@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import SubscriptionModal from '../components/SubscriptionModal';
 import ProfileModal from '../components/ProfileModal';
 import { db } from '../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
@@ -23,25 +23,72 @@ const GeneratePageNav = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [userProfile, setUserProfile] = useState(null);
 
-  return (
+  // Add this function to handle subscription upgrades
+  const handleUpgrade = async (plan) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan,
+          email: user.email,
+          name: user.displayName || user.email
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        throw new Error(data.message || 'Failed to create subscription');
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      setError('Failed to process subscription. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add this to fetch user profile when modal opens
+  useEffect(() => {
+    if (showSubscriptionModal && user) {
+      const fetchUserProfile = async () => {
+        const userDoc = await getDoc(doc(db, 'users', user.email));
+        if (userDoc.exists()) {
+          setUserProfile(userDoc.data());
+        }
+      };
+      fetchUserProfile();
+    }
+  }, [showSubscriptionModal, user]);
+                          
+                          return (
     <>
       <header style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(8px)',
         padding: '15px 0',
         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-        zIndex: 1000
-      }}>
-        <div style={{
+                    zIndex: 1000
+                  }}>
+                    <div style={{
           maxWidth: '1200px',
           margin: '0 auto',
           padding: '0 20px',
-          display: 'flex',
+                        display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
@@ -56,9 +103,9 @@ const GeneratePageNav = () => {
             ScriptSea
           </a>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
             gap: '20px'
           }}>
             {/* Upgrade Button */}
@@ -262,21 +309,29 @@ const GeneratePageNav = () => {
                 background: 'none',
                 border: 'none',
                 fontSize: '1.5rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                color: '#666'
               }}
             >
               ×
             </button>
 
-            <h2 style={{ marginBottom: '20px' }}>Upgrade to Pro</h2>
+            <h2 style={{
+              fontSize: '1.5rem',
+              marginBottom: '20px',
+              color: '#333'
+            }}>
+              Upgrade to Pro
+            </h2>
 
             {error && (
               <div style={{
                 padding: '12px',
-                backgroundColor: '#FFF2F2',
-                color: '#FF3366',
+                backgroundColor: error.includes('successfully') ? '#E8F5E9' : '#FFF2F2',
+                color: error.includes('successfully') ? '#2E7D32' : '#FF3366',
                 borderRadius: '8px',
-                marginBottom: '20px'
+                marginBottom: '20px',
+                fontSize: '0.9rem'
               }}>
                 {error}
               </div>
@@ -292,16 +347,21 @@ const GeneratePageNav = () => {
                 disabled={loading}
                 style={{
                   padding: '20px',
+                  backgroundColor: '#f8f9ff',
                   border: '2px solid #FF3366',
-                  borderRadius: '10px',
-                  background: 'white',
+                  borderRadius: '12px',
                   cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
                   opacity: loading ? 0.7 : 1
                 }}
               >
-                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
-                <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>$4.99</p>
-                <p style={{ color: '#666' }}>Billed monthly</p>
+                {loading ? 'Processing...' : (
+                  <>
+                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
+                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$4.99</p>
+                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed monthly</p>
+                  </>
+                )}
               </button>
 
               <button
@@ -309,17 +369,67 @@ const GeneratePageNav = () => {
                 disabled={loading}
                 style={{
                   padding: '20px',
+                  backgroundColor: '#f8f9ff',
                   border: '2px solid #FF3366',
-                  borderRadius: '10px',
-                  background: 'white',
+                  borderRadius: '12px',
                   cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
                   opacity: loading ? 0.7 : 1
                 }}
               >
-                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
-                <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>$49.99</p>
-                <p style={{ color: '#666' }}>Billed annually</p>
+                {loading ? 'Processing...' : (
+                  <>
+                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
+                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$49.99</p>
+                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed annually</p>
+                  </>
+                )}
               </button>
+            </div>
+
+            <div style={{
+              marginTop: '20px',
+              padding: '20px',
+              backgroundColor: '#f8f9ff',
+              borderRadius: '12px'
+            }}>
+              <h4 style={{ color: '#333', marginBottom: '10px' }}>Pro Benefits:</h4>
+              <ul style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0
+              }}>
+                <li style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#666'
+                }}>
+                  <span style={{ color: '#FF3366' }}>✓</span>
+                  Generate unlimited scripts
+                </li>
+                <li style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#666'
+                }}>
+                  <span style={{ color: '#FF3366' }}>✓</span>
+                  Access to all script types
+                </li>
+                <li style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#666'
+                }}>
+                  <span style={{ color: '#FF3366' }}>✓</span>
+                  Priority support
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -411,9 +521,6 @@ export default function Generate() {
   const [expandedScriptId, setExpandedScriptId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // Add ref for the response section
   const responseRef = useRef(null);
