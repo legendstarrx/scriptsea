@@ -262,29 +262,21 @@ const GeneratePageNav = () => {
                 background: 'none',
                 border: 'none',
                 fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: '#666'
+                cursor: 'pointer'
               }}
             >
               ×
             </button>
 
-            <h2 style={{
-              fontSize: '1.5rem',
-              marginBottom: '20px',
-              color: '#333'
-            }}>
-              Upgrade to Pro
-            </h2>
+            <h2 style={{ marginBottom: '20px' }}>Upgrade to Pro</h2>
 
             {error && (
               <div style={{
                 padding: '12px',
-                backgroundColor: error.includes('successfully') ? '#E8F5E9' : '#FFF2F2',
-                color: error.includes('successfully') ? '#2E7D32' : '#FF3366',
+                backgroundColor: '#FFF2F2',
+                color: '#FF3366',
                 borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '0.9rem'
+                marginBottom: '20px'
               }}>
                 {error}
               </div>
@@ -300,21 +292,16 @@ const GeneratePageNav = () => {
                 disabled={loading}
                 style={{
                   padding: '20px',
-                  backgroundColor: '#f8f9ff',
                   border: '2px solid #FF3366',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
+                  background: 'white',
                   cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
                   opacity: loading ? 0.7 : 1
                 }}
               >
-                {loading ? 'Processing...' : (
-                  <>
-                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
-                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$4.99</p>
-                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed monthly</p>
-                  </>
-                )}
+                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
+                <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>$4.99</p>
+                <p style={{ color: '#666' }}>Billed monthly</p>
               </button>
 
               <button
@@ -322,67 +309,17 @@ const GeneratePageNav = () => {
                 disabled={loading}
                 style={{
                   padding: '20px',
-                  backgroundColor: '#f8f9ff',
                   border: '2px solid #FF3366',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
+                  background: 'white',
                   cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
                   opacity: loading ? 0.7 : 1
                 }}
               >
-                {loading ? 'Processing...' : (
-                  <>
-                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
-                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$49.99</p>
-                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed annually</p>
-                  </>
-                )}
+                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
+                <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>$49.99</p>
+                <p style={{ color: '#666' }}>Billed annually</p>
               </button>
-            </div>
-
-            <div style={{
-              marginTop: '20px',
-              padding: '20px',
-              backgroundColor: '#f8f9ff',
-              borderRadius: '12px'
-            }}>
-              <h4 style={{ color: '#333', marginBottom: '10px' }}>Pro Benefits:</h4>
-              <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0
-              }}>
-                <li style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px',
-                  color: '#666'
-                }}>
-                  <span style={{ color: '#FF3366' }}>✓</span>
-                  Generate unlimited scripts
-                </li>
-                <li style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px',
-                  color: '#666'
-                }}>
-                  <span style={{ color: '#FF3366' }}>✓</span>
-                  Access to all script types
-                </li>
-                <li style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px',
-                  color: '#666'
-                }}>
-                  <span style={{ color: '#FF3366' }}>✓</span>
-                  Priority support
-                </li>
-              </ul>
             </div>
           </div>
         </div>
@@ -474,6 +411,9 @@ export default function Generate() {
   const [expandedScriptId, setExpandedScriptId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // Add ref for the response section
   const responseRef = useRef(null);
