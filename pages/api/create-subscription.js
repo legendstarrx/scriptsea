@@ -1,8 +1,5 @@
 import axios from 'axios';
-import { db } from '../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 
-const PAYSTACK_SECRET_KEY = 'sk_live_3917d76c2e7443aade1cbe0f540244108364711f';
 const MONTHLY_PLAN = 'PLN_2k30q94zztr27aq';
 const YEARLY_PLAN = 'PLN_1y9d4qq8g9qmjos';
 
@@ -14,12 +11,11 @@ export default async function handler(req, res) {
   try {
     const { plan, email, name } = req.body;
     
-    // Initialize Paystack subscription
     const response = await axios({
       method: 'post',
       url: 'https://api.paystack.co/transaction/initialize',
       headers: { 
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json'
       },
       data: {
@@ -41,7 +37,6 @@ export default async function handler(req, res) {
     } else {
       throw new Error(response.data.message || 'Failed to create payment link');
     }
-
   } catch (error) {
     console.error('Subscription creation error:', error.response?.data || error);
     return res.status(500).json({

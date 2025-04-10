@@ -1,8 +1,6 @@
 import { db } from '../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import crypto from 'crypto';
-
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -10,21 +8,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get the signature from the headers
+    // Verify webhook signature
     const hash = crypto
-      .createHmac('sha512', PAYSTACK_SECRET_KEY)
+      .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
       .update(JSON.stringify(req.body))
       .digest('hex');
 
-    // Verify signature
     if (hash !== req.headers['x-paystack-signature']) {
-      console.error('Invalid webhook signature');
       return res.status(401).json({ message: 'Invalid signature' });
     }
 
     const event = req.body;
 
-    // Handle subscription events
     switch (event.event) {
       case 'subscription.create':
         const { customer, plan, subscription_code, next_payment_date } = event.data;
@@ -39,11 +34,20 @@ export default async function handler(req, res) {
           subscriptionId: subscription_code,
           scriptsRemaining: 100
         });
+
+        // Log payment
+        await addDoc(collection(db, 'payments'), {
+          userEmail: customer.email,
+          amount: plan.amount,
+          status: 'successful',
+          type: plan.interval,
+          date: new Date(),
+          subscriptionId: subscription_code
+        });
         break;
 
       case 'subscription.disable':
-        const disabledUserRef = doc(db, 'users', event.data.customer.email);
-        await updateDoc(disabledUserRef, {
+        await updateDoc(doc(db, 'users', event.data.customer.email), {
           subscription: 'free',
           paid: false,
           scriptsRemaining: 3
@@ -51,9 +55,7 @@ export default async function handler(req, res) {
         break;
 
       case 'charge.success':
-        // Handle successful charges (renewals)
-        const chargeUserRef = doc(db, 'users', event.data.customer.email);
-        await updateDoc(chargeUserRef, {
+        await updateDoc(doc(db, 'users', event.data.customer.email), {
           lastPayment: new Date().toISOString(),
           scriptsRemaining: 100
         });
