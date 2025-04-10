@@ -20,279 +20,111 @@ const GeneratePageNav = ({ onShowSubscriptionModal }) => {
   const { user } = useAuth();
   const [showContactModal, setShowContactModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [userProfile, setUserProfile] = useState(null);
 
-  // Add this function to handle subscription upgrades
-  const handleUpgrade = async (plan) => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const response = await fetch('/api/create-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          plan,
-          email: user.email,
-          name: user.displayName || user.email
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.paymentLink) {
-        window.location.href = data.paymentLink;
-      } else {
-        throw new Error(data.message || 'Failed to create subscription');
-      }
-    } catch (error) {
-      console.error('Subscription error:', error);
-      setError('Failed to process subscription. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add this to fetch user profile when modal opens
-  useEffect(() => {
-    if (showSubscriptionModal && user) {
-      const fetchUserProfile = async () => {
-        const userDoc = await getDoc(doc(db, 'users', user.email));
-        if (userDoc.exists()) {
-          setUserProfile(userDoc.data());
-        }
-      };
-      fetchUserProfile();
-    }
-  }, [showSubscriptionModal, user]);
-                          
-                          return (
-    <>
-      <header style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(8px)',
-        padding: '15px 0',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-                    zIndex: 1000
-                  }}>
-                    <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 20px',
-                        display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
+  return (
+    <nav style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(8px)',
+      padding: '15px 0',
+      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+      zIndex: 1000
+    }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '0 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <a href="/" style={{
+          fontSize: '1.5rem',
+          fontWeight: 'bold',
+          background: 'linear-gradient(135deg, #FF3366, #FF6B6B)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textDecoration: 'none'
         }}>
-          <a href="/" style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            background: 'linear-gradient(135deg, #FF3366, #FF6B6B)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textDecoration: 'none'
-          }}>
-            ScriptSea
-          </a>
+          ScriptSea
+        </a>
 
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-            gap: '20px'
-          }}>
-            {/* Upgrade Button */}
-            <button
-              onClick={onShowSubscriptionModal}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                backgroundColor: '#FF3366',
-                color: 'white',
-                border: 'none',
-                borderRadius: '20px',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" />
-                <path d="M2 17L12 22L22 17" />
-                <path d="M2 12L12 17L22 12" />
-              </svg>
-              Upgrade
-            </button>
-
-            {/* Contact Button */}
-            <button
-              onClick={() => setShowContactModal(true)}
-              style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#f8f9ff',
-                border: 'none',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-              </svg>
-            </button>
-
-            {/* Profile Button */}
-            <button
-              onClick={() => setShowProfileModal(true)}
-              style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#f8f9ff',
-                border: 'none',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Contact Modal */}
-      {showContactModal && (
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1001
+          gap: '20px'
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '30px',
-            maxWidth: '400px',
-            width: '90%',
-            position: 'relative'
-          }}>
-            <button
-              onClick={() => setShowContactModal(false)}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: '#666'
-              }}
-            >
-              ×
-            </button>
-
-            <h2 style={{
-              fontSize: '1.5rem',
-              marginBottom: '20px',
-              color: '#333'
-            }}>
-              Contact Us
-            </h2>
-
-            <div style={{
+          <button
+            onClick={onShowSubscriptionModal}
+            style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '15px'
-            }}>
-              <a
-                href="mailto:support@scriptsea.com"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '12px',
-                  backgroundColor: '#f8f9ff',
-                  borderRadius: '12px',
-                  textDecoration: 'none',
-                  color: '#333',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF3366" strokeWidth="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                  <polyline points="22,6 12,13 2,6" />
-                </svg>
-                support@scriptsea.com
-              </a>
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: '#FF3366',
+              color: 'white',
+              border: 'none',
+              borderRadius: '20px',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" />
+              <path d="M2 17L12 22L22 17" />
+              <path d="M2 12L12 17L22 12" />
+            </svg>
+            Upgrade
+          </button>
 
-              <a
-                href="https://wa.me/1234567890"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '12px',
-                  backgroundColor: '#f8f9ff',
-                  borderRadius: '12px',
-                  textDecoration: 'none',
-                  color: '#333',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                Chat on WhatsApp
-              </a>
-            </div>
-          </div>
+          <button
+            onClick={() => setShowContactModal(true)}
+            style={{
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f8f9ff',
+              border: 'none',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => setShowProfileModal(true)}
+            style={{
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f8f9ff',
+              border: 'none',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </button>
         </div>
-      )}
-
-      {/* Subscription Modal */}
-      {showSubscriptionModal && (
-        <SubscriptionModal
-          onClose={() => setShowSubscriptionModal(false)}
-          userProfile={userProfile}
-        />
-      )}
-
-      {/* Profile Modal */}
-      {showProfileModal && (
-        <ProfileModal
-          onClose={() => setShowProfileModal(false)}
-          user={user}
-        />
-      )}
-    </>
+      </div>
+    </nav>
   );
 };
 
@@ -1920,6 +1752,22 @@ export default function Generate() {
         </main>
 
         <Footer />
+
+        {/* Subscription Modal */}
+        {showSubscriptionModal && (
+          <SubscriptionModal
+            onClose={() => setShowSubscriptionModal(false)}
+            userProfile={userProfile}
+          />
+        )}
+
+        {/* Profile Modal */}
+        {showProfileModal && (
+          <ProfileModal
+            onClose={() => setShowProfileModal(false)}
+            user={user}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );
