@@ -231,10 +231,149 @@ const GeneratePageNav = () => {
 
       {/* Subscription Modal */}
       {showSubscriptionModal && (
-        <SubscriptionModal 
-          onClose={() => setShowSubscriptionModal(false)} 
-          user={user} 
-        />
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '90%',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowSubscriptionModal(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
+
+            <h2 style={{
+              fontSize: '1.5rem',
+              marginBottom: '20px',
+              color: '#333'
+            }}>
+              Upgrade to Pro
+            </h2>
+
+            {error && (
+              <div style={{
+                padding: '12px',
+                backgroundColor: error.includes('successfully') ? '#E8F5E9' : '#FFF2F2',
+                color: error.includes('successfully') ? '#2E7D32' : '#FF3366',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                fontSize: '0.9rem'
+              }}>
+                {error}
+              </div>
+            )}
+
+            <div style={{
+              display: 'grid',
+              gap: '20px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))'
+            }}>
+              <button
+                onClick={() => handleUpgrade('monthly')}
+                disabled={loading}
+                style={{
+                  padding: '20px',
+                  backgroundColor: '#f8f9ff',
+                  border: '2px solid #FF3366',
+                  borderRadius: '12px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
+                <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$4.99</p>
+                <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed monthly</p>
+              </button>
+
+              <button
+                onClick={() => handleUpgrade('yearly')}
+                disabled={loading}
+                style={{
+                  padding: '20px',
+                  backgroundColor: '#f8f9ff',
+                  border: '2px solid #FF3366',
+                  borderRadius: '12px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
+                <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$49.99</p>
+                <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed annually</p>
+              </button>
+            </div>
+
+            <div style={{
+              marginTop: '20px',
+              padding: '20px',
+              backgroundColor: '#f8f9ff',
+              borderRadius: '12px'
+            }}>
+              <h4 style={{ color: '#333', marginBottom: '10px' }}>Pro Benefits:</h4>
+              <ul style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0
+              }}>
+                <li style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#666'
+                }}>
+                  <span style={{ color: '#FF3366' }}>✓</span>
+                  Generate unlimited scripts
+                </li>
+                <li style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#666'
+                }}>
+                  <span style={{ color: '#FF3366' }}>✓</span>
+                  Access to all script types
+                </li>
+                <li style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#666'
+                }}>
+                  <span style={{ color: '#FF3366' }}>✓</span>
+                  Priority support
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Profile Modal */}
@@ -324,6 +463,7 @@ export default function Generate() {
   const [expandedScriptId, setExpandedScriptId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Add ref for the response section
   const responseRef = useRef(null);
@@ -1200,6 +1340,39 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       console.error('Error toggling recording:', err);
       setError('Error with voice input. Please try again.');
       setIsRecording(false);
+    }
+  };
+
+  // Add this function near your other state management code
+  const handleUpgrade = async (plan) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan,
+          email: user.email,
+          name: user.displayName || user.email
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        throw new Error(data.message || 'Failed to create subscription');
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      setError('Failed to process subscription. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
