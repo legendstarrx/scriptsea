@@ -15,11 +15,10 @@ import { doc, updateDoc, getDoc } from 'firebase/firestore';
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
 // GeneratePageNav Component
-const GeneratePageNav = () => {
+const GeneratePageNav = ({ onShowSubscriptionModal }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [showContactModal, setShowContactModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -110,7 +109,7 @@ const GeneratePageNav = () => {
           }}>
             {/* Upgrade Button */}
             <button
-              onClick={() => setShowSubscriptionModal(true)}
+              onClick={onShowSubscriptionModal}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -345,8 +344,6 @@ export default function Generate() {
   const router = useRouter();
   const { user } = useAuth();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState(null);
 
   // Fetch user profile when component mounts
@@ -362,38 +359,6 @@ export default function Generate() {
     }
   }, [user]);
 
-  const handleUpgrade = async (plan) => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const response = await fetch('/api/create-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          plan,
-          email: user.email,
-          name: user.displayName || user.email
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.paymentLink) {
-        window.location.href = data.paymentLink;
-      } else {
-        throw new Error(data.message || 'Failed to create subscription');
-      }
-    } catch (error) {
-      console.error('Subscription error:', error);
-      setError('Failed to process subscription. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <ProtectedRoute>
       <div style={{
@@ -402,7 +367,9 @@ export default function Generate() {
         flexDirection: 'column',
         paddingTop: '80px' // Add padding to account for fixed header
       }}>
-        <GeneratePageNav />
+        <GeneratePageNav 
+          onShowSubscriptionModal={() => setShowSubscriptionModal(true)} 
+        />
         
         <main style={{
           flex: 1,
