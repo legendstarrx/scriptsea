@@ -8,11 +8,31 @@ export default function Navigation() {
   const { user, signOut } = useAuth();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
-  const handleUpgrade = (plan) => {
-    const paymentLink = plan === 'monthly' 
-      ? 'https://flutterwave.com/pay/vsxo1pgmcjhl'
-      : 'https://flutterwave.com/pay/x1wjudjheco3';
-    window.open(paymentLink, '_blank');
+  const handleUpgrade = async (plan) => {
+    try {
+      const response = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan,
+          email: user.email,
+          name: user.displayName || user.email
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        throw new Error(data.message || 'Failed to create subscription');
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      // Handle error appropriately
+    }
   };
 
   return (
