@@ -24,16 +24,11 @@ export default function SubscriptionModal({ onClose, userProfile }) {
       });
 
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create subscription');
-      }
 
       if (data.success && data.paymentLink) {
-        // Open payment link in same window
         window.location.href = data.paymentLink;
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error(data.message || 'Failed to create subscription');
       }
     } catch (error) {
       console.error('Subscription error:', error);
@@ -44,8 +39,10 @@ export default function SubscriptionModal({ onClose, userProfile }) {
   };
 
   const handleCancelSubscription = async () => {
+    setLoading(true);
+    setError('');
+
     try {
-      setLoading(true);
       const response = await fetch('/api/cancel-subscription', {
         method: 'POST',
         headers: {
@@ -59,13 +56,14 @@ export default function SubscriptionModal({ onClose, userProfile }) {
 
       const data = await response.json();
       if (data.success) {
-        setError('Subscription cancelled successfully');
-        setTimeout(() => onClose(), 2000);
+        onClose();
+        window.location.reload(); // Refresh to update UI
       } else {
-        throw new Error(data.message);
+        throw new Error(data.message || 'Failed to cancel subscription');
       }
     } catch (error) {
-      setError('Failed to cancel subscription. Please try again.');
+      console.error('Cancellation error:', error);
+      setError('Failed to cancel subscription. Please try again later.');
     } finally {
       setLoading(false);
     }
