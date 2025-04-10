@@ -21,6 +21,8 @@ const GeneratePageNav = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   return (
     <>
@@ -302,12 +304,17 @@ const GeneratePageNav = () => {
                   border: '2px solid #FF3366',
                   borderRadius: '12px',
                   cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  opacity: loading ? 0.7 : 1
                 }}
               >
-                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
-                <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$4.99</p>
-                <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed monthly</p>
+                {loading ? 'Processing...' : (
+                  <>
+                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
+                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$4.99</p>
+                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed monthly</p>
+                  </>
+                )}
               </button>
 
               <button
@@ -319,12 +326,17 @@ const GeneratePageNav = () => {
                   border: '2px solid #FF3366',
                   borderRadius: '12px',
                   cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  opacity: loading ? 0.7 : 1
                 }}
               >
-                <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
-                <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$49.99</p>
-                <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed annually</p>
+                {loading ? 'Processing...' : (
+                  <>
+                    <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
+                    <p style={{ fontSize: '1.5rem', color: '#333', marginBottom: '10px' }}>$49.99</p>
+                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Billed annually</p>
+                  </>
+                )}
               </button>
             </div>
 
@@ -443,7 +455,6 @@ export default function Generate() {
   const [includeVisuals, setIncludeVisuals] = useState(true);
   const [generatedScript, setGeneratedScript] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState('');
   const [isProcessingVideo, setIsProcessingVideo] = useState(false);
   const [videoInfo, setVideoInfo] = useState(null);
   const [thumbnailSuggestions, setThumbnailSuggestions] = useState('');
@@ -463,7 +474,6 @@ export default function Generate() {
   const [expandedScriptId, setExpandedScriptId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   // Add ref for the response section
   const responseRef = useRef(null);
