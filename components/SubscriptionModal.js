@@ -17,7 +17,7 @@ export default function SubscriptionModal({ onClose, userProfile }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          plan: plan,
+          plan,
           email: user.email,
           name: user.displayName || user.email
         })
@@ -49,7 +49,7 @@ export default function SubscriptionModal({ onClose, userProfile }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: user.email,
+            email: user.email,
           subscriptionId: userProfile.subscriptionId
         })
       });
@@ -150,7 +150,7 @@ export default function SubscriptionModal({ onClose, userProfile }) {
         )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           {/* Monthly Plan */}
-          <div style={{
+    <div style={{
             padding: '20px',
             border: '1px solid #ddd',
             borderRadius: '12px',
@@ -198,7 +198,7 @@ export default function SubscriptionModal({ onClose, userProfile }) {
               <li>✓ Priority support</li>
               <li>✓ Advanced features</li>
               <li>✓ 2 months free</li>
-            </ul>
+      </ul>
             <button
               onClick={() => handleUpgrade('yearly')}
               disabled={loading}
@@ -216,8 +216,8 @@ export default function SubscriptionModal({ onClose, userProfile }) {
             </button>
           </div>
         </div>
-      </div>
-    );
+    </div>
+  );
   };
 
   return (
@@ -231,30 +231,117 @@ export default function SubscriptionModal({ onClose, userProfile }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1000
+      zIndex: 1001
     }}>
       <div style={{
-        background: 'white',
+        backgroundColor: 'white',
+        borderRadius: '20px',
         padding: '30px',
-        borderRadius: '12px',
-        maxWidth: '800px',
-        width: '90%'
+        maxWidth: '500px',
+        width: '90%',
+        position: 'relative'
       }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Subscription Status</h2>
-        {renderContent()}
-        <button
-          onClick={onClose}
-          style={{
-            marginTop: '20px',
-            padding: '10px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            color: '#666'
-          }}
-        >
-          Close
-        </button>
+          <button
+            onClick={onClose}
+            style={{
+            position: 'absolute',
+            top: '15px',
+            right: '15px',
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+            cursor: 'pointer'
+            }}
+          >
+            ×
+          </button>
+
+        <h2 style={{ marginBottom: '20px' }}>Upgrade to Pro</h2>
+
+        {/* Show current plan */}
+        <div style={{
+          padding: '12px',
+          backgroundColor: '#E8F5E9',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          <p>Current Plan: {userProfile?.subscription || 'Free'}</p>
+          {userProfile?.subscription === 'pro' && (
+            <>
+              <p>Type: {userProfile.subscriptionType || 'Monthly'}</p>
+              <p>Scripts Remaining: {userProfile.scriptsRemaining || 0}</p>
+              {userProfile.subscriptionEnd && (
+                <p>Renews: {new Date(userProfile.subscriptionEnd).toLocaleDateString()}</p>
+              )}
+            </>
+          )}
+        </div>
+
+        {error && (
+          <div style={{
+            padding: '12px',
+            backgroundColor: '#FFF2F2',
+            color: '#FF3366',
+            borderRadius: '8px',
+            marginBottom: '20px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{
+          display: 'grid',
+          gap: '20px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))'
+        }}>
+          {/* Monthly Plan */}
+            <button
+              onClick={() => handleUpgrade('monthly')}
+            disabled={loading}
+              style={{
+              padding: '20px',
+              backgroundColor: '#f8f9ff',
+              border: '2px solid #FF3366',
+              borderRadius: '12px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Monthly Pro</h3>
+            <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>$4.99</p>
+            <p style={{ color: '#666' }}>Billed monthly</p>
+            <ul style={{ textAlign: 'left', margin: '15px 0' }}>
+              <li>✓ 100 scripts per month</li>
+              <li>✓ Priority support</li>
+              <li>✓ Advanced features</li>
+            </ul>
+          </button>
+
+          {/* Yearly Plan */}
+            <button
+              onClick={() => handleUpgrade('yearly')}
+              disabled={loading}
+              style={{
+              padding: '20px',
+              backgroundColor: '#f8f9ff',
+              border: '2px solid #FF3366',
+              borderRadius: '12px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            <h3 style={{ color: '#FF3366', marginBottom: '10px' }}>Yearly Pro</h3>
+            <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>$49.99</p>
+            <p style={{ color: '#666' }}>Billed annually</p>
+            <ul style={{ textAlign: 'left', margin: '15px 0' }}>
+              <li>✓ 100 scripts per month</li>
+              <li>✓ Priority support</li>
+              <li>✓ Advanced features</li>
+              <li>✓ 2 months free</li>
+            </ul>
+            </button>
+        </div>
       </div>
     </div>
   );
