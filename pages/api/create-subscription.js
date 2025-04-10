@@ -11,11 +11,14 @@ export default async function handler(req, res) {
   try {
     const { plan, email, name } = req.body;
     
+    // Remove any potential whitespace from the secret key
+    const secretKey = process.env.PAYSTACK_SECRET_KEY.trim();
+    
     const response = await axios({
       method: 'post',
       url: 'https://api.paystack.co/transaction/initialize',
       headers: { 
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Authorization': `Bearer ${secretKey}`,
         'Content-Type': 'application/json'
       },
       data: {
