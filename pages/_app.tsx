@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { AppProps } from 'next/app';
 import { initErrorHandling, initFirebaseErrorMonitoring } from '../lib/errorHandling';
 import { db } from '../lib/firebase';
@@ -7,6 +7,8 @@ import { AuthProvider } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const [isInitialized, setIsInitialized] = useState(false);
+
   useEffect(() => {
     // Global error handlers
     if (typeof window !== 'undefined') {
@@ -59,8 +61,10 @@ function MyApp({ Component, pageProps }: AppProps) {
       try {
         await enableNetwork(db);
         console.log('Firebase connection established');
+        setIsInitialized(true);
       } catch (error) {
         console.error('Firebase connection error:', error);
+        setIsInitialized(true); // Still set to true so the app renders even if Firebase fails
       }
     };
 
@@ -75,8 +79,8 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, []);
 
-  // Fallback UI in case of errors
-  if (typeof window === 'undefined') {
+  // Show loading screen only during initialization
+  if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-md text-center">
