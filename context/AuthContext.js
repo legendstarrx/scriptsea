@@ -190,21 +190,41 @@ export function AuthProvider({ children }) {
         prompt: 'select_account'
       });
       
-      provider.addScope('profile');
-      provider.addScope('email');
-
-      const result = await signInWithPopup(auth, provider);
-      if (result?.user) {
-        await handleSignInResult(result);
-        router.push('/generate');
+      // Try popup first
+      try {
+        const result = await signInWithPopup(auth, provider);
+        if (result?.user) {
+          // Check if user profile exists, if not create it
+          const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+          if (!userDoc.exists()) {
+            const userData = {
+              email: result.user.email,
+              displayName: result.user.displayName,
+              photoURL: result.user.photoURL,
+              subscription: 'free',
+              scriptsRemaining: 3,
+              scriptsGenerated: 0,
+              isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            };
+            await setDoc(doc(db, 'users', result.user.uid), userData);
+            setUserProfile(userData);
+          }
+          return result;
+        }
+      } catch (popupError) {
+        // If popup fails, try redirect
+        if (popupError.code === 'auth/popup-closed-by-user' || 
+            popupError.code === 'auth/popup-blocked') {
+          await signInWithRedirect(auth, provider);
+        } else {
+          throw popupError;
+        }
       }
     } catch (error) {
-      if (error.code === 'auth/popup-blocked') {
-        await signInWithRedirect(auth, provider);
-      } else {
-        console.error('Google sign-in error:', error);
-        throw error;
-      }
+      console.error('Google sign in error:', error);
+      throw error;
     }
   };
 
@@ -213,49 +233,30 @@ export function AuthProvider({ children }) {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-          await handleSignInResult(result);
-          router.push('/generate');
+          const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+          if (!userDoc.exists()) {
+            const userData = {
+              email: result.user.email,
+              displayName: result.user.displayName,
+              photoURL: result.user.photoURL,
+              subscription: 'free',
+              scriptsRemaining: 3,
+              scriptsGenerated: 0,
+              isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            };
+            await setDoc(doc(db, 'users', result.user.uid), userData);
+            setUserProfile(userData);
+          }
         }
       } catch (error) {
         console.error('Redirect result error:', error);
-        // Show error to user
-        setError(error.message);
       }
     };
 
     handleRedirectResult();
   }, []);
-
-  const handleSignInResult = async (result) => {
-    if (!result?.user) return;
-    
-    try {
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-      if (!userDoc.exists()) {
-        const userData = {
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL,
-          subscription: 'free',
-          scriptsRemaining: 3,
-          scriptsGenerated: 0,
-          isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        };
-        await setDoc(doc(db, 'users', result.user.uid), userData);
-        setUserProfile(userData);
-      }
-
-      await fetch('/api/user/ip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: result.user.uid }),
-      });
-    } catch (error) {
-      console.error('Error handling sign-in result:', error);
-    }
-  };
 
   const logout = async () => {
     try {
