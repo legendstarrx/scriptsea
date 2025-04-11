@@ -293,6 +293,9 @@ const creatorStyles = {
   ]
 };
 
+// Add this to force dynamic behavior
+export const dynamic = 'force-dynamic';
+
 export default function Generate() {
   const router = useRouter();
   const { user, userProfile, updateUserProfile } = useAuth();
@@ -1205,7 +1208,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
   };
 
   useEffect(() => {
-    const { payment } = router.query;
+    // Handle payment status messages
+    const { payment, t } = router.query;
     
     if (payment) {
       switch (payment) {
@@ -1213,15 +1217,15 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
           toast.success('Payment successful! Your subscription has been activated.');
           break;
         case 'failed':
-          toast.error('Payment failed. Please try again.');
+          toast.error('Payment failed. Please try again or contact support.');
           break;
         case 'error':
-          toast.error('An error occurred processing your payment.');
+          toast.error('An error occurred processing your payment. Please try again or contact support.');
           break;
       }
       
-      // Remove the query parameter after showing the message
-      const { payment: _, ...query } = router.query;
+      // Remove the query parameters but keep the timestamp
+      const { payment: _, t: __, ...query } = router.query;
       router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
     }
   }, [router.query]);
