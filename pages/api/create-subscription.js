@@ -20,24 +20,32 @@ export default async function handler(req, res) {
     }
 
     // Initialize Paystack transaction
-    const response = await fetch('https://api.paystack.co/transaction/initialize', {
+    const response = await axios({
       method: 'POST',
+      url: 'https://api.paystack.co/transaction/initialize',
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
+      data: {
         email,
         amount: amount * 100, // Convert to kobo
         callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify`,
         metadata: {
           userId,
-          plan_type: plan
+          plan_type: plan,
+          custom_fields: [
+            {
+              display_name: "Plan Type",
+              variable_name: "plan_type",
+              value: plan
+            }
+          ]
         }
-      })
+      }
     });
 
-    const data = await response.json();
+    const data = response.data;
 
     if (!data.status) {
       throw new Error(data.message);
