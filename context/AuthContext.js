@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
       
       if (user) {
         try {
-          // Get user profile from Firestore using user.uid instead of email
+          // Get user profile from Firestore using user.uid
           const userRef = doc(db, 'users', user.uid);
           const unsubscribeDoc = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
@@ -63,7 +63,10 @@ export function AuthProvider({ children }) {
                 email: user.email,
                 photoURL: user.photoURL,
                 subscription: 'free',
-                scriptsRemaining: 5
+                scriptsRemaining: 3,
+                scriptsGenerated: 0,
+                isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+                createdAt: new Date().toISOString()
               };
               setDoc(userRef, defaultProfile)
                 .then(() => setUserProfile(defaultProfile))
@@ -88,24 +91,6 @@ export function AuthProvider({ children }) {
 
     return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      // Fetch user profile from Firestore
-      const userRef = doc(db, 'users', user.email);
-      const unsubscribe = onSnapshot(userRef, (doc) => {
-        if (doc.exists()) {
-          setUserProfile(doc.data());
-        } else {
-          setUserProfile({ subscription: 'free' }); // Default profile
-        }
-      });
-
-      return () => unsubscribe();
-    } else {
-      setUserProfile(null);
-    }
-  }, [user]);
 
   const signup = async (email, password, displayName) => {
     try {
