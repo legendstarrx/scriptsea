@@ -6,6 +6,8 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -13,8 +15,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     hasError: false
   };
 
-  public static getDerivedStateFromError(_: Error): State {
-    return { hasError: true };
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -29,17 +31,34 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
-          <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-lg">
             <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
-            <button
-              onClick={() => {
-                this.setState({ hasError: false });
-                window.location.reload();
-              }}
-              className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-            >
-              Try again
-            </button>
+            <p className="text-gray-600 mb-4">
+              We're having trouble loading this page. This might be due to a temporary network issue or system maintenance.
+            </p>
+            <div className="space-y-4">
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 w-full"
+              >
+                Reload Page
+              </button>
+              <button
+                onClick={() => {
+                  // Clear storage and reload
+                  try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                  } catch (e) {
+                    console.error('Storage clear error:', e);
+                  }
+                  window.location.reload();
+                }}
+                className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 w-full"
+              >
+                Clear Cache & Reload
+              </button>
+            </div>
           </div>
         </div>
       );
