@@ -35,6 +35,12 @@ const nextConfig = {
         ]
       }
     ];
+  },
+  // Force pages to be dynamic by default
+  experimental: {
+    // This ensures pages are not statically optimized
+    // which can cause caching issues
+    dynamicPartialRendering: true
   }
 }
 
