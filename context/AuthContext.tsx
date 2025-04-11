@@ -15,7 +15,8 @@ import {
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+  onSnapshot
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
@@ -32,75 +33,90 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     let unsubscribe: () => void;
-    let mounted = true;
+    let profileUnsubscribe: () => void;
 
     const initAuth = async () => {
       try {
-        unsubscribe = onAuthStateChanged(
-          auth,
-          (user) => {
-            if (mounted) {
-              console.log('Auth state changed:', {
-                userId: user?.uid,
-                isAuthenticated: !!user,
-                timestamp: new Date().toISOString()
-              });
-              setUser(user);
-              setLoading(false);
-              setIsReady(true);
-            }
-          },
-          (error) => {
-            console.error('Auth state change error:', error);
-            if (mounted) {
-              setError(error);
-              setLoading(false);
-              setIsReady(true);
-            }
+        unsubscribe = onAuthStateChanged(auth, async (user) => {
+          console.log('Auth state changed:', user?.uid);
+          setUser(user);
+
+          if (user) {
+            // Subscribe to user profile
+            const userRef = doc(db, 'users', user.uid);
+            profileUnsubscribe = onSnapshot(userRef, 
+              (doc) => {
+                if (doc.exists()) {
+                  setUserProfile(doc.data());
+                } else {
+                  // Create default profile
+                  const defaultProfile = {
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    subscription: 'free',
+                    scriptsRemaining: 3,
+                    scriptsGenerated: 0,
+                    createdAt: new Date().toISOString()
+                  };
+                  setDoc(userRef, defaultProfile)
+                    .then(() => setUserProfile(defaultProfile))
+                    .catch(console.error);
+                }
+                setLoading(false);
+              },
+              (error) => {
+                console.error('Profile fetch error:', error);
+                setError(error);
+                setLoading(false);
+              }
+            );
+          } else {
+            setUserProfile(null);
+            setLoading(false);
           }
-        );
+        }, (error) => {
+          console.error('Auth state change error:', error);
+          setError(error);
+          setLoading(false);
+        });
       } catch (error) {
         console.error('Auth initialization error:', error);
-        if (mounted) {
-          setError(error as Error);
-          setLoading(false);
-          setIsReady(true);
-        }
+        setError(error as Error);
+        setLoading(false);
       }
     };
 
-    // Initialize auth
     initAuth();
 
-    // Cleanup function
     return () => {
-      mounted = false;
       if (unsubscribe) unsubscribe();
+      if (profileUnsubscribe) profileUnsubscribe();
     };
   }, []);
 
   // Show loading screen until everything is ready
-  if (!isReady || loading) {
+  if (!loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Authenticating...</h1>
-          <p className="text-gray-600">Please wait while we verify your session.</p>
-        </div>
-      </div>
+      <AuthContext.Provider value={{ user, loading, error }}>
+        {children}
+      </AuthContext.Provider>
     );
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, error }}>
-      {children}
-    </AuthContext.Provider>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md text-center">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Authenticating...</h1>
+        <p className="text-gray-600">Please wait while we verify your session.</p>
+      </div>
+    </div>
   );
 }
 
