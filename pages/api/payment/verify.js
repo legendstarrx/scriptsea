@@ -44,16 +44,13 @@ export default async function handler(req, res) {
         subscriptionId: data.authorization.authorization_code
       });
 
-      // Add timestamp to prevent caching
-      const timestamp = Date.now();
-      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=success&t=${timestamp}`);
+      // Redirect to home page or generate page with success message
+      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=success`);
     } else {
-      const timestamp = Date.now();
-      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=failed&t=${timestamp}`);
+      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}?payment=failed`);
     }
   } catch (error) {
     console.error('Payment verification error:', error);
-    const timestamp = Date.now();
-    return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=error&t=${timestamp}`);
+    return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}?payment=error`);
   }
 } 
