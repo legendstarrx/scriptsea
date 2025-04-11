@@ -30,7 +30,8 @@ export default async function handler(req, res) {
       url: 'https://api.paystack.co/transaction/initialize',
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY.trim()}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache'
       },
       data: {
         email,
@@ -43,21 +44,22 @@ export default async function handler(req, res) {
             display_name: "User ID",
             variable_name: "user_id",
             value: userId
-          }, {
-            display_name: "Plan Type",
-            variable_name: "plan_type",
-            value: plan
           }]
-        }
+        },
+        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer']
       }
     });
+
+    if (!response.data.data.authorization_url) {
+      throw new Error('No payment URL received from Paystack');
+    }
 
     return res.status(200).json({
       success: true,
       paymentLink: response.data.data.authorization_url
     });
   } catch (error) {
-    console.error('Create subscription error:', error);
+    console.error('Create subscription error:', error.response?.data || error.message);
     return res.status(500).json({
       success: false,
       message: 'Failed to create subscription. Please try again.'
