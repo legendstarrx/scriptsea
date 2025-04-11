@@ -34,57 +34,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     let unsubscribe: () => void;
+    let mounted = true;
 
-    try {
-      unsubscribe = onAuthStateChanged(
-        auth,
-        (user) => {
-          console.log('Auth state changed:', {
-            userId: user?.uid,
-            isAuthenticated: !!user,
-            timestamp: new Date().toISOString()
-          });
-          setUser(user);
+    const initAuth = async () => {
+      try {
+        unsubscribe = onAuthStateChanged(
+          auth,
+          (user) => {
+            if (mounted) {
+              console.log('Auth state changed:', {
+                userId: user?.uid,
+                isAuthenticated: !!user,
+                timestamp: new Date().toISOString()
+              });
+              setUser(user);
+              setLoading(false);
+              setIsReady(true);
+            }
+          },
+          (error) => {
+            console.error('Auth state change error:', error);
+            if (mounted) {
+              setError(error);
+              setLoading(false);
+              setIsReady(true);
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setError(error as Error);
           setLoading(false);
-        },
-        (error) => {
-          console.error('Auth state change error:', error);
-          setError(error);
-          setLoading(false);
+          setIsReady(true);
         }
-      );
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      setError(error as Error);
-      setLoading(false);
-    }
+      }
+    };
 
+    // Initialize auth
+    initAuth();
+
+    // Cleanup function
     return () => {
+      mounted = false;
       if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Authentication Error</h1>
-          <p className="text-gray-600 mb-4">{error.message}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
+  // Show loading screen until everything is ready
+  if (!isReady || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-md text-center">
