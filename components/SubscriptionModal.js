@@ -19,6 +19,8 @@ export default function SubscriptionModal({ onClose, userProfile }) {
     }
   };
 
+  const currentSubscription = userProfile?.subscription || 'free';
+
   const handleUpgrade = async (plan) => {
     setLoading(true);
     setError('');
@@ -89,7 +91,7 @@ export default function SubscriptionModal({ onClose, userProfile }) {
           </button>
         </div>
 
-        {userProfile?.subscription === 'free' ? (
+        {currentSubscription === 'free' ? (
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               {/* Monthly Plan */}
@@ -124,7 +126,7 @@ export default function SubscriptionModal({ onClose, userProfile }) {
         ) : (
           <div className="text-center">
             <p className="mb-4">
-              You are currently on the {userProfile.subscription} plan.
+              You are currently on the {currentSubscription} plan.
             </p>
             <button
               onClick={handleCancelSubscription}

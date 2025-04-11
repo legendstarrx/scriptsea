@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -96,6 +96,24 @@ export function AuthProvider({ children }) {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      // Fetch user profile from Firestore
+      const userRef = doc(db, 'users', user.email);
+      const unsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          setUserProfile(doc.data());
+        } else {
+          setUserProfile({ subscription: 'free' }); // Default profile
+        }
+      });
+
+      return () => unsubscribe();
+    } else {
+      setUserProfile(null);
+    }
+  }, [user]);
 
   const signup = async (email, password, displayName) => {
     try {
