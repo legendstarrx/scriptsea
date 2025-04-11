@@ -2,6 +2,7 @@ import '../styles/globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import Head from 'next/head';
 import { useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 
 function MyApp({ Component, pageProps }) {
   // Load Flutter payment script
@@ -27,6 +28,7 @@ function MyApp({ Component, pageProps }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Component {...pageProps} />
+      <Toaster position="top-center" />
     </AuthProvider>
   );
 }
