@@ -26,13 +26,14 @@ const auth = getAuth(app);
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-    tabManager: persistentSingleTabManager(),
+    tabManager: persistentSingleTabManager({
+      forceOwnership: true // This ensures single tab persistence
+    })
   }),
-  experimentalForceLongPolling: true,
-  cacheSizeBytes: CACHE_SIZE_UNLIMITED
+  experimentalForceLongPolling: true
 });
 
-// Enable offline persistence with error handling
+// Remove duplicate cacheSizeBytes setting and simplify persistence
 if (typeof window !== 'undefined') {
   enableMultiTabIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
