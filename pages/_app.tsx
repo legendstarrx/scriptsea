@@ -92,16 +92,16 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     // Register service worker
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
-          registration => {
-            console.log('ServiceWorker registration successful');
-          },
-          err => {
-            console.error('ServiceWorker registration failed:', err);
-          }
-        );
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      window.addEventListener('load', async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/',
+          });
+          console.log('ServiceWorker registration successful:', registration);
+        } catch (error) {
+          console.error('ServiceWorker registration failed:', error);
+        }
       });
     }
   }, []);
