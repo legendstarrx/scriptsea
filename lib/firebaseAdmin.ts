@@ -2,10 +2,14 @@ import { getApps, cert, App, initializeApp as initializeFirebaseAdmin } from 'fi
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth, Auth } from 'firebase-admin/auth';
 
-// Check required environment variables
-if (!process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PROJECT_ID) {
-  throw new Error('Missing Firebase Admin environment variables. Check your .env file');
-}
+// Helper function to get environment variables with type checking
+const getRequiredEnvVar = (name: string): string => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+};
 
 class FirebaseAdmin {
   public db: Firestore;
@@ -18,11 +22,16 @@ class FirebaseAdmin {
     
     if (!apps.length) {
       try {
+        // Get and validate environment variables
+        const projectId = getRequiredEnvVar('FIREBASE_PROJECT_ID');
+        const clientEmail = getRequiredEnvVar('FIREBASE_CLIENT_EMAIL');
+        const privateKey = getRequiredEnvVar('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n');
+
         this.app = initializeFirebaseAdmin({
           credential: cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+            projectId,
+            clientEmail,
+            privateKey
           })
         });
       } catch (error) {
