@@ -14,11 +14,24 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isInitializing, setIsInitializing] = useState(true);
   const router = useRouter();
 
+  // Load Flutterwave script only when needed (on payment pages)
   useEffect(() => {
-    // Initialize app with timeout
+    if (router.pathname.includes('/payment') || router.pathname.includes('/subscription')) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.flutterwave.com/v3.js';
+      script.async = true;
+      document.body.appendChild(script);
+
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
+  }, [router.pathname]);
+
+  useEffect(() => {
     const initTimeout = setTimeout(() => {
       setIsInitializing(false);
-    }, 3000); // Reduced timeout to 3 seconds
+    }, 3000);
 
     const init = async () => {
       try {
@@ -33,8 +46,6 @@ function MyApp({ Component, pageProps }: AppProps) {
     init();
     return () => clearTimeout(initTimeout);
   }, []);
-
-  // Remove service worker registration as we'll handle it differently
 
   if (isInitializing) {
     return <LoadingSpinner />;
@@ -53,10 +64,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
         
-        {/* Preload critical resources */}
+        {/* Preconnect to critical domains */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="preload" href="https://checkout.flutterwave.com/v3.js" as="script" />
       </Head>
       <AuthProvider>
         <div id="app-root" className="min-h-screen">
