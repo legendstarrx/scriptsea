@@ -19,12 +19,17 @@ export default async function handler(req, res) {
       });
     }
 
+    // Make sure PAYSTACK_SECRET_KEY is properly set
+    if (!process.env.PAYSTACK_SECRET_KEY) {
+      throw new Error('Paystack secret key is not configured');
+    }
+
     // Initialize Paystack transaction
     const response = await axios({
       method: 'POST',
       url: 'https://api.paystack.co/transaction/initialize',
       headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY.trim()}`,
         'Content-Type': 'application/json'
       },
       data: {
@@ -33,33 +38,20 @@ export default async function handler(req, res) {
         callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify`,
         metadata: {
           userId,
-          plan_type: plan,
-          custom_fields: [
-            {
-              display_name: "Plan Type",
-              variable_name: "plan_type",
-              value: plan
-            }
-          ]
+          plan_type: plan
         }
       }
     });
 
-    const data = response.data;
-
-    if (!data.status) {
-      throw new Error(data.message);
-    }
-
     return res.status(200).json({
       success: true,
-      paymentLink: data.data.authorization_url
+      paymentLink: response.data.data.authorization_url
     });
   } catch (error) {
     console.error('Create subscription error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to create subscription'
+      message: 'Failed to create subscription. Please try again.'
     });
   }
 } 
