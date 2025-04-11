@@ -1208,26 +1208,30 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
   };
 
   useEffect(() => {
-    // Handle payment status messages
-    const { payment, t } = router.query;
-    
-    if (payment) {
-      switch (payment) {
-        case 'success':
-          toast.success('Payment successful! Your subscription has been activated.');
-          break;
-        case 'failed':
-          toast.error('Payment failed. Please try again or contact support.');
-          break;
-        case 'error':
-          toast.error('An error occurred processing your payment. Please try again or contact support.');
-          break;
-      }
+    const handlePaymentStatus = () => {
+      const { payment } = router.query;
       
-      // Remove the query parameters but keep the timestamp
-      const { payment: _, t: __, ...query } = router.query;
-      router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
-    }
+      if (payment) {
+        switch (payment) {
+          case 'success':
+            toast.success('Payment successful! Your subscription is now active.');
+            // Refresh the page to update subscription status
+            window.location.reload();
+            break;
+          case 'failed':
+            toast.error('Payment failed. Please try again or contact support.');
+            break;
+          case 'error':
+            toast.error('An error occurred. Please contact support if payment was deducted.');
+            break;
+        }
+        
+        // Remove payment status from URL
+        router.replace('/generate', undefined, { shallow: true });
+      }
+    };
+
+    handlePaymentStatus();
   }, [router.query]);
 
   return (
