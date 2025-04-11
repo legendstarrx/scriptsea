@@ -34,56 +34,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Monitor auth state changes with timestamps
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('Auth state changed:', {
-        timestamp: new Date().toISOString(),
-        userId: user?.uid,
-        isAuthenticated: !!user
-      });
       setUser(user);
       setLoading(false);
     }, (error) => {
-      console.error('Auth state change error:', {
-        timestamp: new Date().toISOString(),
-        error
-      });
+      console.error('Auth state change error:', error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Add Firestore connection monitoring
-  useEffect(() => {
-    if (!user) return;
-
-    const userRef = doc(db, 'users', user.uid);
-
-    // Test Firestore connection
-    const testConnection = async () => {
-      try {
-        await getDoc(userRef);
-        console.log('Firestore connection successful');
-      } catch (error) {
-        console.error('Firestore connection error:', {
-          timestamp: new Date().toISOString(),
-          error,
-          userId: user.uid
-        });
-      }
-    };
-
-    testConnection();
-  }, [user]);
-
-  const value = {
-    user,
-    loading,
-    // Add other values you want to expose
-  };
+  // Show a loading indicator while auth state is being determined
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Authenticating...</h1>
+          <p className="text-gray-600">Please wait while we verify your session.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
