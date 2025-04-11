@@ -1,49 +1,56 @@
 import { db } from '../../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import axios from 'axios';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { status, tx_ref, transaction_id } = req.query;
+  const { reference } = req.query; // Paystack sends 'reference' instead of 'transaction_id'
 
-  if (status === 'successful') {
-    try {
-      // Verify transaction with FlutterWave
-      const verifyResponse = await fetch(`https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`, {
-        headers: {
-          'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`
-        }
+  if (!reference) {
+    return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}?payment=failed`);
+  }
+
+  try {
+    // Verify transaction with Paystack
+    const verifyResponse = await axios({
+      method: 'get',
+      url: `https://api.paystack.co/transaction/verify/${reference}`,
+      headers: {
+        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+      }
+    });
+
+    const { data } = verifyResponse.data;
+
+    if (data.status === 'success') {
+      // Get user ID from metadata
+      const userId = data.metadata.userId;
+      const planType = data.metadata.plan_type;
+      
+      // Update user's subscription in Firestore
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        subscription: 'pro',
+        scriptsRemaining: 100,
+        subscriptionEnd: new Date(Date.now() + (planType === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000),
+        lastPayment: new Date().toISOString(),
+        paymentAmount: data.amount / 100, // Convert from kobo to naira
+        paymentCurrency: 'NGN',
+        subscriptionType: planType,
+        paid: true,
+        subscriptionId: data.authorization.authorization_code
       });
 
-      const verifyData = await verifyResponse.json();
-
-      if (verifyData.status === 'success' && verifyData.data.status === 'successful') {
-        // Update user's subscription in Firestore
-        const userRef = doc(db, 'users', tx_ref.split('-')[0]);
-        const isYearlyPlan = verifyData.data.amount === 4999;
-        
-        await updateDoc(userRef, {
-          subscription: 'pro',
-          scriptsRemaining: 100,
-          subscriptionEnd: new Date(Date.now() + (isYearlyPlan ? 365 : 30) * 24 * 60 * 60 * 1000),
-          lastPayment: new Date(),
-          paymentAmount: verifyData.data.amount,
-          paymentCurrency: verifyData.data.currency,
-          subscriptionType: isYearlyPlan ? 'yearly' : 'monthly'
-        });
-
-        // Redirect to success page
-        res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=success`);
-      } else {
-        res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=failed`);
-      }
-    } catch (error) {
-      console.error('Payment verification error:', error);
-      res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=error`);
+      // Redirect to home page or generate page with success message
+      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=success`);
+    } else {
+      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}?payment=failed`);
     }
-  } else {
-    res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?payment=cancelled`);
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}?payment=error`);
   }
 } 

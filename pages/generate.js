@@ -10,6 +10,7 @@ import SubscriptionModal from '../components/SubscriptionModal';
 import ProfileModal from '../components/ProfileModal';
 import { db } from '../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { toast } from 'react-hot-toast'; // or your preferred notification library
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
@@ -1202,6 +1203,28 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       setIsRecording(false);
     }
   };
+
+  useEffect(() => {
+    const { payment } = router.query;
+    
+    if (payment) {
+      switch (payment) {
+        case 'success':
+          toast.success('Payment successful! Your subscription has been activated.');
+          break;
+        case 'failed':
+          toast.error('Payment failed. Please try again.');
+          break;
+        case 'error':
+          toast.error('An error occurred processing your payment.');
+          break;
+      }
+      
+      // Remove the query parameter after showing the message
+      const { payment: _, ...query } = router.query;
+      router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
+    }
+  }, [router.query]);
 
   return (
     <ProtectedRoute>
