@@ -51,4 +51,4 @@ class FirebaseAdmin {
 
 // Export initialized instances
 const { db: adminDb, auth: adminAuth } = FirebaseAdmin.getInstance();
-export { adminDb, adminAuth }; 
+export { adminDb, adminAuth };

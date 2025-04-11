@@ -1,4 +1,4 @@
-import { adminDb } from '../../lib/firebaseAdmin';
+import { adminDb } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,26 +6,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
+    const { userId, ipAddress } = req.body;
+
+    if (!userId || !ipAddress) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Get the user's IP address
-    const ip = req.headers['x-forwarded-for'] || 
-               req.headers['x-real-ip'] || 
-               req.socket.remoteAddress || 
-               'Unknown';
-
-    // Update the user's document with their IP
-    await adminDb.collection('users').doc(userId).update({
-      ipAddress: ip,
+    const userRef = adminDb.collection('users').doc(userId);
+    await userRef.update({
+      ipAddress,
       lastUpdated: new Date().toISOString()
     });
 
-    res.status(200).json({ success: true, ip });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error updating IP:', error);
-    res.status(500).json({ error: 'Failed to update IP' });
+    return res.status(500).json({ error: 'Failed to update IP' });
   }
 } 
