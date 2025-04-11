@@ -6,6 +6,19 @@ export default function SubscriptionModal({ onClose, userProfile }) {
   const [error, setError] = useState('');
   const { user } = useAuth();
 
+  const plans = {
+    monthly: {
+      price: '$4.99',
+      actualAmount: 'NGN 8,000.00',
+      features: ['100 scripts per month', 'Priority support', 'Advanced features']
+    },
+    yearly: {
+      price: '$49.99',
+      actualAmount: 'NGN 80,000.00',
+      features: ['100 scripts per month', 'Priority support', 'Advanced features', '2 months free']
+    }
+  };
+
   const handleUpgrade = async (plan) => {
     setLoading(true);
     setError('');
@@ -48,7 +61,7 @@ export default function SubscriptionModal({ onClose, userProfile }) {
         },
         body: JSON.stringify({
           email: user.email,
-          subscriptionId: userProfile.subscriptionId
+          subscriptionId: userProfile?.subscriptionId
         })
       });
 
@@ -66,192 +79,68 @@ export default function SubscriptionModal({ onClose, userProfile }) {
     }
   };
 
-  const renderContent = () => {
-    if (userProfile?.subscription === 'pro') {
-      return (
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>
-            You are a Pro User ({userProfile.subscriptionType} Plan)
-          </h3>
-          <p>Next payment date: {new Date(userProfile.nextPaymentDate).toLocaleDateString()}</p>
-          <button
-            onClick={handleCancelSubscription}
-            disabled={loading}
-            style={{
-              marginTop: '20px',
-              padding: '10px 20px',
-              backgroundColor: '#ff4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {loading ? 'Processing...' : 'Cancel Subscription'}
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Choose Your Plan</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            ✕
           </button>
         </div>
-      );
-    }
 
-    if (userProfile?.subscription === 'pro' && userProfile?.subscriptionType === 'yearly') {
-      return (
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>You are a Pro User (Yearly Plan)</h3>
-          <p>You have access to all premium features until {new Date(userProfile.subscriptionEnd).toLocaleDateString()}</p>
-        </div>
-      );
-    }
+        {userProfile?.subscription === 'free' ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Monthly Plan */}
+              <div className="border rounded-lg p-4 text-center">
+                <h3 className="font-bold mb-2">Monthly</h3>
+                <div className="text-2xl font-bold mb-1">{plans.monthly.price}</div>
+                <div className="text-sm text-gray-500 mb-4">{plans.monthly.actualAmount}</div>
+                <button
+                  onClick={() => handleUpgrade('monthly')}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Choose Monthly'}
+                </button>
+              </div>
 
-    if (userProfile?.subscription === 'pro' && userProfile?.subscriptionType === 'monthly') {
-      return (
-        <div>
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>You are a Pro User (Monthly Plan)</h3>
-            <p>Current subscription ends: {new Date(userProfile.subscriptionEnd).toLocaleDateString()}</p>
+              {/* Yearly Plan */}
+              <div className="border rounded-lg p-4 text-center">
+                <h3 className="font-bold mb-2">Yearly</h3>
+                <div className="text-2xl font-bold mb-1">{plans.yearly.price}</div>
+                <div className="text-sm text-gray-500 mb-4">{plans.yearly.actualAmount}</div>
+                <button
+                  onClick={() => handleUpgrade('yearly')}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Choose Yearly'}
+                </button>
+              </div>
+            </div>
           </div>
-          <div style={{ padding: '20px', border: '2px solid #FF3366', borderRadius: '12px' }}>
-            <h3>Upgrade to Yearly Plan</h3>
-            <p>Save more with our yearly plan!</p>
-            <div style={{ fontSize: '24px', margin: '15px 0' }}>$49.99/year</div>
+        ) : (
+          <div className="text-center">
+            <p className="mb-4">
+              You are currently on the {userProfile.subscription} plan.
+            </p>
             <button
-              onClick={() => handleUpgrade('yearly')}
+              onClick={handleCancelSubscription}
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: loading ? '#ccc' : '#FF3366',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: loading ? 'not-allowed' : 'pointer'
-              }}
+              className="bg-red-600 text-white rounded py-2 px-4 hover:bg-red-700 disabled:opacity-50"
             >
-              {loading ? 'Processing...' : 'Upgrade to Yearly'}
+              {loading ? 'Processing...' : 'Cancel Subscription'}
             </button>
           </div>
-        </div>
-      );
-    }
+        )}
 
-    // Free plan or no subscription
-    return (
-      <div>
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <h3>Current Plan: Free</h3>
-          <p>Upgrade to Pro for more features!</p>
-        </div>
         {error && (
-          <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>
+          <div className="mt-4 text-red-600 text-center">
             {error}
           </div>
         )}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          {/* Monthly Plan */}
-          <div style={{
-            padding: '20px',
-            border: '1px solid #ddd',
-            borderRadius: '12px',
-            textAlign: 'center'
-          }}>
-            <h3>Monthly Pro Plan</h3>
-            <div style={{ fontSize: '24px', margin: '15px 0' }}>
-              $4.99<span style={{ fontSize: '14px' }}>/month</span>
-            </div>
-            <ul style={{ textAlign: 'left', margin: '15px 0' }}>
-              <li>✓ 100 scripts per month</li>
-              <li>✓ Priority support</li>
-              <li>✓ Advanced features</li>
-            </ul>
-            <button
-              onClick={() => handleUpgrade('monthly')}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: loading ? '#ccc' : '#FF3366',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: loading ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {loading ? 'Processing...' : 'Subscribe Monthly'}
-            </button>
-          </div>
-
-          {/* Yearly Plan */}
-          <div style={{
-            padding: '20px',
-            border: '2px solid #FF3366',
-            borderRadius: '12px',
-            textAlign: 'center'
-          }}>
-            <h3>Yearly Pro Plan</h3>
-            <div style={{ fontSize: '24px', margin: '15px 0' }}>
-              $49.99<span style={{ fontSize: '14px' }}>/year</span>
-            </div>
-            <ul style={{ textAlign: 'left', margin: '15px 0' }}>
-              <li>✓ 100 scripts per month</li>
-              <li>✓ Priority support</li>
-              <li>✓ Advanced features</li>
-              <li>✓ 2 months free</li>
-            </ul>
-            <button
-              onClick={() => handleUpgrade('yearly')}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: loading ? '#ccc' : '#FF3366',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: loading ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {loading ? 'Processing...' : 'Subscribe Yearly'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '30px',
-        borderRadius: '12px',
-        maxWidth: '800px',
-        width: '90%'
-      }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Subscription Status</h2>
-        {renderContent()}
-        <button
-          onClick={onClose}
-          style={{
-            marginTop: '20px',
-            padding: '10px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            color: '#666'
-          }}
-        >
-          Close
-        </button>
       </div>
     </div>
   );
