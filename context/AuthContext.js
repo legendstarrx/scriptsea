@@ -187,14 +187,12 @@ export function AuthProvider({ children }) {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
-        prompt: 'select_account',
+        prompt: 'select_account'
       });
       
-      // Add required scopes only
       provider.addScope('profile');
       provider.addScope('email');
 
-      // Use signInWithPopup instead of redirect for better control
       const result = await signInWithPopup(auth, provider);
       if (result?.user) {
         await handleSignInResult(result);
@@ -202,7 +200,6 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       if (error.code === 'auth/popup-blocked') {
-        // Fallback to redirect only if popup is blocked
         await signInWithRedirect(auth, provider);
       } else {
         console.error('Google sign-in error:', error);

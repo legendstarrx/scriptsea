@@ -5,6 +5,7 @@ import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import Image from 'next/image';
 
 export default function Login() {
   const router = useRouter();
@@ -229,10 +230,12 @@ export default function Login() {
                 gap: '0.5rem'
               }}
             >
-              <img
-                src="https://www.google.com/favicon.ico"
+              <Image
+                src="/google-icon.png"
                 alt="Google"
-                style={{ width: '20px', height: '20px' }}
+                width={20}
+                height={20}
+                priority
               />
               Sign in with Google
             </button>

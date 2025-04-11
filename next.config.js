@@ -5,7 +5,7 @@ const nextConfig = {
   poweredByHeader: false,
   
   images: {
-    domains: ['firebasestorage.googleapis.com'],
+    domains: ['firebasestorage.googleapis.com', 'www.google.com'],
     minimumCacheTTL: 60,
   },
   
@@ -24,8 +24,18 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains'
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.google.com https://apis.google.com https://identitytoolkit.googleapis.com",
+              "connect-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com",
+              "img-src 'self' data: https://*.googleusercontent.com https://firebasestorage.googleapis.com https://www.google.com",
+              "frame-src 'self' https://*.firebaseapp.com https://*.google.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "media-src 'self'",
+              "object-src 'none'"
+            ].join('; ')
           },
           {
             key: 'X-Frame-Options',
@@ -38,10 +48,6 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self' https://apis.google.com https://*.firebaseapp.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://firebasestorage.googleapis.com; frame-src https://*.firebaseapp.com https://*.google.com;"
           }
         ]
       },
