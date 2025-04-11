@@ -4,9 +4,8 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
-  // Add required security headers
-  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-  response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
+  // Remove COOP header to fix popup issues
+  response.headers.delete('Cross-Origin-Opener-Policy');
   
   // Add other security headers
   response.headers.set('X-Frame-Options', 'DENY');
