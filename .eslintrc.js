@@ -1,8 +1,7 @@
 module.exports = {
-  extends: ['next/core-web-vitals'],
+  extends: 'next',
   rules: {
-    // Add any specific rules here
+    'react/no-unescaped-entities': 'off',
     '@next/next/no-img-element': 'off',
-    'react/no-unescaped-entities': 'off'
   }
-} 
+}; 
