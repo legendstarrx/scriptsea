@@ -9,46 +9,49 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { plan, email, name } = req.body;
-    
-    // Remove any potential whitespace from the secret key
-    const secretKey = process.env.PAYSTACK_SECRET_KEY.trim();
-    
-    const response = await axios({
-      method: 'post',
-      url: 'https://api.paystack.co/transaction/initialize',
-      headers: { 
-        'Authorization': `Bearer ${secretKey}`,
+    const { plan, amount, email, name, userId } = req.body;
+
+    // Validate inputs
+    if (!plan || !amount || !email || !userId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Missing required fields' 
+      });
+    }
+
+    // Initialize Paystack transaction
+    const response = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json'
       },
-      data: {
-        email: email,
-        plan: plan === 'monthly' ? MONTHLY_PLAN : YEARLY_PLAN,
-        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
-        currency: 'NGN', // Explicitly set currency to Naira
+      body: JSON.stringify({
+        email,
+        amount: amount * 100, // Convert to kobo
+        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify`,
         metadata: {
-          name: name,
-          plan_type: plan,
-          display_currency: 'USD',
-          display_amount: plan === 'monthly' ? 4.99 : 49.99
+          userId,
+          plan_type: plan
         }
-      }
+      })
     });
 
-    if (response.data.status) {
-      return res.status(200).json({
-        success: true,
-        paymentLink: response.data.data.authorization_url
-      });
-    } else {
-      throw new Error(response.data.message || 'Failed to create payment link');
+    const data = await response.json();
+
+    if (!data.status) {
+      throw new Error(data.message);
     }
+
+    return res.status(200).json({
+      success: true,
+      paymentLink: data.data.authorization_url
+    });
   } catch (error) {
-    console.error('Subscription creation error:', error.response?.data || error);
+    console.error('Create subscription error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to create subscription',
-      message: error.response?.data?.message || error.message
+      message: error.message || 'Failed to create subscription'
     });
   }
 } 

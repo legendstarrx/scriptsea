@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
       
       if (user) {
         try {
-          // Get user profile from Firestore using user.uid
+          // Always use UID for document ID
           const userRef = doc(db, 'users', user.uid);
           const unsubscribeDoc = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
@@ -59,27 +59,25 @@ export function AuthProvider({ children }) {
             } else {
               // Create default profile if it doesn't exist
               const defaultProfile = {
+                email: user.email, // Store email in the document
                 displayName: user.displayName,
-                email: user.email,
                 photoURL: user.photoURL,
                 subscription: 'free',
                 scriptsRemaining: 3,
                 scriptsGenerated: 0,
                 isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                lastLogin: new Date().toISOString()
               };
               setDoc(userRef, defaultProfile)
                 .then(() => setUserProfile(defaultProfile))
                 .catch(console.error);
             }
-          }, (error) => {
-            console.error('Profile fetch error:', error);
-            setUserProfile(null);
           });
 
           return () => unsubscribeDoc();
         } catch (error) {
-          console.error('Auth state change error:', error);
+          console.error('Profile fetch error:', error);
           setUserProfile(null);
         }
       } else {
