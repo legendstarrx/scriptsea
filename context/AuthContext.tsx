@@ -19,6 +19,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { setCookie, getCookie } from '../utils/cookies';
 
 // Define interface for the context value
 interface AuthContextType {
@@ -39,58 +40,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let unsubscribe: () => void;
-    let profileUnsubscribe: () => void;
     let mounted = true;
 
     const initAuth = async () => {
       try {
-        // Set up auth state listener with timeout
-        const authPromise = new Promise((resolve) => {
-          unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (mounted) {
-              setUser(user);
-              resolve(user);
-            }
-          });
-        });
+        // Check for existing session
+        const sessionCookie = getCookie('auth_session');
+        
+        unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!mounted) return;
 
-        // Wait for auth with timeout
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Auth timeout')), 5000);
-        });
+          if (user) {
+            // Set session cookie
+            setCookie('auth_session', 'true');
+            setUser(user);
 
-        const user = await Promise.race([authPromise, timeoutPromise]);
+            try {
+              const userRef = doc(db, 'users', user.uid);
+              const docSnap = await getDoc(userRef);
 
-        if (user) {
-          // Get user profile only if authenticated
-          const userRef = doc(db, 'users', user.uid);
-          profileUnsubscribe = onSnapshot(userRef, 
-            (doc) => {
-              if (mounted) {
-                setUserProfile(doc.exists() ? doc.data() : null);
-                setLoading(false);
+              if (docSnap.exists()) {
+                setUserProfile(docSnap.data());
+              } else {
+                // Create default profile
+                const defaultProfile = {
+                  email: user.email,
+                  displayName: user.displayName,
+                  photoURL: user.photoURL,
+                  subscription: 'free',
+                  scriptsRemaining: 3,
+                  lastLogin: new Date().toISOString()
+                };
+                await setDoc(userRef, defaultProfile);
+                setUserProfile(defaultProfile);
               }
-            },
-            (error) => {
+            } catch (error) {
               console.error('Profile fetch error:', error);
-              if (mounted) {
-                setError(error);
-                setLoading(false);
+              // Use cached profile if available
+              const cachedProfile = localStorage.getItem(`profile_${user.uid}`);
+              if (cachedProfile) {
+                setUserProfile(JSON.parse(cachedProfile));
               }
             }
-          );
-        } else {
-          // No user, stop loading
-          if (mounted) {
-            setLoading(false);
+          } else {
+            setCookie('auth_session', '', 0); // Clear cookie
+            setUser(null);
+            setUserProfile(null);
           }
-        }
+          setLoading(false);
+        });
       } catch (error) {
         console.error('Auth initialization error:', error);
-        if (mounted) {
-          setError(error as Error);
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
@@ -99,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
       if (unsubscribe) unsubscribe();
-      if (profileUnsubscribe) profileUnsubscribe();
     };
   }, []);
 

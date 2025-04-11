@@ -3,9 +3,8 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { 
   initializeFirestore,
   persistentLocalCache,
-  persistentSingleTabManager,
+  persistentMultipleTabManager,
   CACHE_SIZE_UNLIMITED,
-  enableNetwork
 } from 'firebase/firestore';
 
 // Your Firebase configuration
@@ -32,16 +31,14 @@ try {
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Initialize Firestore with optimized settings
+// Initialize Firestore with multi-tab support
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-    tabManager: persistentSingleTabManager({
-      forceOwnership: false
-    })
+    tabManager: persistentMultipleTabManager(),
   }),
-  experimentalForceLongPolling: false,
-  experimentalAutoDetectLongPolling: true
+  experimentalAutoDetectLongPolling: true,
+  ignoreUndefinedProperties: true
 });
 
 export { app, auth, db, googleProvider }; 
