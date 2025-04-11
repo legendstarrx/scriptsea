@@ -1,5 +1,19 @@
-import { adminDb } from '../../../lib/firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
+
+// Initialize Firebase Admin
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    })
+  });
+}
+
+const adminDb = getFirestore();
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -9,30 +23,32 @@ export default async function handler(req, res) {
   const { reference } = req.query;
 
   if (!reference) {
+    console.error('No reference provided');
     return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=failed`);
   }
 
   try {
-    // Verify transaction with Paystack
+    console.log('Verifying payment reference:', reference);
+    
     const verifyResponse = await axios({
       method: 'get',
       url: `https://api.paystack.co/transaction/verify/${reference}`,
       headers: {
         'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        'Cache-Control': 'no-store, must-revalidate',
-        'Pragma': 'no-cache'
+        'Cache-Control': 'no-store'
       }
     });
 
-    console.log('Paystack verification response:', verifyResponse.data);
+    console.log('Paystack response:', verifyResponse.data);
     const { data } = verifyResponse.data;
 
     if (data.status === 'success') {
-      // Get user ID from metadata
       const userId = data.metadata.userId;
       const planType = data.metadata.plan_type;
       
-      // Update user's subscription using admin SDK
+      console.log('Updating subscription for user:', userId);
+
+      // Use admin SDK for Firestore operations
       const userRef = adminDb.collection('users').doc(userId);
       await userRef.update({
         subscription: 'pro',
@@ -46,23 +62,31 @@ export default async function handler(req, res) {
         subscriptionId: data.authorization.authorization_code
       });
 
-      // Log payment using admin SDK
+      // Log payment
       await adminDb.collection('payments').add({
         userId,
+        email: data.customer.email,
         amount: data.amount,
         status: 'successful',
         type: planType,
         date: new Date(),
-        reference: reference,
-        email: data.customer.email
+        reference: reference
       });
 
-      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=success`);
+      console.log('Subscription updated successfully');
+      
+      // Set headers to prevent caching
+      res.setHeader('Cache-Control', 'no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      return res.redirect(302, `${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=success`);
     } else {
-      return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=failed`);
+      console.error('Payment not successful:', data);
+      return res.redirect(302, `${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=failed`);
     }
   } catch (error) {
-    console.error('Payment verification error:', error);
-    return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=error`);
+    console.error('Payment verification error:', error.response?.data || error.message);
+    return res.redirect(302, `${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=error`);
   }
 } 

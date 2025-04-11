@@ -2,8 +2,6 @@ import axios from 'axios';
 import { db } from '../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
-const PAYSTACK_SECRET_KEY = 'sk_live_3917d76c2e7443aade1cbe0f540244108364711f';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -17,7 +15,7 @@ export default async function handler(req, res) {
       method: 'post',
       url: `https://api.paystack.co/subscription/${subscriptionId}/disable`,
       headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json'
       }
     });
