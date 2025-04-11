@@ -2,16 +2,42 @@ import { useEffect, useState } from 'react';
 import type { AppProps } from 'next/app';
 import { initErrorHandling, initFirebaseErrorMonitoring } from '../lib/errorHandling';
 import { db } from '../lib/firebase';
-import { enableNetwork } from 'firebase/firestore';
+import { enableNetwork, getFirestore } from 'firebase/firestore';
 import { AuthProvider } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { useRouter } from 'next/router';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [isFirebaseInitialized, setIsFirebaseInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [initError, setInitError] = useState<Error | null>(null);
+  const router = useRouter();
+
+  // Add a connection status check
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
+    // Network status monitoring
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOnline(navigator.onLine);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const initializeApp = async () => {
       try {
+        // Set a timeout to show loading state for at least 1 second
+        timeoutId = setTimeout(() => setIsLoading(true), 0);
+
         // Initialize error handling
         initErrorHandling();
         initFirebaseErrorMonitoring();
@@ -19,12 +45,16 @@ function MyApp({ Component, pageProps }: AppProps) {
         // Monitor Firebase connection state
         await enableNetwork(db);
         console.log('Firebase connection established');
+
+        // Add a small delay to ensure everything is properly initialized
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
       } catch (error) {
         console.error('Firebase initialization error:', error);
-        // Still set initialized to true so the app can function in a degraded state
-        // rather than being stuck on the loading screen
+        setInitError(error as Error);
       } finally {
-        setIsFirebaseInitialized(true);
+        clearTimeout(timeoutId);
+        setIsLoading(false);
       }
     };
 
@@ -52,6 +82,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     }
 
     return () => {
+      clearTimeout(timeoutId);
       if (typeof window !== 'undefined') {
         window.onerror = null;
         window.onunhandledrejection = null;
@@ -59,13 +90,45 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, []);
 
-  // Show loading screen only during initialization
-  if (!isFirebaseInitialized) {
+  // Show loading screen with retry option if offline
+  if (isLoading || !isOnline) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Initializing...</h1>
-          <p className="text-gray-600">Please wait while we set up your experience.</p>
+        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            {isLoading ? 'Loading...' : 'Connection Lost'}
+          </h1>
+          <p className="text-gray-600 mb-4">
+            {isLoading 
+              ? 'Please wait while we set up your experience.'
+              : 'Please check your internet connection.'}
+          </p>
+          {!isOnline && (
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+            >
+              Retry Connection
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Show error screen if initialization failed
+  if (initError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Initialization Error</h1>
+          <p className="text-gray-600 mb-4">{initError.message}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -74,7 +137,9 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Component {...pageProps} />
+        <div id="app-root" className="min-h-screen">
+          <Component {...pageProps} />
+        </div>
       </AuthProvider>
     </ErrorBoundary>
   );
