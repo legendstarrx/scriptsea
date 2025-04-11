@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import type { AppProps } from 'next/app';
 import { initErrorHandling, initFirebaseErrorMonitoring } from '../lib/errorHandling';
-
-// Import your existing providers/context
+import { db } from '../lib/firebase'; // Import the Firestore instance
+import { enableNetwork, disableNetwork } from 'firebase/firestore';
 import { AuthProvider } from '../context/AuthContext';
+import { ErrorBoundary } from '../components/ErrorBoundary'; // Assuming you have this component
 
 function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
@@ -16,18 +17,21 @@ function MyApp({ Component, pageProps }: AppProps) {
     console.log(`Page loaded in ${pageLoadTime}ms`);
 
     // Monitor Firebase connection state
-    const unsubscribe = window.firebase?.firestore()?.enableNetwork()
-      .then(() => {
+    const monitorFirebaseConnection = async () => {
+      try {
+        await enableNetwork(db);
         console.log('Firebase connection established');
-      })
-      .catch((error: Error) => {
+      } catch (error) {
         console.error('Firebase connection error:', error);
-      });
-
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
       }
+    };
+
+    monitorFirebaseConnection();
+
+    // Cleanup function
+    return () => {
+      // Optionally disable network when component unmounts
+      // disableNetwork(db).catch(console.error);
     };
   }, []);
 
