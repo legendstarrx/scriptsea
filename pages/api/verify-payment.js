@@ -1,6 +1,7 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
+import { adminDb } from '../../lib/firebaseAdmin';
 
 // Initialize Firebase Admin
 if (!getApps().length) {
