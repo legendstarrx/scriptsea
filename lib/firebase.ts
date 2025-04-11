@@ -3,8 +3,9 @@ import { getAuth } from 'firebase/auth';
 import { 
   initializeFirestore, 
   persistentLocalCache,
-  persistentMultipleTabManager,
-  CACHE_SIZE_UNLIMITED 
+  persistentSingleTabManager,
+  CACHE_SIZE_UNLIMITED,
+  enableMultiTabIndexedDbPersistence
 } from 'firebase/firestore';
 
 // Your Firebase configuration
@@ -21,13 +22,25 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 
-// Initialize Firestore with multi-tab persistence
+// Initialize Firestore with more reliable caching
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-    tabManager: persistentMultipleTabManager()
+    tabManager: persistentSingleTabManager(),
   }),
   experimentalForceLongPolling: true,
+  cacheSizeBytes: CACHE_SIZE_UNLIMITED
 });
+
+// Enable offline persistence with error handling
+if (typeof window !== 'undefined') {
+  enableMultiTabIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Multiple tabs open, persistence enabled in first tab only');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Browser doesn\'t support persistence');
+    }
+  });
+}
 
 export { app, auth, db }; 
