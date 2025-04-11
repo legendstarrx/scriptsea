@@ -2,6 +2,12 @@ import { db } from '../../lib/firebase';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import crypto from 'crypto';
 
+async function getUserByEmail(email) {
+  const usersRef = db.collection('users');
+  const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+  return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -24,8 +30,15 @@ export default async function handler(req, res) {
       case 'subscription.create':
         const { customer, plan, subscription_code, next_payment_date } = event.data;
         
-        // Update user subscription in Firebase
-        const userRef = doc(db, 'users', customer.email);
+        // Get user document by email
+        const user = await getUserByEmail(customer.email);
+        if (!user) {
+          console.error('User not found:', customer.email);
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Update user using their UID
+        const userRef = doc(db, 'users', user.id);
         await updateDoc(userRef, {
           subscription: plan.interval === 'monthly' ? 'monthly' : 'yearly',
           paid: true,
