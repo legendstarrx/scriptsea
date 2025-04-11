@@ -14,7 +14,8 @@ import {
   updateProfile,
   onAuthStateChanged,
   deleteUser,
-  signInWithRedirect
+  signInWithRedirect,
+  getRedirectResult
 } from 'firebase/auth';
 
 const AuthContext = createContext();
@@ -184,30 +185,31 @@ export function AuthProvider({ children }) {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
         prompt: 'select_account',
-        scope: 'profile email',
-        auth_type: 'popup',
-        nonce: Math.random().toString(36).substring(2)
+        login_hint: window?.localStorage.getItem('lastEmail') || ''
       });
 
-      if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
-        await signInWithRedirect(auth, provider);
-      } else {
-        try {
-          const result = await signInWithPopup(auth, provider);
-          await handleSignInResult(result);
-        } catch (error) {
-          if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-            await signInWithRedirect(auth, provider);
-          } else {
-            throw error;
-          }
-        }
-      }
+      await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error('Google sign-in error:', error);
       throw error;
     }
   };
+
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          window.localStorage.setItem('lastEmail', result.user.email);
+          await handleSignInResult(result);
+        }
+      } catch (error) {
+        console.error('Redirect result error:', error);
+      }
+    };
+
+    handleRedirectResult();
+  }, []);
 
   const handleSignInResult = async (result) => {
     if (!result?.user) return;

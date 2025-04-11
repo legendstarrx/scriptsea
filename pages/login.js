@@ -48,20 +48,11 @@ export default function Login() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      setMessage({
-        type: 'success',
-        text: 'Login successful! Redirecting...'
-      });
-      
-      setTimeout(() => {
-        router.push('/generate');
-      }, 1500);
     } catch (error) {
       setMessage({
         type: 'error',
         text: error.message || 'Google sign-in failed. Please try again.'
       });
-    } finally {
       setIsLoading(false);
     }
   };
