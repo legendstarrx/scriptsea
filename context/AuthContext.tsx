@@ -40,62 +40,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let unsubscribe: () => void;
     let profileUnsubscribe: () => void;
+    let mounted = true;
 
     const initAuth = async () => {
       try {
-        unsubscribe = onAuthStateChanged(auth, async (user) => {
-          console.log('Auth state changed:', user?.uid);
-          setUser(user);
+        // Set up auth state listener with timeout
+        const authPromise = new Promise((resolve) => {
+          unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (mounted) {
+              setUser(user);
+              resolve(user);
+            }
+          });
+        });
 
-          if (user) {
-            // Subscribe to user profile
-            const userRef = doc(db, 'users', user.uid);
-            profileUnsubscribe = onSnapshot(userRef, 
-              (doc) => {
-                if (doc.exists()) {
-                  setUserProfile(doc.data());
-                } else {
-                  // Create default profile
-                  const defaultProfile = {
-                    email: user.email,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL,
-                    subscription: 'free',
-                    scriptsRemaining: 3,
-                    scriptsGenerated: 0,
-                    createdAt: new Date().toISOString()
-                  };
-                  setDoc(userRef, defaultProfile)
-                    .then(() => setUserProfile(defaultProfile))
-                    .catch(console.error);
-                }
+        // Wait for auth with timeout
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Auth timeout')), 5000);
+        });
+
+        const user = await Promise.race([authPromise, timeoutPromise]);
+
+        if (user) {
+          // Get user profile only if authenticated
+          const userRef = doc(db, 'users', user.uid);
+          profileUnsubscribe = onSnapshot(userRef, 
+            (doc) => {
+              if (mounted) {
+                setUserProfile(doc.exists() ? doc.data() : null);
                 setLoading(false);
-              },
-              (error) => {
-                console.error('Profile fetch error:', error);
+              }
+            },
+            (error) => {
+              console.error('Profile fetch error:', error);
+              if (mounted) {
                 setError(error);
                 setLoading(false);
               }
-            );
-          } else {
-            setUserProfile(null);
+            }
+          );
+        } else {
+          // No user, stop loading
+          if (mounted) {
             setLoading(false);
           }
-        }, (error) => {
-          console.error('Auth state change error:', error);
-          setError(error);
-          setLoading(false);
-        });
+        }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        setError(error as Error);
-        setLoading(false);
+        if (mounted) {
+          setError(error as Error);
+          setLoading(false);
+        }
       }
     };
 
     initAuth();
 
     return () => {
+      mounted = false;
       if (unsubscribe) unsubscribe();
       if (profileUnsubscribe) profileUnsubscribe();
     };
