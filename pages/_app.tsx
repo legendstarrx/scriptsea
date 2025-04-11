@@ -6,10 +6,10 @@ import { enableNetwork, getFirestore } from 'firebase/firestore';
 import { AuthProvider } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useRouter } from 'next/router';
+import LoadingScreen from '../components/LoadingScreen';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [initError, setInitError] = useState<Error | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const router = useRouter();
 
   // Add a connection status check
@@ -31,63 +31,25 @@ function MyApp({ Component, pageProps }: AppProps) {
   }, []);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    const initializeApp = async () => {
+    // Set a maximum timeout for initialization
+    const timeout = setTimeout(() => {
+      setIsInitializing(false);
+    }, 5000); // 5 seconds maximum loading time
+
+    // Initialize your app
+    const init = async () => {
       try {
-        // Set a timeout to show loading state for at least 1 second
-        timeoutId = setTimeout(() => setIsLoading(true), 0);
-
-        // Initialize error handling
-        initErrorHandling();
-        initFirebaseErrorMonitoring();
-
-        // Monitor Firebase connection state
         await enableNetwork(db);
-        console.log('Firebase connection established');
-
-        // Add a small delay to ensure everything is properly initialized
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
+        setIsInitializing(false);
       } catch (error) {
-        console.error('Firebase initialization error:', error);
-        setInitError(error as Error);
-      } finally {
-        clearTimeout(timeoutId);
-        setIsLoading(false);
+        console.error('Initialization error:', error);
+        setIsInitializing(false);
       }
     };
 
-    initializeApp();
+    init();
 
-    // Global error handlers
-    if (typeof window !== 'undefined') {
-      window.onerror = function (msg, url, lineNo, columnNo, error) {
-        console.error('Global Error:', {
-          message: msg,
-          url,
-          lineNo,
-          columnNo,
-          error,
-          timestamp: new Date().toISOString()
-        });
-      };
-
-      window.onunhandledrejection = function (event) {
-        console.error('Unhandled Promise Rejection:', {
-          reason: event.reason,
-          timestamp: new Date().toISOString()
-        });
-      };
-    }
-
-    return () => {
-      clearTimeout(timeoutId);
-      if (typeof window !== 'undefined') {
-        window.onerror = null;
-        window.onunhandledrejection = null;
-      }
-    };
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -107,15 +69,15 @@ function MyApp({ Component, pageProps }: AppProps) {
   }, []);
 
   // Show loading screen with retry option if offline
-  if (isLoading || !isOnline) {
+  if (isInitializing || !isOnline) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            {isLoading ? 'Loading...' : 'Connection Lost'}
+            {isInitializing ? 'Loading...' : 'Connection Lost'}
           </h1>
           <p className="text-gray-600 mb-4">
-            {isLoading 
+            {isInitializing 
               ? 'Please wait while we set up your experience.'
               : 'Please check your internet connection.'}
           </p>
@@ -127,24 +89,6 @@ function MyApp({ Component, pageProps }: AppProps) {
               Retry Connection
             </button>
           )}
-        </div>
-      </div>
-    );
-  }
-
-  // Show error screen if initialization failed
-  if (initError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Initialization Error</h1>
-          <p className="text-gray-600 mb-4">{initError.message}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
         </div>
       </div>
     );
