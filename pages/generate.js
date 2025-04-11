@@ -1218,13 +1218,23 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
           break;
         case 'failed':
           toast.error('Payment failed. Please try again or contact support.');
+          router.replace('/generate', undefined, { shallow: true });
+          break;
+        case 'error':
+          toast.error('An error occurred. Please contact support if payment was deducted.');
+          router.replace('/generate', undefined, { shallow: true });
+          break;
+      }
+    }
+  }, [router.query]);
+
   return (
     <ProtectedRoute>
       <div style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        paddingTop: '80px' // Add padding to account for fixed header
+        paddingTop: '80px'
       }}>
         <GeneratePageNav />
         
