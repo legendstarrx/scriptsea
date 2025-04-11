@@ -43,6 +43,10 @@ export default async function handler(req, res) {
             display_name: "User ID",
             variable_name: "user_id",
             value: userId
+          }, {
+            display_name: "Plan Type",
+            variable_name: "plan_type",
+            value: plan
           }]
         }
       }
