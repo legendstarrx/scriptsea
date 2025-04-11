@@ -9,13 +9,11 @@ export default function SubscriptionModal({ onClose, userProfile }) {
   const plans = {
     monthly: {
       price: '$4.99',
-      actualAmount: 'NGN 8,000.00',
       amount: 8000,
       features: ['100 scripts per month', 'Priority support', 'Advanced features']
     },
     yearly: {
       price: '$49.99',
-      actualAmount: 'NGN 80,000.00',
       amount: 80000,
       features: ['100 scripts per month', 'Priority support', 'Advanced features', '2 months free']
     }
@@ -91,63 +89,91 @@ export default function SubscriptionModal({ onClose, userProfile }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Choose Your Plan</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            ✕
-          </button>
+      <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 relative">
+        {/* Close button */}
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900">Choose Your Plan</h2>
+          <p className="text-gray-500 mt-2">Select the plan that best fits your needs</p>
         </div>
 
-        {currentSubscription === 'free' ? (
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Monthly Plan */}
-              <div className="border rounded-lg p-4 text-center">
-                <h3 className="font-bold mb-2">Monthly</h3>
-                <div className="text-2xl font-bold mb-1">{plans.monthly.price}</div>
-                <div className="text-sm text-gray-500 mb-4">{plans.monthly.actualAmount}</div>
-                <button
-                  onClick={() => handleUpgrade('monthly')}
-                  disabled={loading}
-                  className="w-full bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : 'Choose Monthly'}
-                </button>
+        {/* Plans */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Monthly Plan */}
+          <div className="border border-gray-200 rounded-xl p-6 hover:border-blue-500 transition-all duration-200">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-900">Monthly</h3>
+              <div className="mt-4 flex justify-center items-baseline">
+                <span className="text-4xl font-bold text-gray-900">{plans.monthly.price}</span>
+                <span className="text-gray-500 ml-1">/month</span>
               </div>
+              
+              <ul className="mt-6 space-y-4 text-left">
+                {plans.monthly.features.map((feature, index) => (
+                  <li key={index} className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
 
-              {/* Yearly Plan */}
-              <div className="border rounded-lg p-4 text-center">
-                <h3 className="font-bold mb-2">Yearly</h3>
-                <div className="text-2xl font-bold mb-1">{plans.yearly.price}</div>
-                <div className="text-sm text-gray-500 mb-4">{plans.yearly.actualAmount}</div>
-                <button
-                  onClick={() => handleUpgrade('yearly')}
-                  disabled={loading}
-                  className="w-full bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : 'Choose Yearly'}
-                </button>
-              </div>
+              <button
+                onClick={() => handleUpgrade('monthly')}
+                disabled={loading}
+                className="mt-8 w-full bg-blue-600 text-white rounded-lg py-3 px-4 hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Processing...' : 'Get Started'}
+              </button>
             </div>
           </div>
-        ) : (
-          <div className="text-center">
-            <p className="mb-4">
-              You are currently on the {currentSubscription} plan.
-            </p>
-            <button
-              onClick={handleCancelSubscription}
-              disabled={loading}
-              className="bg-red-600 text-white rounded py-2 px-4 hover:bg-red-700 disabled:opacity-50"
-            >
-              {loading ? 'Processing...' : 'Cancel Subscription'}
-            </button>
+
+          {/* Yearly Plan */}
+          <div className="border-2 border-blue-500 rounded-xl p-6 relative bg-white shadow-lg">
+            <div className="absolute top-0 right-0 transform translate-x-1/3 -translate-y-1/3">
+              <span className="bg-blue-500 text-white text-sm px-3 py-1 rounded-full">Best Value</span>
+            </div>
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-900">Yearly</h3>
+              <div className="mt-4 flex justify-center items-baseline">
+                <span className="text-4xl font-bold text-gray-900">{plans.yearly.price}</span>
+                <span className="text-gray-500 ml-1">/year</span>
+              </div>
+
+              <ul className="mt-6 space-y-4 text-left">
+                {plans.yearly.features.map((feature, index) => (
+                  <li key={index} className="flex items-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => handleUpgrade('yearly')}
+                disabled={loading}
+                className="mt-8 w-full bg-blue-600 text-white rounded-lg py-3 px-4 hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Processing...' : 'Get Started'}
+              </button>
+            </div>
           </div>
-        )}
+        </div>
 
         {error && (
-          <div className="mt-4 text-red-600 text-center">
+          <div className="mt-6 text-center text-red-600">
             {error}
           </div>
         )}
