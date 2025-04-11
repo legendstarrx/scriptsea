@@ -255,4 +255,31 @@ export default function SubscriptionModal({ onClose, userProfile }) {
       </div>
     </div>
   );
+}
+
+.plan {
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin: 10px;
+  text-align: center;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin: 10px 0;
+}
+
+small {
+  color: #666;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
 } 

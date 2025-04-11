@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const MONTHLY_PLAN = 'PLN_2k30q94zztr27aq';
-const YEARLY_PLAN = 'PLN_1y9d4qq8g9qmjos';
+const MONTHLY_PLAN = 'PLN_2k30q94zztr27aq'; // NGN 8,000
+const YEARLY_PLAN = 'PLN_1y9d4qq8g9qmjos';  // NGN 80,000
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -25,9 +25,12 @@ export default async function handler(req, res) {
         email: email,
         plan: plan === 'monthly' ? MONTHLY_PLAN : YEARLY_PLAN,
         callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+        currency: 'NGN', // Explicitly set currency to Naira
         metadata: {
           name: name,
-          plan_type: plan
+          plan_type: plan,
+          display_currency: 'USD',
+          display_amount: plan === 'monthly' ? 4.99 : 49.99
         }
       }
     });
