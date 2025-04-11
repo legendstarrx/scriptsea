@@ -47,12 +47,19 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      if (result?.user) {
+        setMessage({
+          type: 'success',
+          text: 'Login successful! Redirecting...'
+        });
+      }
     } catch (error) {
       setMessage({
         type: 'error',
         text: error.message || 'Google sign-in failed. Please try again.'
       });
+    } finally {
       setIsLoading(false);
     }
   };
