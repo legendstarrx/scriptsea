@@ -7,9 +7,27 @@ import { AuthProvider } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isFirebaseInitialized, setIsFirebaseInitialized] = useState(false);
 
   useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // Initialize error handling
+        initErrorHandling();
+        initFirebaseErrorMonitoring();
+
+        // Monitor Firebase connection state
+        await enableNetwork(db);
+        console.log('Firebase connection established');
+      } catch (error) {
+        console.error('Firebase initialization error:', error);
+      } finally {
+        setIsFirebaseInitialized(true);
+      }
+    };
+
+    initializeApp();
+
     // Global error handlers
     if (typeof window !== 'undefined') {
       window.onerror = function (msg, url, lineNo, columnNo, error) {
@@ -48,29 +66,10 @@ function MyApp({ Component, pageProps }: AppProps) {
       }
     }
 
-    // Initialize error handling
-    initErrorHandling();
-    initFirebaseErrorMonitoring();
-
     // Add page load performance monitoring
     const pageLoadTime = performance.now();
     console.log(`Page loaded in ${pageLoadTime}ms`);
 
-    // Monitor Firebase connection state
-    const monitorFirebaseConnection = async () => {
-      try {
-        await enableNetwork(db);
-        console.log('Firebase connection established');
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Firebase connection error:', error);
-        setIsInitialized(true); // Still set to true so the app renders even if Firebase fails
-      }
-    };
-
-    monitorFirebaseConnection();
-
-    // Cleanup function
     return () => {
       if (typeof window !== 'undefined') {
         window.onerror = null;
@@ -79,12 +78,11 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, []);
 
-  // Show loading screen only during initialization
-  if (!isInitialized) {
+  if (!isFirebaseInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-md text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Initializing...</h1>
           <p className="text-gray-600">Please wait while we set up your experience.</p>
         </div>
       </div>
