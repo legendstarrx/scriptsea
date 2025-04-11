@@ -14,38 +14,59 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isInitializing, setIsInitializing] = useState(true);
   const router = useRouter();
 
-  // Load Flutterwave script only when needed (on payment pages)
+  // Reduce initialization timeout and add progress tracking
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      try {
+        // Initialize Firebase network first
+        await enableNetwork(db);
+        
+        // If component is still mounted, update state
+        if (mounted) {
+          setIsInitializing(false);
+        }
+      } catch (error) {
+        console.error('Initialization error:', error);
+        if (mounted) {
+          setIsInitializing(false);
+        }
+      }
+    };
+
+    // Start initialization immediately
+    init();
+
+    // Fallback timeout - shorter than before
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        setIsInitializing(false);
+      }
+    }, 2000); // Reduced from 3000ms to 2000ms
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  // Move script loading to a separate effect
   useEffect(() => {
     if (router.pathname.includes('/payment') || router.pathname.includes('/subscription')) {
       const script = document.createElement('script');
       script.src = 'https://checkout.flutterwave.com/v3.js';
       script.async = true;
+      script.defer = true; // Add defer
       document.body.appendChild(script);
 
       return () => {
-        document.body.removeChild(script);
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
       };
     }
   }, [router.pathname]);
-
-  useEffect(() => {
-    const initTimeout = setTimeout(() => {
-      setIsInitializing(false);
-    }, 3000);
-
-    const init = async () => {
-      try {
-        await enableNetwork(db);
-        setIsInitializing(false);
-      } catch (error) {
-        console.error('Initialization error:', error);
-        setIsInitializing(false);
-      }
-    };
-
-    init();
-    return () => clearTimeout(initTimeout);
-  }, []);
 
   if (isInitializing) {
     return <LoadingSpinner />;

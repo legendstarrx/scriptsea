@@ -37,13 +37,11 @@ const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     cacheSizeBytes: CACHE_SIZE_UNLIMITED,
     tabManager: persistentSingleTabManager({
-      forceOwnership: false // Allow multiple tabs
+      forceOwnership: false
     })
   }),
-  experimentalForceLongPolling: true
+  experimentalForceLongPolling: false,
+  experimentalAutoDetectLongPolling: true
 });
-
-// Enable network by default
-enableNetwork(db).catch(console.error);
 
 export { app, auth, db, googleProvider }; 
