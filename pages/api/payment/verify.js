@@ -1,5 +1,4 @@
-import { db } from '../../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { adminDb } from '../../../lib/firebase-admin';
 import axios from 'axios';
 
 export default async function handler(req, res) {
@@ -7,7 +6,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { reference } = req.query; // Paystack sends 'reference' instead of 'transaction_id'
+  const { reference } = req.query;
 
   if (!reference) {
     return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=failed`);
@@ -19,7 +18,9 @@ export default async function handler(req, res) {
       method: 'get',
       url: `https://api.paystack.co/transaction/verify/${reference}`,
       headers: {
-        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+        'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Cache-Control': 'no-store, must-revalidate',
+        'Pragma': 'no-cache'
       }
     });
 
@@ -27,37 +28,41 @@ export default async function handler(req, res) {
     const { data } = verifyResponse.data;
 
     if (data.status === 'success') {
-      console.log('Payment successful, updating user:', data.metadata.userId);
       // Get user ID from metadata
       const userId = data.metadata.userId;
       const planType = data.metadata.plan_type;
       
-      // Update user's subscription in Firestore
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, {
+      // Update user's subscription using admin SDK
+      const userRef = adminDb.collection('users').doc(userId);
+      await userRef.update({
         subscription: 'pro',
         scriptsRemaining: 100,
         subscriptionEnd: new Date(Date.now() + (planType === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000),
         lastPayment: new Date().toISOString(),
-        paymentAmount: data.amount / 100, // Convert from kobo to naira
+        paymentAmount: data.amount / 100,
         paymentCurrency: 'NGN',
         subscriptionType: planType,
         paid: true,
         subscriptionId: data.authorization.authorization_code
       });
 
-      // Redirect to generate page with success message
+      // Log payment using admin SDK
+      await adminDb.collection('payments').add({
+        userId,
+        amount: data.amount,
+        status: 'successful',
+        type: planType,
+        date: new Date(),
+        reference: reference,
+        email: data.customer.email
+      });
+
       return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=success`);
     } else {
       return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=failed`);
     }
   } catch (error) {
-    console.error('Payment verification error details:', {
-      error: error.message,
-      response: error.response?.data,
-      reference: reference
-    });
-    // Always redirect to generate page
+    console.error('Payment verification error:', error);
     return res.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=error`);
   }
 } 
