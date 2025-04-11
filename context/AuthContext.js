@@ -13,7 +13,8 @@ import {
   GoogleAuthProvider,
   updateProfile,
   onAuthStateChanged,
-  deleteUser
+  deleteUser,
+  signInWithRedirect
 } from 'firebase/auth';
 
 const AuthContext = createContext();
@@ -181,9 +182,37 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      
-      // Check if user document exists, if not create it with correct initial values
+      provider.setCustomParameters({
+        prompt: 'select_account',
+        scope: 'profile email',
+        auth_type: 'popup',
+        nonce: Math.random().toString(36).substring(2)
+      });
+
+      if (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) {
+        await signInWithRedirect(auth, provider);
+      } else {
+        try {
+          const result = await signInWithPopup(auth, provider);
+          await handleSignInResult(result);
+        } catch (error) {
+          if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+            await signInWithRedirect(auth, provider);
+          } else {
+            throw error;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      throw error;
+    }
+  };
+
+  const handleSignInResult = async (result) => {
+    if (!result?.user) return;
+    
+    try {
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
       if (!userDoc.exists()) {
         const userData = {
@@ -194,24 +223,20 @@ export function AuthProvider({ children }) {
           scriptsRemaining: 3,
           scriptsGenerated: 0,
           isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
         };
         await setDoc(doc(db, 'users', result.user.uid), userData);
         setUserProfile(userData);
       }
 
-      // Update IP address after successful Google sign-in
       await fetch('/api/user/ip', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: result.user.uid }),
       });
-      
-      return result.user;
     } catch (error) {
-      throw error;
+      console.error('Error handling sign-in result:', error);
     }
   };
 
