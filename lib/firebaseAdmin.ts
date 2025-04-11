@@ -22,16 +22,11 @@ class FirebaseAdmin {
     
     if (!apps.length) {
       try {
-        // Get and validate environment variables
-        const projectId = getRequiredEnvVar('FIREBASE_PROJECT_ID');
-        const clientEmail = getRequiredEnvVar('FIREBASE_CLIENT_EMAIL');
-        const privateKey = getRequiredEnvVar('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n');
-
         this.app = initializeFirebaseAdmin({
           credential: cert({
-            projectId,
-            clientEmail,
-            privateKey
+            projectId: process.env.FIREBASE_PROJECT_ID!,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n')
           })
         });
       } catch (error) {

@@ -1,3 +1,4 @@
+import { adminDb } from '../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,7 +9,7 @@ export default async function handler(req, res) {
     const { userId, plan } = req.body;
 
     if (!userId || !plan) {
-      return res.status(400).json({ error: 'User ID and plan are required' });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const userRef = adminDb.collection('users').doc(userId);
@@ -20,13 +21,14 @@ export default async function handler(req, res) {
 
     await userRef.update({
       subscription: plan,
-      scriptsRemaining: plan === 'pro' ? 100 : 3
+      scriptsRemaining: plan === 'pro' ? 100 : 3,
+      lastUpdated: new Date().toISOString()
     });
 
-    res.status(200).json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Subscription update error:', error);
-    res.status(500).json({ error: 'Failed to update subscription' });
+    return res.status(500).json({ error: 'Failed to update subscription' });
   }
 } 
-} 
+ 

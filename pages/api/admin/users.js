@@ -1,4 +1,4 @@
-import { adminDb, adminAuth } from '../../lib/firebaseAdmin';
+import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -79,6 +79,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 } 
