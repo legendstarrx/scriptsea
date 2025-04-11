@@ -25,30 +25,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isOnline, setIsOnline] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
-
-  // Check network status
-  useEffect(() => {
-    const checkNetworkStatus = () => {
-      setIsOnline(navigator.onLine);
-    };
-
-    checkNetworkStatus();
-    
-    // Add event listeners for online/offline status
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -56,34 +34,29 @@ export function AuthProvider({ children }) {
       
       if (user) {
         try {
-          // Always use UID for document ID
           const userRef = doc(db, 'users', user.uid);
-          const unsubscribeDoc = onSnapshot(userRef, (doc) => {
-            if (doc.exists()) {
-              setUserProfile(doc.data());
-            } else {
-              // Create default profile if it doesn't exist
-              const defaultProfile = {
-                email: user.email, // Store email in the document
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                subscription: 'free',
-                scriptsRemaining: 3,
-                scriptsGenerated: 0,
-                isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-                createdAt: new Date().toISOString(),
-                lastLogin: new Date().toISOString()
-              };
-              setDoc(userRef, defaultProfile)
-                .then(() => setUserProfile(defaultProfile))
-                .catch(console.error);
-            }
-          });
-
-          return () => unsubscribeDoc();
+          const docSnap = await getDoc(userRef);
+          
+          if (docSnap.exists()) {
+            setUserProfile(docSnap.data());
+          } else {
+            const defaultProfile = {
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              subscription: 'free',
+              scriptsRemaining: 3,
+              scriptsGenerated: 0,
+              isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            };
+            await setDoc(userRef, defaultProfile);
+            setUserProfile(defaultProfile);
+          }
         } catch (error) {
           console.error('Profile fetch error:', error);
-          setUserProfile(null);
+          setError(error);
         }
       } else {
         setUserProfile(null);
@@ -189,41 +162,17 @@ export function AuthProvider({ children }) {
       provider.setCustomParameters({
         prompt: 'select_account'
       });
-      
-      // Try popup first
-      try {
-        const result = await signInWithPopup(auth, provider);
-        if (result?.user) {
-          // Check if user profile exists, if not create it
-          const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-          if (!userDoc.exists()) {
-            const userData = {
-              email: result.user.email,
-              displayName: result.user.displayName,
-              photoURL: result.user.photoURL,
-              subscription: 'free',
-              scriptsRemaining: 3,
-              scriptsGenerated: 0,
-              isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-              createdAt: new Date().toISOString(),
-              lastLogin: new Date().toISOString()
-            };
-            await setDoc(doc(db, 'users', result.user.uid), userData);
-            setUserProfile(userData);
-          }
-          return result;
-        }
-      } catch (popupError) {
-        // If popup fails, try redirect
-        if (popupError.code === 'auth/popup-closed-by-user' || 
-            popupError.code === 'auth/popup-blocked') {
-          await signInWithRedirect(auth, provider);
-        } else {
-          throw popupError;
-        }
+
+      const result = await signInWithPopup(auth, provider);
+      if (result?.user) {
+        await router.push('/generate');
+        return result;
       }
     } catch (error) {
-      console.error('Google sign in error:', error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, don't throw an error
+        return null;
+      }
       throw error;
     }
   };
@@ -367,7 +316,7 @@ export function AuthProvider({ children }) {
     user,
     userProfile,
     loading,
-    isOnline,
+    error,
     signup,
     login,
     signInWithGoogle,

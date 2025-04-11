@@ -4,14 +4,12 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
-  // Remove COOP header to fix popup issues
-  response.headers.delete('Cross-Origin-Opener-Policy');
-  
-  // Add other security headers
+  // Add security headers but allow popups
+  response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
+  response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
   return response;
 }

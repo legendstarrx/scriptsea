@@ -1,11 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { 
-  initializeFirestore, 
-  getFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager
-} from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -25,16 +20,11 @@ try {
   throw error;
 }
 
-// Initialize Auth with custom settings
+// Initialize Auth
 const auth = getAuth(app);
 auth.useDeviceLanguage();
-auth.settings.appVerificationDisabledForTesting = false;
 
-// Initialize Firestore with modern cache settings
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
-});
+// Initialize Firestore without persistence
+const db = getFirestore(app);
 
 export { app, auth, db };
