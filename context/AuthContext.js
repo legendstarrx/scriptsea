@@ -17,6 +17,7 @@ import {
   signInWithRedirect,
   getRedirectResult
 } from 'firebase/auth';
+import { useRouter } from 'next/router';
 
 const AuthContext = createContext();
 
@@ -25,6 +26,8 @@ export function AuthProvider({ children }) {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
+  const [error, setError] = useState(null);
+  const router = useRouter();
 
   // Check network status
   useEffect(() => {
@@ -185,13 +188,26 @@ export function AuthProvider({ children }) {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
         prompt: 'select_account',
-        login_hint: window?.localStorage.getItem('lastEmail') || ''
       });
+      
+      // Add required scopes only
+      provider.addScope('profile');
+      provider.addScope('email');
 
-      await signInWithRedirect(auth, provider);
+      // Use signInWithPopup instead of redirect for better control
+      const result = await signInWithPopup(auth, provider);
+      if (result?.user) {
+        await handleSignInResult(result);
+        router.push('/generate');
+      }
     } catch (error) {
-      console.error('Google sign-in error:', error);
-      throw error;
+      if (error.code === 'auth/popup-blocked') {
+        // Fallback to redirect only if popup is blocked
+        await signInWithRedirect(auth, provider);
+      } else {
+        console.error('Google sign-in error:', error);
+        throw error;
+      }
     }
   };
 
@@ -200,11 +216,13 @@ export function AuthProvider({ children }) {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-          window.localStorage.setItem('lastEmail', result.user.email);
           await handleSignInResult(result);
+          router.push('/generate');
         }
       } catch (error) {
         console.error('Redirect result error:', error);
+        // Show error to user
+        setError(error.message);
       }
     };
 

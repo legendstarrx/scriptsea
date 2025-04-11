@@ -9,7 +9,7 @@ import {
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: "scriptsea-4c5cd.firebaseapp.com",
+  authDomain: "www.scriptsea.com",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
@@ -25,9 +25,10 @@ try {
   throw error;
 }
 
-// Initialize Auth
+// Initialize Auth with custom settings
 const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+auth.useDeviceLanguage();
+auth.settings.appVerificationDisabledForTesting = false;
 
 // Initialize Firestore with modern cache settings
 const db = initializeFirestore(app, {
@@ -36,4 +37,4 @@ const db = initializeFirestore(app, {
   })
 });
 
-export { app, auth, db, googleProvider };
+export { app, auth, db };

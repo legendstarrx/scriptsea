@@ -12,8 +12,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/__/auth/handler',
-        destination: 'https://scriptsea-4c5cd.firebaseapp.com/__/auth/handler'
+        source: '/auth/:path*',
+        destination: 'https://scriptsea-4c5cd.firebaseapp.com/__/auth/:path*'
       }
     ];
   },
@@ -24,18 +24,26 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'unsafe-none'
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains'
           },
           {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'unsafe-none'
+            key: 'X-Frame-Options',
+            value: 'DENY'
           },
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
           },
-        ],
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self' https://apis.google.com https://*.firebaseapp.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleusercontent.com https://firebasestorage.googleapis.com; frame-src https://*.firebaseapp.com https://*.google.com;"
+          }
+        ]
       },
       {
         source: '/_next/static/:path*',
