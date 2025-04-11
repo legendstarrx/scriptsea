@@ -4,7 +4,7 @@ import { initErrorHandling, initFirebaseErrorMonitoring } from '../lib/errorHand
 import { db } from '../lib/firebase'; // Import the Firestore instance
 import { enableNetwork, disableNetwork } from 'firebase/firestore';
 import { AuthProvider } from '../context/AuthContext';
-import { ErrorBoundary } from '../components/ErrorBoundary'; // Assuming you have this component
+import ErrorBoundary from '../components/ErrorBoundary'; // Changed to default import
 
 function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
