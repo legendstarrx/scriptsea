@@ -37,57 +37,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOnline(navigator.onLine);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     let unsubscribe: () => void;
-    let mounted = true;
+    let profileUnsubscribe: () => void;
 
     const initAuth = async () => {
       try {
-        // Check for existing session
-        const sessionCookie = getCookie('auth_session');
-        
         unsubscribe = onAuthStateChanged(auth, async (user) => {
-          if (!mounted) return;
-
+          setUser(user);
+          
           if (user) {
-            // Set session cookie
-            setCookie('auth_session', 'true');
-            setUser(user);
-
-            try {
-              const userRef = doc(db, 'users', user.uid);
-              const docSnap = await getDoc(userRef);
-
-              if (docSnap.exists()) {
-                setUserProfile(docSnap.data());
-              } else {
-                // Create default profile
-                const defaultProfile = {
-                  email: user.email,
-                  displayName: user.displayName,
-                  photoURL: user.photoURL,
-                  subscription: 'free',
-                  scriptsRemaining: 3,
-                  lastLogin: new Date().toISOString()
-                };
-                await setDoc(userRef, defaultProfile);
-                setUserProfile(defaultProfile);
+            // Get user profile with offline support
+            const userRef = doc(db, 'users', user.uid);
+            profileUnsubscribe = onSnapshot(userRef, 
+              {
+                // Include metadata changes to detect online/offline
+                includeMetadataChanges: true
+              },
+              (doc) => {
+                if (doc.exists()) {
+                  const data = doc.data();
+                  setUserProfile(data);
+                  // Cache the profile for offline use
+                  localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(data));
+                } else {
+                  // Create default profile
+                  const defaultProfile = {
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    subscription: 'free',
+                    scriptsRemaining: 3,
+                    lastLogin: new Date().toISOString()
+                  };
+                  setDoc(userRef, defaultProfile)
+                    .then(() => {
+                      setUserProfile(defaultProfile);
+                      localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(defaultProfile));
+                    })
+                    .catch(console.error);
+                }
+                setLoading(false);
+              },
+              (error) => {
+                console.error('Profile fetch error:', error);
+                // Try to use cached profile on error
+                const cachedProfile = localStorage.getItem(`userProfile_${user.uid}`);
+                if (cachedProfile) {
+                  setUserProfile(JSON.parse(cachedProfile));
+                }
+                setLoading(false);
               }
-            } catch (error) {
-              console.error('Profile fetch error:', error);
-              // Use cached profile if available
-              const cachedProfile = localStorage.getItem(`profile_${user.uid}`);
-              if (cachedProfile) {
-                setUserProfile(JSON.parse(cachedProfile));
-              }
-            }
+            );
           } else {
-            setCookie('auth_session', '', 0); // Clear cookie
-            setUser(null);
             setUserProfile(null);
+            setLoading(false);
           }
-          setLoading(false);
         });
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -98,8 +120,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
 
     return () => {
-      mounted = false;
       if (unsubscribe) unsubscribe();
+      if (profileUnsubscribe) profileUnsubscribe();
     };
   }, []);
 
