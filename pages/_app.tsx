@@ -21,6 +21,8 @@ function MyApp({ Component, pageProps }: AppProps) {
         console.log('Firebase connection established');
       } catch (error) {
         console.error('Firebase initialization error:', error);
+        // Still set initialized to true so the app can function in a degraded state
+        // rather than being stuck on the loading screen
       } finally {
         setIsFirebaseInitialized(true);
       }
@@ -47,28 +49,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           timestamp: new Date().toISOString()
         });
       };
-
-      // Clear storage as a test (remove this in production)
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (error) {
-        console.error('Storage clear error:', error);
-      }
-
-      // Unregister service workers
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister();
-          }
-        }).catch(console.error);
-      }
     }
-
-    // Add page load performance monitoring
-    const pageLoadTime = performance.now();
-    console.log(`Page loaded in ${pageLoadTime}ms`);
 
     return () => {
       if (typeof window !== 'undefined') {
@@ -78,6 +59,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, []);
 
+  // Show loading screen only during initialization
   if (!isFirebaseInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">

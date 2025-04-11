@@ -1,6 +1,11 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
+import { 
+  initializeFirestore, 
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  CACHE_SIZE_UNLIMITED 
+} from 'firebase/firestore';
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -16,12 +21,13 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 
-// Initialize Firestore with persistent cache
+// Initialize Firestore with multi-tab persistence
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    tabManager: persistentMultipleTabManager()
   }),
-  experimentalForceLongPolling: true, // Add this if you're having connection issues
+  experimentalForceLongPolling: true,
 });
 
 export { app, auth, db }; 
