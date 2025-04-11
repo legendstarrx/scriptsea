@@ -9,6 +9,15 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
   
+  async rewrites() {
+    return [
+      {
+        source: '/__/auth/handler',
+        destination: 'https://scriptsea-4c5cd.firebaseapp.com/__/auth/handler'
+      }
+    ];
+  },
+  
   async headers() {
     return [
       {
@@ -16,11 +25,11 @@ const nextConfig = {
         headers: [
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups'
+            value: 'unsafe-none'
           },
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless'
+            value: 'unsafe-none'
           },
           {
             key: 'Cache-Control',
