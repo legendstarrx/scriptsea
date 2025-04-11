@@ -38,7 +38,12 @@ export default async function handler(req, res) {
         callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify`,
         metadata: {
           userId,
-          plan_type: plan
+          plan_type: plan,
+          custom_fields: [{
+            display_name: "User ID",
+            variable_name: "user_id",
+            value: userId
+          }]
         }
       }
     });
