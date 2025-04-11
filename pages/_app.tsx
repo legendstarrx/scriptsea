@@ -90,6 +90,22 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, []);
 
+  useEffect(() => {
+    // Register service worker
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          registration => {
+            console.log('ServiceWorker registration successful');
+          },
+          err => {
+            console.error('ServiceWorker registration failed:', err);
+          }
+        );
+      });
+    }
+  }, []);
+
   // Show loading screen with retry option if offline
   if (isLoading || !isOnline) {
     return (
