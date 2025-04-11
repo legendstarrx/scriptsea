@@ -10,6 +10,7 @@ import ProfileModal from '../components/ProfileModal';
 import { db } from '../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast'; // or your preferred notification library
+import React, { useState, useEffect } from 'react'; // Add this at the top with your other imports
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
