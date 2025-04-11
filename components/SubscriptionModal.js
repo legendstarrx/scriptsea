@@ -10,11 +10,13 @@ export default function SubscriptionModal({ onClose, userProfile }) {
     monthly: {
       price: '$4.99',
       actualAmount: 'NGN 8,000.00',
+      amount: 8000,
       features: ['100 scripts per month', 'Priority support', 'Advanced features']
     },
     yearly: {
       price: '$49.99',
       actualAmount: 'NGN 80,000.00',
+      amount: 80000,
       features: ['100 scripts per month', 'Priority support', 'Advanced features', '2 months free']
     }
   };
@@ -32,13 +34,19 @@ export default function SubscriptionModal({ onClose, userProfile }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          plan: plan,
+          plan,
+          amount: plans[plan].amount,
           email: user.email,
-          name: user.displayName || user.email
+          name: user.displayName || user.email,
+          userId: user.uid
         })
       });
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create subscription');
+      }
       
       if (data.success && data.paymentLink) {
         window.location.href = data.paymentLink;

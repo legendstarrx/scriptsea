@@ -47,54 +47,46 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      
       if (user) {
         try {
-          // Get additional user data from Firestore
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          const userData = userDoc.data();
-          
-          // Always check and update admin status
-          const isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-          
-          if (userData) {
-            // Update admin status if it's different
-            if (userData.isAdmin !== isAdmin) {
-              await updateDoc(doc(db, 'users', user.uid), { isAdmin });
-              userData.isAdmin = isAdmin;
+          // Get user profile from Firestore using user.uid instead of email
+          const userRef = doc(db, 'users', user.uid);
+          const unsubscribeDoc = onSnapshot(userRef, (doc) => {
+            if (doc.exists()) {
+              setUserProfile(doc.data());
+            } else {
+              // Create default profile if it doesn't exist
+              const defaultProfile = {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                subscription: 'free',
+                scriptsRemaining: 5
+              };
+              setDoc(userRef, defaultProfile)
+                .then(() => setUserProfile(defaultProfile))
+                .catch(console.error);
             }
-            setUserProfile(userData);
-          } else {
-            // Create default profile if none exists
-            const defaultProfile = {
-              displayName: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL,
-              subscription: 'free',
-              scriptsRemaining: 3,
-              scriptsGenerated: 0,
-              isAdmin,
-              createdAt: new Date().toISOString()
-            };
-            await setDoc(doc(db, 'users', user.uid), defaultProfile);
-            setUserProfile(defaultProfile);
-          }
-          
-          setUser({
-            ...user,
-            ...userData
+          }, (error) => {
+            console.error('Profile fetch error:', error);
+            setUserProfile(null);
           });
+
+          return () => unsubscribeDoc();
         } catch (error) {
-          console.error('Error fetching user data:', error);
-          setUser(user); // Set basic user data if Firestore fetch fails
+          console.error('Auth state change error:', error);
+          setUserProfile(null);
         }
       } else {
-        setUser(null);
         setUserProfile(null);
       }
+      
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
