@@ -36,15 +36,10 @@ export default async function handler(req, res) {
       data: {
         email,
         amount: amount * 100, // Convert to kobo
-        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?ref=REFERENCE&plan=${plan}`,
+        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success?reference=REFERENCE&plan=${plan}`,
         metadata: {
           userId,
-          plan_type: plan,
-          custom_fields: [{
-            display_name: "User ID",
-            variable_name: "user_id",
-            value: userId
-          }]
+          plan_type: plan
         },
         channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer']
       }

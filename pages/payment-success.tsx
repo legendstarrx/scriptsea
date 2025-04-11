@@ -1,25 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext'; // Make sure this path is correct
 
 export default function PaymentSuccess() {
   const router = useRouter();
   const [status, setStatus] = useState('Verifying payment...');
+  const { user } = useAuth();
 
   useEffect(() => {
     const verifyPayment = async () => {
-      const { ref, plan } = router.query;
+      // Get reference from URL (note: changed from ref to reference to match Paystack's standard)
+      const { reference, plan } = router.query;
 
-      if (!ref || !plan) {
-        setStatus('Invalid payment reference');
-        setTimeout(() => router.push('/payment-error?message=invalid-reference'), 2000);
+      if (!reference || !plan || !user) {
+        setStatus('Missing required information');
+        setTimeout(() => router.push('/payment-error?message=invalid-parameters'), 2000);
         return;
       }
 
       try {
+        // Call our API endpoint to verify and update
         const response = await axios.post('/api/verify-payment', {
-          reference: ref,
-          plan
+          reference: reference as string,
+          plan: plan as string,
+          userId: user.uid
         });
 
         if (response.data.success) {
@@ -36,10 +41,10 @@ export default function PaymentSuccess() {
       }
     };
 
-    if (router.isReady) {
+    if (router.isReady && user) {
       verifyPayment();
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, user]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -50,3 +55,4 @@ export default function PaymentSuccess() {
     </div>
   );
 } 
+ 

@@ -20,9 +20,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { reference, plan } = req.body;
+  const { reference, plan, userId } = req.body;
+
+  if (!reference || !plan || !userId) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Missing required parameters' 
+    });
+  }
 
   try {
+    // Verify with Paystack
     const verifyResponse = await axios({
       method: 'get',
       url: `https://api.paystack.co/transaction/verify/${reference}`,
@@ -35,8 +43,6 @@ export default async function handler(req, res) {
     const { data } = verifyResponse.data;
 
     if (data.status === 'success') {
-      const userId = data.metadata.userId;
-      
       // Update user subscription
       const userRef = adminDb.collection('users').doc(userId);
       await userRef.update({
@@ -48,7 +54,9 @@ export default async function handler(req, res) {
         paymentCurrency: 'NGN',
         subscriptionType: plan,
         paid: true,
-        subscriptionId: data.authorization.authorization_code
+        subscriptionId: data.authorization.authorization_code,
+        upgradedAt: new Date().toISOString(),
+        nextBillingDate: new Date(Date.now() + (plan === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString()
       });
 
       // Log payment
