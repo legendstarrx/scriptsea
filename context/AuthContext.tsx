@@ -37,22 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [isOnline, setIsOnline] = useState(true);
-
-  // Monitor online/offline status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    setIsOnline(navigator.onLine);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   useEffect(() => {
     let unsubscribe: () => void;
@@ -64,48 +48,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(user);
           
           if (user) {
-            // Get user profile with offline support
+            // Get user profile
             const userRef = doc(db, 'users', user.uid);
-            profileUnsubscribe = onSnapshot(userRef, 
-              {
-                // Include metadata changes to detect online/offline
-                includeMetadataChanges: true
-              },
-              (doc) => {
-                if (doc.exists()) {
-                  const data = doc.data();
-                  setUserProfile(data);
-                  // Cache the profile for offline use
-                  localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(data));
-                } else {
-                  // Create default profile
-                  const defaultProfile = {
-                    email: user.email,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL,
-                    subscription: 'free',
-                    scriptsRemaining: 3,
-                    lastLogin: new Date().toISOString()
-                  };
-                  setDoc(userRef, defaultProfile)
-                    .then(() => {
-                      setUserProfile(defaultProfile);
-                      localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(defaultProfile));
-                    })
-                    .catch(console.error);
-                }
-                setLoading(false);
-              },
-              (error) => {
-                console.error('Profile fetch error:', error);
-                // Try to use cached profile on error
-                const cachedProfile = localStorage.getItem(`userProfile_${user.uid}`);
-                if (cachedProfile) {
-                  setUserProfile(JSON.parse(cachedProfile));
-                }
-                setLoading(false);
+            profileUnsubscribe = onSnapshot(userRef, (doc) => {
+              if (doc.exists()) {
+                setUserProfile(doc.data());
+              } else {
+                // Create default profile
+                const defaultProfile = {
+                  email: user.email,
+                  displayName: user.displayName,
+                  photoURL: user.photoURL,
+                  subscription: 'free',
+                  scriptsRemaining: 3,
+                  lastLogin: new Date().toISOString()
+                };
+                setDoc(userRef, defaultProfile)
+                  .then(() => setUserProfile(defaultProfile))
+                  .catch(console.error);
               }
-            );
+              setLoading(false);
+            });
           } else {
             setUserProfile(null);
             setLoading(false);
@@ -113,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } catch (error) {
         console.error('Auth initialization error:', error);
+        setError(error as Error);
         setLoading(false);
       }
     };

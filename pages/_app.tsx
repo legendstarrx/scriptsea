@@ -14,41 +14,13 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isInitializing, setIsInitializing] = useState(true);
   const router = useRouter();
 
-  // Reduce initialization timeout and add progress tracking
   useEffect(() => {
-    let mounted = true;
-
-    const init = async () => {
-      try {
-        // Initialize Firebase network first
-        await enableNetwork(db);
-        
-        // If component is still mounted, update state
-        if (mounted) {
-          setIsInitializing(false);
-        }
-      } catch (error) {
-        console.error('Initialization error:', error);
-        if (mounted) {
-          setIsInitializing(false);
-        }
-      }
-    };
-
-    // Start initialization immediately
-    init();
-
-    // Fallback timeout - shorter than before
+    // Simple timeout to ensure minimal loading state
     const timeout = setTimeout(() => {
-      if (mounted) {
-        setIsInitializing(false);
-      }
-    }, 2000); // Reduced from 3000ms to 2000ms
+      setIsInitializing(false);
+    }, 1000);
 
-    return () => {
-      mounted = false;
-      clearTimeout(timeout);
-    };
+    return () => clearTimeout(timeout);
   }, []);
 
   // Move script loading to a separate effect
