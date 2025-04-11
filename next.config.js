@@ -20,6 +20,19 @@ const nextConfig = {
             value: 'Content-Type, Authorization'
           }
         ]
+      },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate'
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache'
+          }
+        ]
       }
     ];
   }

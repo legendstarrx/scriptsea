@@ -3,8 +3,11 @@ import { AuthProvider } from '../context/AuthContext';
 import Head from 'next/head';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { useRouter } from 'next/router';
 
 function MyApp({ Component, pageProps }) {
+  const router = useRouter();
+
   // Load Flutter payment script
   useEffect(() => {
     const loadFlutterScript = () => {
@@ -19,6 +22,29 @@ function MyApp({ Component, pageProps }) {
     loadFlutterScript();
   }, []);
 
+  useEffect(() => {
+    // Add no-cache headers
+    const addNoCacheHeaders = () => {
+      document.querySelector('meta[http-equiv="Cache-Control"]')?.remove();
+      const meta = document.createElement('meta');
+      meta.httpEquiv = 'Cache-Control';
+      meta.content = 'no-cache, no-store, must-revalidate';
+      document.head.appendChild(meta);
+    };
+
+    addNoCacheHeaders();
+
+    // Handle route changes
+    const handleRouteChange = () => {
+      window.scrollTo(0, 0);
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
+
   return (
     <AuthProvider>
       <Head>
@@ -26,6 +52,9 @@ function MyApp({ Component, pageProps }) {
         <title>ScriptSea - AI Script Generator</title>
         <meta name="description" content="Generate professional scripts with AI" />
         <link rel="icon" href="/favicon.ico" />
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
       </Head>
       <Component {...pageProps} />
       <Toaster position="top-center" />
