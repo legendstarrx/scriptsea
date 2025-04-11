@@ -15,6 +15,14 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups'
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'require-corp'
+          },
+          {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
           },
@@ -32,6 +40,10 @@ const nextConfig = {
       {
         source: '/api/:path*',
         headers: [
+          {
+            key: 'Set-Cookie',
+            value: 'Path=/; Secure; SameSite=Strict'
+          },
           {
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate',
@@ -75,6 +87,15 @@ const nextConfig = {
     }
     return config;
   },
+
+  serverRuntimeConfig: {
+    cookieOptions: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/'
+    }
+  }
 };
 
 module.exports = nextConfig;
