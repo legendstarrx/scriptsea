@@ -7,6 +7,8 @@
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html,
@@ -16,6 +18,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: #ffffff;
   color: #333;
+  visibility: visible;
+  opacity: 1;
 }
 
 a {
@@ -56,9 +60,6 @@ a {
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
   to {
     transform: rotate(360deg);
   }
@@ -75,6 +76,14 @@ a {
 
 .slide-up {
   animation: slideUp 0.3s ease;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-delay-150 {
+  animation-delay: 150ms;
 }
 
 /* Mobile optimizations */
