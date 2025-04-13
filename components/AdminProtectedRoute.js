@@ -7,10 +7,18 @@ export default function AdminProtectedRoute({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!user || user.email !== 'legendstarr2024@gmail.com')) {
-      router.push('/');
-    }
-  }, [user, userProfile, loading, router]);
+    const checkAdmin = async () => {
+      if (!loading) {
+        const isAdmin = user?.email === 'legendstarr2024@gmail.com';
+        if (!isAdmin) {
+          console.log('Not admin, redirecting');
+          await router.push('/');
+        }
+      }
+    };
+
+    checkAdmin();
+  }, [user, loading, router]);
 
   if (loading) {
     return (
@@ -20,10 +28,10 @@ export default function AdminProtectedRoute({ children }) {
     );
   }
 
-  // Check specifically for the admin email
-  if (!user || user.email !== 'legendstarr2024@gmail.com') {
-    return null;
+  // Only render children if user is admin
+  if (user?.email === 'legendstarr2024@gmail.com') {
+    return children;
   }
 
-  return children;
+  return null;
 } 

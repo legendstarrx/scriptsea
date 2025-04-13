@@ -37,10 +37,12 @@ export function AuthProvider({ children }) {
           const userRef = doc(db, 'users', user.uid);
           const docSnap = await getDoc(userRef);
           
+          const isAdminUser = user.email === 'legendstarr2024@gmail.com';
+          
           if (docSnap.exists()) {
             const userData = docSnap.data();
-            // Use the exact email check
-            userData.isAdmin = user.email === 'legendstarr2024@gmail.com';
+            userData.isAdmin = isAdminUser;
+            await updateDoc(userRef, { isAdmin: isAdminUser });
             setUserProfile(userData);
           } else {
             const defaultProfile = {
@@ -50,7 +52,7 @@ export function AuthProvider({ children }) {
               subscription: 'free',
               scriptsRemaining: 3,
               scriptsGenerated: 0,
-              isAdmin: user.email === 'legendstarr2024@gmail.com',
+              isAdmin: isAdminUser,
               createdAt: new Date().toISOString(),
               lastLogin: new Date().toISOString()
             };
