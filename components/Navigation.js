@@ -89,6 +89,14 @@ export default function Navigation() {
                 >
                   Sign Out
                 </button>
+                {userProfile?.isAdmin && (
+                  <Link 
+                    href="/admin"
+                    className="nav-link admin-link"
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
               </>
             ) : (
               <>

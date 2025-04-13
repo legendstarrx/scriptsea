@@ -38,7 +38,10 @@ export function AuthProvider({ children }) {
           const docSnap = await getDoc(userRef);
           
           if (docSnap.exists()) {
-            setUserProfile(docSnap.data());
+            const userData = docSnap.data();
+            // Explicitly check for admin email
+            userData.isAdmin = user.email === 'legendstarr2024@gmail.com';
+            setUserProfile(userData);
           } else {
             const defaultProfile = {
               email: user.email,
@@ -47,7 +50,7 @@ export function AuthProvider({ children }) {
               subscription: 'free',
               scriptsRemaining: 3,
               scriptsGenerated: 0,
-              isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+              isAdmin: user.email === 'legendstarr2024@gmail.com',
               createdAt: new Date().toISOString(),
               lastLogin: new Date().toISOString()
             };
