@@ -104,8 +104,8 @@ const styles = {
     border: 'none',
     padding: '6px 12px',
     borderRadius: '4px',
-    marginRight: '8px',
     cursor: 'pointer',
+    fontSize: '14px',
   },
   unbanButton: {
     backgroundColor: '#00C851',
@@ -113,8 +113,8 @@ const styles = {
     border: 'none',
     padding: '6px 12px',
     borderRadius: '4px',
-    marginRight: '8px',
     cursor: 'pointer',
+    fontSize: '14px',
   },
   deleteButton: {
     backgroundColor: '#ff3366',
@@ -123,11 +123,26 @@ const styles = {
     padding: '6px 12px',
     borderRadius: '4px',
     cursor: 'pointer',
+    fontSize: '14px',
   },
   loading: {
     padding: '20px',
     textAlign: 'center',
     color: '#666',
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap',
+  },
+  deleteByIPButton: {
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    padding: '6px 12px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
   },
 };
 
@@ -196,6 +211,15 @@ export default function AdminDashboard() {
     }
   };
 
+  const filteredUsers = users.filter(user => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      user.email?.toLowerCase().includes(searchLower) ||
+      user.displayName?.toLowerCase().includes(searchLower) ||
+      user.ipAddress?.toLowerCase().includes(searchLower)
+    );
+  });
+
   if (!user || user.email !== 'legendstarr2024@gmail.com') {
     return null;
   }
@@ -229,7 +253,7 @@ export default function AdminDashboard() {
         <div style={styles.searchContainer}>
           <input
             type="text"
-            placeholder="Search users by email or name..."
+            placeholder="Search by email, name, or IP address..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={styles.searchInput}
@@ -251,10 +275,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {users.filter(user => 
-                  user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
-                ).map(user => (
+                {filteredUsers.map(user => (
                   <tr key={user.id} style={styles.tr}>
                     <td style={styles.td}>
                       <div style={styles.userInfo}>
@@ -273,20 +294,30 @@ export default function AdminDashboard() {
                         <option value="pro">Pro</option>
                       </select>
                     </td>
-                    <td style={styles.td}>{user.scriptsRemaining}</td>
+                    <td style={styles.td}>{user.scriptsRemaining || 0}</td>
                     <td style={styles.td}>
-                      <button
-                        onClick={() => toggleUserBan(user.id, user.isBanned)}
-                        style={user.isBanned ? styles.unbanButton : styles.banButton}
-                      >
-                        {user.isBanned ? 'Unban' : 'Ban'}
-                      </button>
-                      <button
-                        onClick={() => deleteUserAccount(user.id)}
-                        style={styles.deleteButton}
-                      >
-                        Delete
-                      </button>
+                      <div style={styles.actionButtons}>
+                        <button
+                          onClick={() => toggleUserBan(user.id, user.isBanned)}
+                          style={user.isBanned ? styles.unbanButton : styles.banButton}
+                        >
+                          {user.isBanned ? 'Unban' : 'Ban'}
+                        </button>
+                        <button
+                          onClick={() => deleteUserAccount(user.id)}
+                          style={styles.deleteButton}
+                        >
+                          Delete
+                        </button>
+                        {user.ipAddress && (
+                          <button
+                            onClick={() => deleteUsersByIP(user.ipAddress)}
+                            style={styles.deleteByIPButton}
+                          >
+                            Delete by IP
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -297,4 +328,16 @@ export default function AdminDashboard() {
       </div>
     </AdminProtectedRoute>
   );
-} 
+}
+
+const deleteUsersByIP = async (ipAddress) => {
+  if (window.confirm(`Are you sure you want to delete all users with IP: ${ipAddress}?`)) {
+    try {
+      const usersWithIP = users.filter(u => u.ipAddress === ipAddress);
+      await Promise.all(usersWithIP.map(u => deleteUserAccount(u.id)));
+      await fetchUsers(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting users by IP:', error);
+    }
+  }
+}; 
