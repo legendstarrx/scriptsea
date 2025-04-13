@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
           
           if (docSnap.exists()) {
             const userData = docSnap.data();
-            // Explicitly check for admin email
+            // Use the exact email check
             userData.isAdmin = user.email === 'legendstarr2024@gmail.com';
             setUserProfile(userData);
           } else {
