@@ -126,9 +126,25 @@ const styles = {
     fontSize: '14px',
   },
   loading: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: '20px',
+    color: '#fff',
+  },
+  spinner: {
+    width: '20px',
+    height: '20px',
+    border: '2px solid #ff3366',
+    borderTop: '2px solid transparent',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginRight: '10px',
+  },
+  noUsers: {
     textAlign: 'center',
-    color: '#666',
+    padding: '20px',
+    color: '#fff',
   },
   actionButtons: {
     display: 'flex',
@@ -150,7 +166,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const { user, getAllUsers } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -162,9 +178,13 @@ export default function AdminDashboard() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const usersData = await getAllUsers();
-      console.log('Fetched users:', usersData); // Debug log
-      setUsers(usersData);
+      const response = await fetch('/api/admin/get-users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await response.json();
+      console.log('Client: Fetched users:', data.users); // Debug log
+      setUsers(data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -174,11 +194,18 @@ export default function AdminDashboard() {
 
   const updateUserSubscription = async (userId, newSubscription) => {
     try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, {
-        subscription: newSubscription,
-        scriptsRemaining: newSubscription === 'premium' ? 999999 : 3
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId,
+          action: 'updateSubscription',
+          data: { plan: newSubscription }
+        })
       });
+      if (!response.ok) throw new Error('Failed to update subscription');
       await fetchUsers(); // Refresh the list
     } catch (error) {
       console.error('Error updating subscription:', error);
@@ -187,10 +214,17 @@ export default function AdminDashboard() {
 
   const toggleUserBan = async (userId, currentBanStatus) => {
     try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, {
-        isBanned: !currentBanStatus
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          action: currentBanStatus ? 'unbanUser' : 'banUser'
+        })
       });
+      if (!response.ok) throw new Error('Failed to toggle ban status');
       await fetchUsers();
     } catch (error) {
       console.error('Error toggling ban status:', error);
@@ -200,8 +234,18 @@ export default function AdminDashboard() {
   const deleteUserAccount = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await deleteDoc(doc(db, 'users', userId));
-      await fetchUsers();
+        const response = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId,
+            action: 'deleteUser'
+          })
+        });
+        if (!response.ok) throw new Error('Failed to delete user');
+        await fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
       }
@@ -259,7 +303,12 @@ export default function AdminDashboard() {
 
         <div style={styles.tableContainer}>
           {loading ? (
-            <div style={styles.loading}>Loading...</div>
+            <div style={styles.loading}>
+              <div style={styles.spinner}></div>
+              Loading users...
+            </div>
+          ) : users.length === 0 ? (
+            <div style={styles.noUsers}>No users found</div>
           ) : (
             <table style={styles.table}>
               <thead>
