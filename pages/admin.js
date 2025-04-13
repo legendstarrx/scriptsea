@@ -161,12 +161,10 @@ export default function AdminDashboard() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/get-users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      const data = await response.json();
-      setUsers(data.users); // API returns { users: [...] }
+      setLoading(true);
+      const usersData = await getAllUsers();
+      console.log('Fetched users:', usersData); // Debug log
+      setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -225,39 +223,39 @@ export default function AdminDashboard() {
 
   return (
     <AdminProtectedRoute>
-      <div style={styles.container}>
+    <div style={styles.container}>
         <div style={styles.header}>
           <h1 style={styles.title}>Admin Dashboard</h1>
         </div>
-
+          
         <div style={styles.statsContainer}>
-          <div style={styles.statCard}>
-            <h3 style={styles.statLabel}>Total Users</h3>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>Total Users</h3>
             <p style={styles.statValue}>{users.length}</p>
-          </div>
-          <div style={styles.statCard}>
-            <h3 style={styles.statLabel}>Pro Users</h3>
+            </div>
+            <div style={styles.statCard}>
+              <h3 style={styles.statLabel}>Pro Users</h3>
             <p style={styles.statValue}>
               {users.filter(u => u.subscription === 'pro').length}
             </p>
-          </div>
-          <div style={styles.statCard}>
+            </div>
+            <div style={styles.statCard}>
             <h3 style={styles.statLabel}>Banned Users</h3>
             <p style={styles.statValue}>
               {users.filter(u => u.isBanned).length}
             </p>
+            </div>
           </div>
-        </div>
 
-        <div style={styles.searchContainer}>
-          <input
-            type="text"
+          <div style={styles.searchContainer}>
+            <input
+              type="text"
             placeholder="Search by email, name, or IP address..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={styles.searchInput}
-          />
-        </div>
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={styles.searchInput}
+            />
+          </div>
 
         <div style={styles.tableContainer}>
           {loading ? (
@@ -302,21 +300,21 @@ export default function AdminDashboard() {
                         >
                           {user.isBanned ? 'Unban' : 'Ban'}
                         </button>
-                        <button
+                          <button
                           onClick={() => deleteUserAccount(user.id)}
                           style={styles.deleteButton}
-                        >
-                          Delete
-                        </button>
+                          >
+                            Delete
+                          </button>
                         {user.ipAddress && (
-                          <button
+                <button
                             onClick={() => deleteUsersByIP(user.ipAddress)}
                             style={styles.deleteByIPButton}
-                          >
+                >
                             Delete by IP
-                          </button>
+                </button>
                         )}
-                      </div>
+              </div>
                     </td>
                   </tr>
                 ))}
@@ -324,7 +322,7 @@ export default function AdminDashboard() {
             </table>
           )}
         </div>
-      </div>
+    </div>
     </AdminProtectedRoute>
   );
 }

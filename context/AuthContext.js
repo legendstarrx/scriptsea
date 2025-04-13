@@ -308,6 +308,9 @@ export function AuthProvider({ children }) {
 
   const getAllUsers = async () => {
     try {
+      if (!user || user.email !== 'legendstarr2024@gmail.com') {
+        throw new Error('Unauthorized');
+      }
       const usersRef = collection(db, 'users');
       const querySnapshot = await getDocs(usersRef);
       const users = querySnapshot.docs.map(doc => ({
