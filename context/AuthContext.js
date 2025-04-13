@@ -42,8 +42,10 @@ export function AuthProvider({ children }) {
           if (docSnap.exists()) {
             const userData = docSnap.data();
             userData.isAdmin = isAdminUser;
-            await updateDoc(userRef, { isAdmin: isAdminUser });
-            setUserProfile(userData);
+            setUserProfile({
+              ...userData,
+              isAdmin: isAdminUser
+            });
           } else {
             const defaultProfile = {
               email: user.email,
@@ -64,6 +66,7 @@ export function AuthProvider({ children }) {
           setError(error);
         }
       } else {
+        setUser(null);
         setUserProfile(null);
       }
       

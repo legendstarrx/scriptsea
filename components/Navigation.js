@@ -89,7 +89,7 @@ export default function Navigation() {
                 >
                   Sign Out
                 </button>
-                {userProfile?.isAdmin && (
+                {user && user.email === 'legendstarr2024@gmail.com' && (
                   <Link 
                     href="/admin"
                     className="nav-link admin-link"

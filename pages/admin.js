@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { useRouter } from 'next/router';
 import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -218,11 +219,20 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const { userProfile } = useAuth();
+  const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
+    // Check admin access
+    if (user && user.email !== 'legendstarr2024@gmail.com') {
+      router.push('/');
+      return;
+    }
+    
+    if (user?.email === 'legendstarr2024@gmail.com') {
       fetchUsers();
-  }, []);
+    }
+  }, [user]);
 
   const fetchUsers = async () => {
     try {
@@ -281,8 +291,8 @@ export default function AdminDashboard() {
     user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!userProfile?.isAdmin) {
-    return <div>Access Denied</div>;
+  if (!user || user.email !== 'legendstarr2024@gmail.com') {
+    return null;
   }
 
   return (
@@ -291,62 +301,66 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
         
         {/* Search Input */}
-        <input
-          type="text"
+            <input
+              type="text"
           placeholder="Search users..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full p-2 mb-4 border rounded"
         />
 
         {/* Users Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Name</th>
-                <th>IP Address</th>
-                <th>Subscription</th>
-                <th>Scripts Left</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.id}>
-                  <td>{user.email}</td>
-                  <td>{user.displayName}</td>
-                  <td>{user.ipAddress || 'N/A'}</td>
-                  <td>{user.subscription}</td>
-                  <td>{user.scriptsRemaining}</td>
-                  <td>
-                    <select
-                      value={user.subscription}
-                      onChange={(e) => updateUserSubscription(user.id, e.target.value)}
-                    >
-                      <option value="free">Free</option>
-                      <option value="premium">Premium</option>
-                    </select>
-                    <button
-                      onClick={() => toggleUserBan(user.id, user.isBanned)}
-                      className={user.isBanned ? 'unban-btn' : 'ban-btn'}
-                    >
-                      {user.isBanned ? 'Unban' : 'Ban'}
-                    </button>
-                    <button
-                      onClick={() => deleteUserAccount(user.id)}
-                      className="delete-btn"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        {loading ? (
+          <div>Loading...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Name</th>
+                  <th>IP Address</th>
+                  <th>Subscription</th>
+                  <th>Scripts Left</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody>
+                {filteredUsers.map(user => (
+                  <tr key={user.id}>
+                    <td>{user.email}</td>
+                    <td>{user.displayName}</td>
+                    <td>{user.ipAddress || 'N/A'}</td>
+                    <td>{user.subscription}</td>
+                    <td>{user.scriptsRemaining}</td>
+                    <td>
+                      <select
+                        value={user.subscription}
+                        onChange={(e) => updateUserSubscription(user.id, e.target.value)}
+                      >
+                        <option value="free">Free</option>
+                        <option value="premium">Premium</option>
+                      </select>
+                      <button
+                        onClick={() => toggleUserBan(user.id, user.isBanned)}
+                        className={user.isBanned ? 'unban-btn' : 'ban-btn'}
+                      >
+                        {user.isBanned ? 'Unban' : 'Ban'}
+                      </button>
+                          <button
+                        onClick={() => deleteUserAccount(user.id)}
+                        className="delete-btn"
+                          >
+                            Delete
+                          </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            </div>
+          )}
+            </div>
     </AdminProtectedRoute>
   );
 } 
