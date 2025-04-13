@@ -82,6 +82,26 @@ export default async function handler(req, res) {
         await Promise.all(deletePromises);
         break;
 
+      case 'banByIP':
+        if (!data?.ipAddress) {
+          return res.status(400).json({ error: 'IP address is required' });
+        }
+        
+        const banSnapshot = await adminDb.collection('users')
+          .where('ipAddress', '==', data.ipAddress)
+          .get();
+        
+        const banPromises = banSnapshot.docs.map(doc => 
+          doc.ref.update({
+            isBanned: true,
+            lastUpdated: new Date().toISOString(),
+            banReason: `Banned by IP address: ${data.ipAddress}`
+          })
+        );
+        
+        await Promise.all(banPromises);
+        break;
+
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }

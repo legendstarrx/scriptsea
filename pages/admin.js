@@ -160,6 +160,15 @@ const styles = {
     cursor: 'pointer',
     fontSize: '14px',
   },
+  banByIPButton: {
+    backgroundColor: '#ff6b6b',
+    color: 'white',
+    border: 'none',
+    padding: '6px 12px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '14px',
+  },
 };
 
 export default function AdminDashboard() {
@@ -257,7 +266,7 @@ export default function AdminDashboard() {
         if (!response.ok) {
           throw new Error('Failed to delete user');
         }
-        await fetchUsers();
+      await fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
       }
@@ -285,6 +294,31 @@ export default function AdminDashboard() {
         await fetchUsers();
       } catch (error) {
         console.error('Error deleting users by IP:', error);
+      }
+    }
+  };
+
+  const banUsersByIP = async (ipAddress) => {
+    if (window.confirm(`Are you sure you want to ban all users with IP: ${ipAddress}?`)) {
+      try {
+        const response = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          },
+          body: JSON.stringify({
+            action: 'banByIP',
+            data: { ipAddress }
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to ban users by IP');
+        }
+        await fetchUsers();
+      } catch (error) {
+        console.error('Error banning users by IP:', error);
       }
     }
   };
@@ -386,21 +420,21 @@ export default function AdminDashboard() {
                         >
                           {user.isBanned ? 'Unban' : 'Ban'}
                         </button>
+                        {user.ipAddress && (
+                          <button
+                            onClick={() => banUsersByIP(user.ipAddress)}
+                            style={styles.banByIPButton}
+                          >
+                            Ban by IP
+                          </button>
+                        )}
                           <button
                           onClick={() => deleteUserAccount(user.id)}
                           style={styles.deleteButton}
                           >
                             Delete
                           </button>
-                        {user.ipAddress && (
-                <button
-                            onClick={() => deleteUsersByIP(user.ipAddress)}
-                            style={styles.deleteByIPButton}
-                >
-                            Delete by IP
-                </button>
-                        )}
-              </div>
+                        </div>
                     </td>
                   </tr>
                 ))}
