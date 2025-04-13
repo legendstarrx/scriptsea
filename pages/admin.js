@@ -223,12 +223,6 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check admin access
-    if (user && user.email !== 'legendstarr2024@gmail.com') {
-      router.push('/');
-      return;
-    }
-    
     if (user?.email === 'legendstarr2024@gmail.com') {
       fetchUsers();
     }
@@ -243,9 +237,9 @@ export default function AdminDashboard() {
         ...doc.data()
       }));
       setUsers(usersData);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching users:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -286,81 +280,134 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredUsers = users.filter(user => 
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (!user || user.email !== 'legendstarr2024@gmail.com') {
     return null;
   }
 
   return (
     <AdminProtectedRoute>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-        
-        {/* Search Input */}
-            <input
-              type="text"
-          placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 mb-4 border rounded"
-        />
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            </div>
 
-        {/* Users Table */}
-        {loading ? (
-          <div>Loading...</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Name</th>
-                  <th>IP Address</th>
-                  <th>Subscription</th>
-                  <th>Scripts Left</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map(user => (
-                  <tr key={user.id}>
-                    <td>{user.email}</td>
-                    <td>{user.displayName}</td>
-                    <td>{user.ipAddress || 'N/A'}</td>
-                    <td>{user.subscription}</td>
-                    <td>{user.scriptsRemaining}</td>
-                    <td>
-                      <select
-                        value={user.subscription}
-                        onChange={(e) => updateUserSubscription(user.id, e.target.value)}
-                      >
-                        <option value="free">Free</option>
-                        <option value="premium">Premium</option>
-                      </select>
-                      <button
-                        onClick={() => toggleUserBan(user.id, user.isBanned)}
-                        className={user.isBanned ? 'unban-btn' : 'ban-btn'}
-                      >
-                        {user.isBanned ? 'Unban' : 'Ban'}
-                      </button>
-                          <button
-                        onClick={() => deleteUserAccount(user.id)}
-                        className="delete-btn"
-                          >
-                            Delete
-                          </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <dt className="text-sm font-medium text-gray-500">Total Users</dt>
+                  <dd className="mt-1 text-3xl font-semibold text-pink-600">{users.length}</dd>
+                </div>
+              </div>
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <dt className="text-sm font-medium text-gray-500">Pro Users</dt>
+                  <dd className="mt-1 text-3xl font-semibold text-pink-600">
+                    {users.filter(u => u.subscription === 'pro' || u.subscription === 'premium').length}
+                  </dd>
+                </div>
+              </div>
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <dt className="text-sm font-medium text-gray-500">Banned Users</dt>
+                  <dd className="mt-1 text-3xl font-semibold text-pink-600">
+                    {users.filter(u => u.isBanned).length}
+                  </dd>
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Search Bar */}
+            <div className="mb-6">
+              <input
+                type="text"
+                placeholder="Search users by email or name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
+              />
             </div>
+
+            {/* Users Table */}
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              {loading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-pink-500"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts Left</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {users.filter(user => 
+                        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).map(user => (
+                        <tr key={user.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
+                                <div className="text-sm text-gray-500">{user.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {user.ipAddress || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <select
+                              value={user.subscription}
+                              onChange={(e) => updateUserSubscription(user.id, e.target.value)}
+                              className="text-sm rounded-md border-gray-300 focus:ring-pink-500 focus:border-pink-500"
+                            >
+                              <option value="free">Free</option>
+                              <option value="pro">Pro</option>
+                            </select>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {user.scriptsRemaining}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => toggleUserBan(user.id, user.isBanned)}
+                              className={`mr-2 px-3 py-1 rounded-md ${
+                                user.isBanned 
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                              }`}
+                            >
+                              {user.isBanned ? 'Unban' : 'Ban'}
+                            </button>
+                            <button
+                              onClick={() => deleteUserAccount(user.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
     </AdminProtectedRoute>
   );
 } 
