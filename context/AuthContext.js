@@ -310,10 +310,12 @@ export function AuthProvider({ children }) {
     try {
       const usersRef = collection(db, 'users');
       const querySnapshot = await getDocs(usersRef);
-      return querySnapshot.docs.map(doc => ({
+      const users = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      console.log('Fetched users:', users);
+      return users;
     } catch (error) {
       console.error('Error getting all users:', error);
       throw error;
@@ -347,7 +349,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

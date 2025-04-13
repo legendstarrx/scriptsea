@@ -150,7 +150,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, getAllUsers } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -161,12 +161,7 @@ export default function AdminDashboard() {
 
   const fetchUsers = async () => {
     try {
-      const usersRef = collection(db, 'users');
-      const querySnapshot = await getDocs(usersRef);
-      const usersData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const usersData = await getAllUsers();
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
