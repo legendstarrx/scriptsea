@@ -198,6 +198,7 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
         },
         body: JSON.stringify({ 
           userId,
@@ -205,7 +206,10 @@ export default function AdminDashboard() {
           data: { plan: newSubscription }
         })
       });
-      if (!response.ok) throw new Error('Failed to update subscription');
+      
+      if (!response.ok) {
+        throw new Error('Failed to update subscription');
+      }
       await fetchUsers(); // Refresh the list
     } catch (error) {
       console.error('Error updating subscription:', error);
@@ -218,13 +222,17 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
         },
         body: JSON.stringify({
           userId,
           action: currentBanStatus ? 'unbanUser' : 'banUser'
         })
       });
-      if (!response.ok) throw new Error('Failed to toggle ban status');
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle ban status');
+      }
       await fetchUsers();
     } catch (error) {
       console.error('Error toggling ban status:', error);
@@ -238,16 +246,45 @@ export default function AdminDashboard() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
           },
           body: JSON.stringify({
             userId,
             action: 'deleteUser'
           })
         });
-        if (!response.ok) throw new Error('Failed to delete user');
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete user');
+        }
         await fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
+      }
+    }
+  };
+
+  const deleteUsersByIP = async (ipAddress) => {
+    if (window.confirm(`Are you sure you want to delete all users with IP: ${ipAddress}?`)) {
+      try {
+        const response = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          },
+          body: JSON.stringify({
+            action: 'deleteByIP',
+            data: { ipAddress }
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete users by IP');
+        }
+        await fetchUsers();
+      } catch (error) {
+        console.error('Error deleting users by IP:', error);
       }
     }
   };
@@ -374,16 +411,4 @@ export default function AdminDashboard() {
     </div>
     </AdminProtectedRoute>
   );
-}
-
-const deleteUsersByIP = async (ipAddress) => {
-  if (window.confirm(`Are you sure you want to delete all users with IP: ${ipAddress}?`)) {
-    try {
-      const usersWithIP = users.filter(u => u.ipAddress === ipAddress);
-      await Promise.all(usersWithIP.map(u => deleteUserAccount(u.id)));
-      await fetchUsers(); // Refresh the list
-    } catch (error) {
-      console.error('Error deleting users by IP:', error);
-    }
-  }
-}; 
+} 

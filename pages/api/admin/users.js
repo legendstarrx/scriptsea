@@ -13,63 +13,73 @@ export default async function handler(req, res) {
 
     const { userId, action, data } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
-    }
-
-    const userRef = adminDb.collection('users').doc(userId);
-    const userDoc = await userRef.get();
-
-    if (!userDoc.exists) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
     switch (action) {
       case 'updateSubscription':
-        if (!data.plan) {
-          return res.status(400).json({ error: 'Plan is required' });
+        if (!userId || !data?.plan) {
+          return res.status(400).json({ error: 'Missing required fields' });
         }
         
-        await userRef.update({
+        await adminDb.collection('users').doc(userId).update({
           subscription: data.plan,
           scriptsRemaining: data.plan === 'pro' ? 100 : 3,
           lastUpdated: new Date().toISOString()
         });
         break;
 
-      case 'resetScripts':
-        const currentUser = userDoc.data();
-        const scriptsCount = currentUser.subscription === 'pro' ? 100 : 3;
-        
-        await userRef.update({
-          scriptsRemaining: scriptsCount,
-          lastUpdated: new Date().toISOString()
-        });
-        break;
-
       case 'banUser':
-        await userRef.update({
+        if (!userId) {
+          return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        await adminDb.collection('users').doc(userId).update({
           isBanned: true,
           lastUpdated: new Date().toISOString()
         });
         break;
 
       case 'unbanUser':
-        await userRef.update({
+        if (!userId) {
+          return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        await adminDb.collection('users').doc(userId).update({
           isBanned: false,
           lastUpdated: new Date().toISOString()
         });
         break;
 
       case 'deleteUser':
+        if (!userId) {
+          return res.status(400).json({ error: 'User ID is required' });
+        }
+        
         try {
-          // Try to delete from Auth first
           await adminAuth.deleteUser(userId);
         } catch (authError) {
-          console.warn('Auth deletion failed, proceeding with Firestore deletion:', authError.message);
+          console.warn('Auth deletion failed:', authError.message);
         }
-        // Delete from Firestore
-        await userRef.delete();
+        await adminDb.collection('users').doc(userId).delete();
+        break;
+
+      case 'deleteByIP':
+        if (!data?.ipAddress) {
+          return res.status(400).json({ error: 'IP address is required' });
+        }
+        
+        const snapshot = await adminDb.collection('users')
+          .where('ipAddress', '==', data.ipAddress)
+          .get();
+        
+        const deletePromises = snapshot.docs.map(async (doc) => {
+          try {
+            await adminAuth.deleteUser(doc.id);
+          } catch (authError) {
+            console.warn('Auth deletion failed:', authError.message);
+          }
+          return doc.ref.delete();
+        });
+        
+        await Promise.all(deletePromises);
         break;
 
       default:
