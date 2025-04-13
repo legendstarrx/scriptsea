@@ -10,209 +10,125 @@ import Link from 'next/link';
 
 const styles = {
   container: {
+    padding: '20px',
+    backgroundColor: '#f8f9fa',
     minHeight: '100vh',
-    backgroundColor: '#f8f9ff'
-  },
-  main: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '2rem 1rem'
   },
   header: {
-    marginBottom: '2rem'
+    marginBottom: '30px',
   },
-  headerTitle: {
-    fontSize: '2rem',
+  title: {
+    fontSize: '24px',
     fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: '1rem'
+    color: '#333',
   },
-  statsGrid: {
+  statsContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '1rem',
-    marginBottom: '2rem'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '20px',
+    marginBottom: '30px',
   },
   statCard: {
     backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-    transition: 'transform 0.2s ease',
-    ':hover': {
-      transform: 'translateY(-2px)'
-    }
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   },
   statLabel: {
-    fontSize: '0.875rem',
+    fontSize: '14px',
     color: '#666',
-    marginBottom: '0.5rem'
+    marginBottom: '8px',
   },
   statValue: {
-    fontSize: '2rem',
+    fontSize: '24px',
     fontWeight: 'bold',
-    color: '#FF3366'
+    color: '#FF3366',
+    margin: 0,
   },
   searchContainer: {
-    marginBottom: '2rem'
+    marginBottom: '20px',
   },
   searchInput: {
     width: '100%',
-    maxWidth: '400px',
-    padding: '0.75rem 1rem',
+    padding: '10px',
+    border: '1px solid #ddd',
     borderRadius: '8px',
-    border: '1px solid #e1e1e1',
-    fontSize: '1rem',
-    outline: 'none',
-    transition: 'all 0.2s ease',
-    ':focus': {
-      borderColor: '#FF3366',
-      boxShadow: '0 0 0 3px rgba(255, 51, 102, 0.1)'
-    }
+    fontSize: '16px',
   },
-  suspiciousIpsSection: {
-    marginBottom: '2rem'
+  tableContainer: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    overflow: 'auto',
   },
-  suspiciousIpsTitle: {
-    fontSize: '1.25rem',
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+  },
+  th: {
+    textAlign: 'left',
+    padding: '12px',
+    borderBottom: '2px solid #ddd',
+    color: '#666',
+    fontSize: '14px',
     fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: '1rem'
   },
-  suspiciousIpsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '1rem'
+  tr: {
+    borderBottom: '1px solid #eee',
   },
-  ipCard: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
-  },
-  userCard: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    marginBottom: '1rem',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-    transition: 'all 0.2s ease',
-    ':hover': {
-      boxShadow: '0 8px 12px rgba(0, 0, 0, 0.1)'
-    }
-  },
-  userCardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '1rem'
+  td: {
+    padding: '12px',
+    fontSize: '14px',
   },
   userInfo: {
-    flex: 1
-  },
-  userEmail: {
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: '0.5rem'
-  },
-  userDetail: {
-    fontSize: '0.875rem',
-    color: '#666',
-    marginBottom: '0.25rem'
-  },
-  badge: {
-    display: 'inline-block',
-    padding: '0.25rem 0.75rem',
-    borderRadius: '9999px',
-    fontSize: '0.75rem',
-    fontWeight: '500'
-  },
-  proBadge: {
-    backgroundColor: '#ebf5ff',
-    color: '#1e88e5'
-  },
-  freeBadge: {
-    backgroundColor: '#f3f4f6',
-    color: '#6b7280'
-  },
-  buttonGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.5rem'
   },
-  button: {
-    padding: '0.5rem 1rem',
-    borderRadius: '6px',
-    fontSize: '0.875rem',
+  userName: {
     fontWeight: '500',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
+    color: '#333',
   },
-  upgradeButton: {
-    backgroundColor: '#1e88e5',
-    color: 'white',
-    ':hover': {
-      backgroundColor: '#1976d2'
-    }
+  userEmail: {
+    color: '#666',
+    fontSize: '13px',
   },
-  downgradeButton: {
-    backgroundColor: '#64748b',
-    color: 'white',
-    ':hover': {
-      backgroundColor: '#475569'
-    }
-  },
-  resetButton: {
-    backgroundColor: '#10b981',
-    color: 'white',
-    ':hover': {
-      backgroundColor: '#059669'
-    }
+  select: {
+    padding: '6px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    backgroundColor: 'white',
   },
   banButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#ff4444',
     color: 'white',
-    ':hover': {
-      backgroundColor: '#dc2626'
-    }
+    border: 'none',
+    padding: '6px 12px',
+    borderRadius: '4px',
+    marginRight: '8px',
+    cursor: 'pointer',
+  },
+  unbanButton: {
+    backgroundColor: '#00C851',
+    color: 'white',
+    border: 'none',
+    padding: '6px 12px',
+    borderRadius: '4px',
+    marginRight: '8px',
+    cursor: 'pointer',
   },
   deleteButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#ff3366',
     color: 'white',
-    ':hover': {
-      backgroundColor: '#dc2626'
-    }
-  },
-  pagination: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: '2rem'
-  },
-  paginationButton: {
-    padding: '0.5rem 1rem',
-    borderRadius: '6px',
-    border: '1px solid #e1e1e1',
-    backgroundColor: 'white',
+    border: 'none',
+    padding: '6px 12px',
+    borderRadius: '4px',
     cursor: 'pointer',
-    margin: '0 0.25rem',
-    ':hover': {
-      backgroundColor: '#f3f4f6'
-    },
-    ':disabled': {
-      opacity: 0.5,
-      cursor: 'not-allowed'
-    }
   },
-  errorMessage: {
-    backgroundColor: '#fee2e2',
-    color: '#ef4444',
-    padding: '1rem',
-    borderRadius: '8px',
-    marginBottom: '1rem'
-  }
+  loading: {
+    padding: '20px',
+    textAlign: 'center',
+    color: '#666',
+  },
 };
 
 export default function AdminDashboard() {
@@ -286,127 +202,98 @@ export default function AdminDashboard() {
 
   return (
     <AdminProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            </div>
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>Admin Dashboard</h1>
+        </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <dt className="text-sm font-medium text-gray-500">Total Users</dt>
-                  <dd className="mt-1 text-3xl font-semibold text-pink-600">{users.length}</dd>
-                </div>
-              </div>
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <dt className="text-sm font-medium text-gray-500">Pro Users</dt>
-                  <dd className="mt-1 text-3xl font-semibold text-pink-600">
-                    {users.filter(u => u.subscription === 'pro' || u.subscription === 'premium').length}
-                  </dd>
-                </div>
-              </div>
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <dt className="text-sm font-medium text-gray-500">Banned Users</dt>
-                  <dd className="mt-1 text-3xl font-semibold text-pink-600">
-                    {users.filter(u => u.isBanned).length}
-                  </dd>
-                </div>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="mb-6">
-              <input
-                type="text"
-                placeholder="Search users by email or name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
-              />
-            </div>
-
-            {/* Users Table */}
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              {loading ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-pink-500"></div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts Left</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {users.filter(user => 
-                        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
-                      ).map(user => (
-                        <tr key={user.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {user.ipAddress || 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <select
-                              value={user.subscription}
-                              onChange={(e) => updateUserSubscription(user.id, e.target.value)}
-                              className="text-sm rounded-md border-gray-300 focus:ring-pink-500 focus:border-pink-500"
-                            >
-                              <option value="free">Free</option>
-                              <option value="pro">Pro</option>
-                            </select>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {user.scriptsRemaining}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => toggleUserBan(user.id, user.isBanned)}
-                              className={`mr-2 px-3 py-1 rounded-md ${
-                                user.isBanned 
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
-                              }`}
-                            >
-                              {user.isBanned ? 'Unban' : 'Ban'}
-                            </button>
-                            <button
-                              onClick={() => deleteUserAccount(user.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+        <div style={styles.statsContainer}>
+          <div style={styles.statCard}>
+            <h3 style={styles.statLabel}>Total Users</h3>
+            <p style={styles.statValue}>{users.length}</p>
+          </div>
+          <div style={styles.statCard}>
+            <h3 style={styles.statLabel}>Pro Users</h3>
+            <p style={styles.statValue}>
+              {users.filter(u => u.subscription === 'pro').length}
+            </p>
+          </div>
+          <div style={styles.statCard}>
+            <h3 style={styles.statLabel}>Banned Users</h3>
+            <p style={styles.statValue}>
+              {users.filter(u => u.isBanned).length}
+            </p>
           </div>
         </div>
-        <Footer />
+
+        <div style={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Search users by email or name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+
+        <div style={styles.tableContainer}>
+          {loading ? (
+            <div style={styles.loading}>Loading...</div>
+          ) : (
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>User</th>
+                  <th style={styles.th}>IP Address</th>
+                  <th style={styles.th}>Subscription</th>
+                  <th style={styles.th}>Scripts Left</th>
+                  <th style={styles.th}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.filter(user => 
+                  user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+                ).map(user => (
+                  <tr key={user.id} style={styles.tr}>
+                    <td style={styles.td}>
+                      <div style={styles.userInfo}>
+                        <div style={styles.userName}>{user.displayName || 'N/A'}</div>
+                        <div style={styles.userEmail}>{user.email}</div>
+                      </div>
+                    </td>
+                    <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
+                    <td style={styles.td}>
+                      <select
+                        value={user.subscription || 'free'}
+                        onChange={(e) => updateUserSubscription(user.id, e.target.value)}
+                        style={styles.select}
+                      >
+                        <option value="free">Free</option>
+                        <option value="pro">Pro</option>
+                      </select>
+                    </td>
+                    <td style={styles.td}>{user.scriptsRemaining}</td>
+                    <td style={styles.td}>
+                      <button
+                        onClick={() => toggleUserBan(user.id, user.isBanned)}
+                        style={user.isBanned ? styles.unbanButton : styles.banButton}
+                      >
+                        {user.isBanned ? 'Unban' : 'Ban'}
+                      </button>
+                      <button
+                        onClick={() => deleteUserAccount(user.id)}
+                        style={styles.deleteButton}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </AdminProtectedRoute>
   );
