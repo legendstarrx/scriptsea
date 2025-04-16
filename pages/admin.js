@@ -7,7 +7,6 @@ import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import Link from 'next/link';
-import { adminDb } from '../lib/firebaseAdmin';
 
 const styles = {
   container: {
@@ -189,27 +188,20 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user?.email === 'legendstarr2024@gmail.com') {
+    const fetchUsers = async () => {
+      const response = await fetch('/api/admin/users', {
+        headers: {
+          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+        }
+      });
+      const data = await response.json();
+      setUsers(data);
+    };
+
+    if (user) {
       fetchUsers();
     }
   }, [user]);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/admin/get-users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      const data = await response.json();
-      console.log('Client: Fetched users:', data.users); // Debug log
-      setUsers(data.users || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubscriptionChange = async (userId, newPlan) => {
     try {
@@ -248,7 +240,18 @@ export default function AdminDashboard() {
         };
       }
 
-      await adminDb.collection('users').doc(userId).update(updateData);
+      await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+        },
+        body: JSON.stringify({
+          userId,
+          action: 'updateSubscription',
+          data: updateData
+        })
+      });
       fetchUsers(); // Refresh the users list
     } catch (error) {
       console.error('Error updating subscription:', error);
@@ -258,7 +261,7 @@ export default function AdminDashboard() {
 
   const toggleUserBan = async (userId, currentBanStatus) => {
     try {
-      const response = await fetch('/api/admin/users', {
+      await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -269,11 +272,7 @@ export default function AdminDashboard() {
           action: currentBanStatus ? 'unbanUser' : 'banUser'
         })
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to toggle ban status');
-      }
-      await fetchUsers();
+      fetchUsers();
     } catch (error) {
       console.error('Error toggling ban status:', error);
     }
@@ -282,7 +281,7 @@ export default function AdminDashboard() {
   const deleteUserAccount = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const response = await fetch('/api/admin/users', {
+        await fetch('/api/admin/users', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -293,11 +292,7 @@ export default function AdminDashboard() {
             action: 'deleteUser'
           })
         });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete user');
-        }
-      await fetchUsers();
+        fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
       }
@@ -307,7 +302,7 @@ export default function AdminDashboard() {
   const deleteUsersByIP = async (ipAddress) => {
     if (window.confirm(`Are you sure you want to delete all users with IP: ${ipAddress}?`)) {
       try {
-        const response = await fetch('/api/admin/users', {
+        await fetch('/api/admin/users', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -318,11 +313,7 @@ export default function AdminDashboard() {
             data: { ipAddress }
           })
         });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete users by IP');
-        }
-        await fetchUsers();
+        fetchUsers();
       } catch (error) {
         console.error('Error deleting users by IP:', error);
       }
@@ -332,7 +323,7 @@ export default function AdminDashboard() {
   const banUsersByIP = async (ipAddress) => {
     if (window.confirm(`Are you sure you want to ban all users with IP: ${ipAddress}?`)) {
       try {
-        const response = await fetch('/api/admin/users', {
+        await fetch('/api/admin/users', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -343,11 +334,7 @@ export default function AdminDashboard() {
             data: { ipAddress }
           })
         });
-        
-        if (!response.ok) {
-          throw new Error('Failed to ban users by IP');
-        }
-        await fetchUsers();
+        fetchUsers();
       } catch (error) {
         console.error('Error banning users by IP:', error);
       }
