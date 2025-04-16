@@ -3,21 +3,13 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminProtectedRoute({ children }) {
-  const { user, userProfile, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (!loading) {
-        const isAdmin = user?.email === 'legendstarr2024@gmail.com';
-        if (!isAdmin) {
-          console.log('Not admin, redirecting');
-          await router.push('/');
-        }
-      }
-    };
-
-    checkAdmin();
+    if (!loading && (!user || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)) {
+      router.push('/');
+    }
   }, [user, loading, router]);
 
   if (loading) {
@@ -28,8 +20,7 @@ export default function AdminProtectedRoute({ children }) {
     );
   }
 
-  // Only render children if user is admin
-  if (user?.email === 'legendstarr2024@gmail.com') {
+  if (user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
     return children;
   }
 

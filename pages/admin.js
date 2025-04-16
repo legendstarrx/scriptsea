@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import AdminProtectedRoute from '../components/AdminProtectedRoute';
 
-export default function AdminDashboard() {
+function AdminDashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
@@ -206,20 +207,11 @@ export default function AdminDashboard() {
   );
 }
 
-export async function getServerSideProps(context) {
-  const { req } = context;
-  const userEmail = req.headers['x-user-email'];
-
-  if (userEmail !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-    return {
-      redirect: {
-        destination: '/',
-        permanent: false,
-      },
-    };
-  }
-
-  return {
-    props: {},
-  };
+// Wrap the component with AdminProtectedRoute
+export default function ProtectedAdminDashboard() {
+  return (
+    <AdminProtectedRoute>
+      <AdminDashboard />
+    </AdminProtectedRoute>
+  );
 } 
