@@ -31,7 +31,7 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          plan,
+          plan: plan === 'yearly' ? 'yearly' : 'monthly',
           userId: user.uid,
           email: user.email
         })
@@ -40,6 +40,8 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
       const data = await response.json();
       if (data.success && data.paymentLink) {
         window.location.href = data.paymentLink;
+      } else {
+        console.error('Failed to create payment link');
       }
     } catch (error) {
       console.error('Error initiating payment:', error);
