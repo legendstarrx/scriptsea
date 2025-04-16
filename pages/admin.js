@@ -136,14 +136,15 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="mt-2 text-sm text-gray-600">Manage your users and monitor system statistics</p>
         </div>
 
-        {/* Statistics Cards */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-blue-600">{stats.totalUsers}</div>
@@ -165,15 +166,13 @@ function AdminDashboard() {
 
         {/* Search Bar */}
         <div className="mb-6">
-          <div className="max-w-md">
-            <input
-              type="text"
-              placeholder="Search by email or IP..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Search by email or IP..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full md:w-96 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
 
         {/* Users Table */}
@@ -185,85 +184,34 @@ function AdminDashboard() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Payment</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentUsers.map((user) => (
                 <tr key={user.id}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {user.ipAddress}
-                      {user.isBanned && (
-                        <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                          Banned
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {user.subscription}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{user.scriptsRemaining} / {user.scriptsLimit}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {user.lastPayment ? new Date(user.lastPayment).toLocaleDateString() : 'Never'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{user.ipAddress}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{user.subscription}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{user.scriptsRemaining}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_monthly' })}
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
+                      <button onClick={() => handleAction('upgrade', user.id, { plan: 'monthly' })} 
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
                         Monthly Pro
                       </button>
-                      <button
-                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_yearly' })}
-                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                      >
+                      <button onClick={() => handleAction('upgrade', user.id, { plan: 'yearly' })}
+                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">
                         Yearly Pro
                       </button>
-                      <button
-                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'free' })}
-                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                      >
+                      <button onClick={() => handleAction('downgrade', user.id)}
+                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600">
                         Free
                       </button>
-                      <button
-                        onClick={() => confirmAction('deleteUser', user.id)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
+                      <button onClick={() => confirmAction('delete', user.id)}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
                         Delete
                       </button>
-                      {!user.isBanned ? (
-                        <button
-                          onClick={() => confirmAction('banByIP', user.id, { ipAddress: user.ipAddress })}
-                          className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                        >
-                          Ban IP
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleAction('unbanByIP', user.id, { ipAddress: user.ipAddress })}
-                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                        >
-                          Unban IP
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -290,60 +238,7 @@ function AdminDashboard() {
               Next
             </button>
           </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{indexOfFirstUser + 1}</span> to{' '}
-                <span className="font-medium">{Math.min(indexOfLastUser, filteredUsers.length)}</span> of{' '}
-                <span className="font-medium">{filteredUsers.length}</span> results
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                {[...Array(totalPages)].map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentPage(idx + 1)}
-                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                      currentPage === idx + 1
-                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                    }`}
-                  >
-                    {idx + 1}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div>
         </div>
-
-        {/* Confirmation Modal */}
-        {showConfirmation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-8 rounded-lg max-w-md">
-              <h2 className="text-xl font-bold mb-4">Confirm Action</h2>
-              <p className="mb-4">Are you sure you want to perform this action?</p>
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={() => setShowConfirmation(false)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    handleAction(actionDetails.action, actionDetails.userId, actionDetails.data);
-                    setShowConfirmation(false);
-                  }}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
