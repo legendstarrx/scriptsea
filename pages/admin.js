@@ -198,11 +198,12 @@ export default function AdminDashboard() {
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('Fetched users:', data); // For debugging
+      console.log('Fetched users:', data);
       setUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -372,7 +373,27 @@ export default function AdminDashboard() {
   }
 
   if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
+    return (
+      <div style={{ color: 'red', padding: '20px' }}>
+        <p>Error: {error}</p>
+        <button 
+          onClick={() => {
+            setError(null);
+            fetchUsers();
+          }}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (loading) {
