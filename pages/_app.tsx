@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Toaster } from 'react-hot-toast';
+import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [isInitializing, setIsInitializing] = useState(true);

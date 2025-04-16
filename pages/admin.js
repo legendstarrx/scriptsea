@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AdminProtectedRoute from '../components/AdminProtectedRoute';
-import '../styles/globals.css';
 
 function AdminDashboard() {
   const router = useRouter();
