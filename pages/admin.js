@@ -7,6 +7,7 @@ import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import Link from 'next/link';
+import { toast } from 'react-toastify';
 
 const styles = {
   container: {
@@ -233,58 +234,89 @@ export default function AdminDashboard() {
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update subscription');
-      }
-
-      await fetchUsers(); // Refresh the users list
-      // Show success message
-      alert('Subscription updated successfully');
+      await fetchUsers();
+      toast.success('Subscription updated successfully');
     } catch (error) {
       console.error('Error updating subscription:', error);
-      // Show error in a more user-friendly way
-      alert(`Error: ${error.message}\nPlease try again or contact support if the issue persists.`);
+      toast.error(`Failed to update subscription: ${error.message}`);
     }
   };
 
-  const toggleUserBan = async (userId, currentBanStatus) => {
+  const handleBanUser = async (userId, currentBanStatus) => {
     try {
-      await fetch('/api/admin/users', {
+      const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId,
           action: currentBanStatus ? 'unbanUser' : 'banUser'
         })
       });
-      fetchUsers();
+
+      if (!response.ok) throw new Error('Failed to update ban status');
+      await fetchUsers();
+      toast.success(`User ${currentBanStatus ? 'unbanned' : 'banned'} successfully`);
     } catch (error) {
-      console.error('Error toggling ban status:', error);
+      console.error('Error updating ban status:', error);
+      toast.error(`Failed to ${currentBanStatus ? 'unban' : 'ban'} user`);
     }
   };
 
-  const deleteUserAccount = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
-          },
-          body: JSON.stringify({
-            userId,
-            action: 'deleteUser'
-          })
-        });
-        fetchUsers();
-      } catch (error) {
-        console.error('Error deleting user:', error);
-      }
+  const handleBanByIP = async (ipAddress) => {
+    if (!ipAddress || ipAddress === 'N/A') {
+      toast.error('No IP address available');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+        },
+        body: JSON.stringify({
+          action: 'banByIP',
+          data: { ipAddress }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to ban users by IP');
+      await fetchUsers();
+      toast.success('Users banned by IP successfully');
+    } catch (error) {
+      console.error('Error banning users by IP:', error);
+      toast.error('Failed to ban users by IP');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+        },
+        body: JSON.stringify({
+          userId,
+          action: 'deleteUser'
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to delete user');
+      await fetchUsers();
+      toast.success('User deleted successfully');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
     }
   };
 
@@ -305,27 +337,6 @@ export default function AdminDashboard() {
         fetchUsers();
       } catch (error) {
         console.error('Error deleting users by IP:', error);
-      }
-    }
-  };
-
-  const banUsersByIP = async (ipAddress) => {
-    if (window.confirm(`Are you sure you want to ban all users with IP: ${ipAddress}?`)) {
-      try {
-        await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
-          },
-          body: JSON.stringify({
-            action: 'banByIP',
-            data: { ipAddress }
-          })
-        });
-        fetchUsers();
-      } catch (error) {
-        console.error('Error banning users by IP:', error);
       }
     }
   };
@@ -496,21 +507,21 @@ export default function AdminDashboard() {
                       <td style={styles.td}>
                         <div style={styles.actionButtons}>
                           <button
-                            onClick={() => toggleUserBan(user.id, user.isBanned)}
+                            onClick={() => handleBanUser(user.id, user.isBanned)}
                             style={user.isBanned ? styles.unbanButton : styles.banButton}
                           >
                             {user.isBanned ? 'Unban' : 'Ban'}
                           </button>
                           {user.ipAddress && (
                             <button
-                              onClick={() => banUsersByIP(user.ipAddress)}
+                              onClick={() => handleBanByIP(user.ipAddress)}
                               style={styles.banByIPButton}
                             >
                               Ban by IP
                             </button>
                           )}
                           <button
-                            onClick={() => deleteUserAccount(user.id)}
+                            onClick={() => handleDeleteUser(user.id)}
                             style={styles.deleteButton}
                           >
                             Delete

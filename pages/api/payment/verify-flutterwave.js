@@ -36,8 +36,7 @@ export default async function handler(req, res) {
         subscriptionEnd: subscriptionEnd.toISOString(),
         paid: true,
         lastPayment: admin.firestore.FieldValue.serverTimestamp(),
-        upgradedAt: admin.firestore.FieldValue.serverTimestamp(),
-        nextBillingDate: subscriptionEnd.toISOString()
+        upgradedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
       return res.status(200).json({ success: true });
