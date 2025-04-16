@@ -184,21 +184,34 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+      try {
+        const response = await fetch('/api/admin/users', {
+          headers: {
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
         }
-      });
-      const data = await response.json();
-      setUsers(data);
+
+        const data = await response.json();
+        setUsers(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError(err.message);
+        setLoading(false);
+      }
     };
 
-    if (user) {
+    if (user?.email) {
       fetchUsers();
     }
   }, [user]);
@@ -363,6 +376,19 @@ export default function AdminDashboard() {
     return null;
   }
 
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
+  if (loading) {
+    return (
+      <div style={styles.loading}>
+        <div style={styles.spinner}></div>
+        Loading users...
+      </div>
+    );
+  }
+
   return (
     <AdminProtectedRoute>
     <div style={styles.container}>
@@ -400,12 +426,7 @@ export default function AdminDashboard() {
           </div>
 
         <div style={styles.tableContainer}>
-          {loading ? (
-            <div style={styles.loading}>
-              <div style={styles.spinner}></div>
-              Loading users...
-            </div>
-          ) : users.length === 0 ? (
+          {users.length === 0 ? (
             <div style={styles.noUsers}>No users found</div>
           ) : (
             <table style={styles.table}>

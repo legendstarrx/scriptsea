@@ -5,12 +5,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify admin authorization
-  if (req.headers.authorization !== process.env.NEXT_PUBLIC_ADMIN_API_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
   try {
+    // Verify admin authorization
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ') || 
+        authHeader.split(' ')[1] !== process.env.NEXT_PUBLIC_ADMIN_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const usersSnapshot = await adminDb.collection('users').get();
     const users = usersSnapshot.docs.map(doc => ({
       id: doc.id,
