@@ -29,6 +29,7 @@ export default async function handler(req, res) {
         await adminDb.collection('users').doc(userId).update({
           subscription: data.plan,
           scriptsRemaining: data.plan.startsWith('pro') ? 100 : 3,
+          scriptsLimit: data.plan.startsWith('pro') ? 100 : 3,
           lastUpdated: new Date().toISOString(),
           subscriptionEnd: data.plan === 'free' ? null : subscriptionEnd.toISOString(),
           subscriptionType: data.plan === 'free' ? null : data.plan.includes('yearly') ? 'yearly' : 'monthly'

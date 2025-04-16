@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
@@ -6,9 +7,16 @@ import AdminProtectedRoute from '../../components/AdminProtectedRoute';
 
 export default function PaymentsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!user || user.email !== 'legendstarr2024@gmail.com') {
+      router.push('/');
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -32,16 +40,8 @@ export default function PaymentsPage() {
     }
   }, [user]);
 
-  if (!user?.isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-white">
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-red-500">Access denied</div>
-        </div>
-        <Footer />
-      </div>
-    );
+  if (!user || user.email !== 'legendstarr2024@gmail.com') {
+    return null; // Don't render anything while checking auth
   }
 
   return (
