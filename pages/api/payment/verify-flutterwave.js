@@ -18,15 +18,26 @@ export default async function handler(req, res) {
     });
 
     if (transaction.data.status === "successful") {
-      // Update Firestore with new subscription details
+      const plan = req.query.plan; // 'monthly' or 'yearly'
+      const now = new Date();
+      const subscriptionEnd = new Date(now);
+      
+      if (plan === 'yearly') {
+        subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+      } else {
+        subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+      }
+
       await adminDb.collection('users').doc(req.query.userId).update({
         subscription: 'pro',
-        subscriptionType: req.query.plan, // 'monthly' or 'yearly'
-        subscriptionEnd: calculateEndDate(req.query.plan),
+        subscriptionType: plan,
         scriptsRemaining: 100,
         scriptsLimit: 100,
+        subscriptionEnd: subscriptionEnd.toISOString(),
         paid: true,
-        lastPayment: admin.firestore.FieldValue.serverTimestamp()
+        lastPayment: admin.firestore.FieldValue.serverTimestamp(),
+        upgradedAt: admin.firestore.FieldValue.serverTimestamp(),
+        nextBillingDate: subscriptionEnd.toISOString()
       });
 
       return res.status(200).json({ success: true });
@@ -37,14 +48,4 @@ export default async function handler(req, res) {
     console.error('Payment verification error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
-}
-
-function calculateEndDate(plan) {
-  const date = new Date();
-  if (plan === 'yearly') {
-    date.setFullYear(date.getFullYear() + 1);
-  } else {
-    date.setMonth(date.getMonth() + 1);
-  }
-  return date;
 } 

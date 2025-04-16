@@ -218,57 +218,28 @@ export default function AdminDashboard() {
 
   const handleSubscriptionChange = async (userId, newPlan) => {
     try {
-      const now = new Date();
-      const subscriptionEnd = new Date(now);
-      
-      let updateData = {};
-      
-      if (newPlan === 'free') {
-        updateData = {
-          subscription: 'free',
-          subscriptionType: null,
-          scriptsRemaining: 3,
-          scriptsLimit: 3,
-          subscriptionEnd: null,
-          paid: false
-        };
-      } else {
-        // For pro plans (monthly or yearly)
-        if (newPlan === 'yearly') {
-          subscriptionEnd.setFullYear(now.getFullYear() + 1);
-        } else {
-          subscriptionEnd.setMonth(now.getMonth() + 1);
-        }
-
-        updateData = {
-          subscription: 'pro',
-          subscriptionType: newPlan,
-          scriptsRemaining: 100,
-          scriptsLimit: 100,
-          subscriptionEnd: subscriptionEnd.toISOString(),
-          paid: true,
-          upgradedAt: now.toISOString(),
-          lastPayment: now.toISOString(),
-          nextBillingDate: subscriptionEnd.toISOString()
-        };
-      }
-
-      await fetch('/api/admin/users', {
+      const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
         },
         body: JSON.stringify({
           userId,
           action: 'updateSubscription',
-          data: updateData
+          plan: newPlan
         })
       });
-      fetchUsers(); // Refresh the users list
+
+      if (!response.ok) {
+        throw new Error('Failed to update subscription');
+      }
+
+      // Refresh the users list
+      fetchUsers();
     } catch (error) {
       console.error('Error updating subscription:', error);
-      alert('Failed to update subscription');
+      alert('Failed to update subscription: ' + error.message);
     }
   };
 
@@ -472,9 +443,9 @@ export default function AdminDashboard() {
                         </select>
                       </td>
                       <td style={styles.td}>
-                        {user.subscription === 'pro' ? `${daysLeft} days` : 'N/A'}
+                        {user.subscription === 'free' ? 'N/A' : `${daysLeft} days`}
                       </td>
-                      <td style={styles.td}>{user.scriptsRemaining}/{user.scriptsLimit || 3}</td>
+                      <td style={styles.td}>{`${user.scriptsRemaining}/${user.scriptsLimit}`}</td>
                       <td style={styles.td}>
                         <div style={styles.actionButtons}>
                           <button
