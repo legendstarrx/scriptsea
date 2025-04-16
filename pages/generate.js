@@ -45,14 +45,16 @@ const GeneratePageNav = () => {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <Link href="/" style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            background: 'linear-gradient(135deg, #FF3366, #FF6B6B)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textDecoration: 'none'
-          }}>
+          <Link
+            href="/"
+            style={{
+              textDecoration: 'none',
+              color: '#FF3366',
+              fontSize: '1.5rem',
+              fontWeight: 'bold'
+              // ... any other styles you had
+            }}
+          >
             ScriptSea
           </Link>
 
