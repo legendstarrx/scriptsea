@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const SubscriptionModal = ({ isOpen, onClose, plan }) => {
+const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,10 +19,10 @@ const SubscriptionModal = ({ isOpen, onClose, plan }) => {
     }
   };
 
-  const currentSubscription = plan || 'free';
+  const currentSubscription = userProfile?.subscription || 'free';
   const isPro = currentSubscription === 'pro' || currentSubscription === 'premium';
 
-  const handleUpgrade = async (selectedPlan) => {
+  const handleUpgrade = async (plan) => {
     try {
       setLoading(true);
       const response = await fetch('/api/create-payment', {
@@ -31,7 +31,7 @@ const SubscriptionModal = ({ isOpen, onClose, plan }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          plan: selectedPlan,
+          plan,
           userId: user.uid,
           email: user.email
         })
@@ -40,11 +40,10 @@ const SubscriptionModal = ({ isOpen, onClose, plan }) => {
       const data = await response.json();
       if (data.success && data.paymentLink) {
         window.location.href = data.paymentLink;
-      } else {
-        console.error('Failed to create payment link');
       }
     } catch (error) {
       console.error('Error initiating payment:', error);
+      setError('Failed to process payment. Please try again.');
     } finally {
       setLoading(false);
     }
