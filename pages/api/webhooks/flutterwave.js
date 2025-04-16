@@ -1,5 +1,6 @@
 import { db } from '../../../lib/firebase';
 import { collection, doc, updateDoc, addDoc } from 'firebase/firestore';
+import crypto from 'crypto';
 
 // Load environment variables
 const WEBHOOK_HASH = process.env.FLUTTERWAVE_WEBHOOK_HASH;

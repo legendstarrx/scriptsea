@@ -9,7 +9,7 @@ export default async function handler(req, res) {
       `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
       {
         headers: {
-          'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`
+          'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`
         }
       }
     );

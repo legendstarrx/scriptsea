@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     const response = await fetch('https://api.flutterwave.com/v3/payment-plans', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
+        'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(planDetails)
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     const paymentResponse = await fetch('https://api.flutterwave.com/v3/payments', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
+        'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(paymentData)
