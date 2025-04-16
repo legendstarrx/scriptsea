@@ -1,475 +1,225 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { db } from '../lib/firebase';
-import { collection, query, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
-import AdminProtectedRoute from '../components/AdminProtectedRoute';
-import Navigation from '../components/Navigation';
-import Footer from '../components/Footer';
-import Link from 'next/link';
-
-const styles = {
-  container: {
-    padding: '20px',
-    backgroundColor: '#f8f9fa',
-    minHeight: '100vh',
-  },
-  header: {
-    marginBottom: '30px',
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statsContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
-  },
-  statCard: {
-    backgroundColor: 'white',
-    padding: '20px',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  statLabel: {
-    fontSize: '14px',
-    color: '#666',
-    marginBottom: '8px',
-  },
-  statValue: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: '#FF3366',
-    margin: 0,
-  },
-  searchContainer: {
-    marginBottom: '20px',
-  },
-  searchInput: {
-    width: '100%',
-    padding: '10px',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    fontSize: '16px',
-  },
-  tableContainer: {
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    overflow: 'auto',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '12px',
-    borderBottom: '2px solid #ddd',
-    color: '#666',
-    fontSize: '14px',
-    fontWeight: '600',
-  },
-  tr: {
-    borderBottom: '1px solid #eee',
-  },
-  td: {
-    padding: '12px',
-    fontSize: '14px',
-  },
-  userInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  userName: {
-    fontWeight: '500',
-    color: '#333',
-  },
-  userEmail: {
-    color: '#666',
-    fontSize: '13px',
-  },
-  select: {
-    padding: '6px',
-    borderRadius: '4px',
-    border: '1px solid #ddd',
-    backgroundColor: 'white',
-    minWidth: '120px',
-  },
-  banButton: {
-    backgroundColor: '#ff4444',
-    color: 'white',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  unbanButton: {
-    backgroundColor: '#00C851',
-    color: 'white',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  deleteButton: {
-    backgroundColor: '#ff3366',
-    color: 'white',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '20px',
-    color: '#fff',
-  },
-  spinner: {
-    width: '20px',
-    height: '20px',
-    border: '2px solid #ff3366',
-    borderTop: '2px solid transparent',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    marginRight: '10px',
-  },
-  noUsers: {
-    textAlign: 'center',
-    padding: '20px',
-    color: '#fff',
-  },
-  actionButtons: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap',
-  },
-  deleteByIPButton: {
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  banByIPButton: {
-    backgroundColor: '#ff6b6b',
-    color: 'white',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-  },
-  expiryInfo: {
-    display: 'inline-block',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    backgroundColor: '#2d2d2d',
-    color: '#fff',
-    fontSize: '14px',
-  },
-};
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
   const router = useRouter();
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [actionDetails, setActionDetails] = useState(null);
 
   useEffect(() => {
-    if (user?.email === 'legendstarr2024@gmail.com') {
-      fetchUsers();
+    if (!user?.email || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      router.push('/');
+      return;
     }
+    fetchUsers();
   }, [user]);
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/admin/get-users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
+      const response = await fetch('/api/admin/get-users', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+        }
+      });
       const data = await response.json();
-      console.log('Client: Fetched users:', data.users); // Debug log
-      setUsers(data.users || []);
+      setUsers(data.users);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      toast.error('Failed to fetch users');
     } finally {
       setLoading(false);
     }
   };
 
-  const updateUserSubscription = async (userId, newSubscription) => {
+  const handleAction = async (action, userId, data = {}) => {
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
-        },
-        body: JSON.stringify({ 
-          userId,
-          action: 'updateSubscription',
-          data: { plan: newSubscription }
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update subscription');
-      }
-      await fetchUsers(); // Refresh the list
-    } catch (error) {
-      console.error('Error updating subscription:', error);
-    }
-  };
-
-  const toggleUserBan = async (userId, currentBanStatus) => {
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
         },
         body: JSON.stringify({
+          action,
           userId,
-          action: currentBanStatus ? 'unbanUser' : 'banUser'
+          data: {
+            ...data,
+            adminEmail: user.email
+          }
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to toggle ban status');
+      if (response.ok) {
+        toast.success('Action completed successfully');
+        fetchUsers();
+      } else {
+        throw new Error('Action failed');
       }
-      await fetchUsers();
     } catch (error) {
-      console.error('Error toggling ban status:', error);
+      toast.error('Failed to perform action');
     }
   };
 
-  const deleteUserAccount = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        const response = await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
-          },
-          body: JSON.stringify({
-            userId,
-            action: 'deleteUser'
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete user');
-        }
-      await fetchUsers();
-      } catch (error) {
-        console.error('Error deleting user:', error);
-      }
-    }
+  const confirmAction = (action, userId, data = {}) => {
+    setActionDetails({ action, userId, data });
+    setShowConfirmation(true);
   };
 
-  const deleteUsersByIP = async (ipAddress) => {
-    if (window.confirm(`Are you sure you want to delete all users with IP: ${ipAddress}?`)) {
-      try {
-        const response = await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
-          },
-          body: JSON.stringify({
-            action: 'deleteByIP',
-            data: { ipAddress }
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete users by IP');
-        }
-        await fetchUsers();
-      } catch (error) {
-        console.error('Error deleting users by IP:', error);
-      }
-    }
-  };
-
-  const banUsersByIP = async (ipAddress) => {
-    if (window.confirm(`Are you sure you want to ban all users with IP: ${ipAddress}?`)) {
-      try {
-        const response = await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
-          },
-          body: JSON.stringify({
-            action: 'banByIP',
-            data: { ipAddress }
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to ban users by IP');
-        }
-        await fetchUsers();
-      } catch (error) {
-        console.error('Error banning users by IP:', error);
-      }
-    }
-  };
-
-  const filteredUsers = users.filter(user => {
-    const searchLower = searchTerm.toLowerCase();
+  if (loading) {
     return (
-      user.email?.toLowerCase().includes(searchLower) ||
-      user.displayName?.toLowerCase().includes(searchLower) ||
-      user.ipAddress?.toLowerCase().includes(searchLower)
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
     );
-  });
-
-  const getDaysUntilExpiry = (expiryDate) => {
-    if (!expiryDate) return 0;
-    const now = new Date();
-    const expiry = new Date(expiryDate);
-    const diffTime = expiry - now;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
-  };
-
-  if (!user || user.email !== 'legendstarr2024@gmail.com') {
-    return null;
   }
 
   return (
-    <AdminProtectedRoute>
-    <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>Admin Dashboard</h1>
-        </div>
-          
-        <div style={styles.statsContainer}>
-            <div style={styles.statCard}>
-              <h3 style={styles.statLabel}>Total Users</h3>
-            <p style={styles.statValue}>{users.length}</p>
-            </div>
-            <div style={styles.statCard}>
-              <h3 style={styles.statLabel}>Pro Users</h3>
-            <p style={styles.statValue}>
-              {users.filter(u => u.subscription === 'pro').length}
-            </p>
-            </div>
-            <div style={styles.statCard}>
-            <h3 style={styles.statLabel}>Banned Users</h3>
-            <p style={styles.statValue}>
-              {users.filter(u => u.isBanned).length}
-            </p>
-            </div>
-          </div>
-
-          <div style={styles.searchContainer}>
-            <input
-              type="text"
-            placeholder="Search by email, name, or IP address..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={styles.searchInput}
-            />
-          </div>
-
-        <div style={styles.tableContainer}>
-          {loading ? (
-            <div style={styles.loading}>
-              <div style={styles.spinner}></div>
-              Loading users...
-            </div>
-          ) : users.length === 0 ? (
-            <div style={styles.noUsers}>No users found</div>
-          ) : (
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>User</th>
-                  <th style={styles.th}>IP Address</th>
-                  <th style={styles.th}>Subscription</th>
-                  <th style={styles.th}>Expires In</th>
-                  <th style={styles.th}>Scripts Left</th>
-                  <th style={styles.th}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map(user => (
-                  <tr key={user.id} style={styles.tr}>
-                    <td style={styles.td}>
-                      <div style={styles.userInfo}>
-                        <div style={styles.userName}>{user.displayName || 'N/A'}</div>
-                        <div style={styles.userEmail}>{user.email}</div>
-                      </div>
-                    </td>
-                    <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
-                    <td style={styles.td}>
-                      <select
-                        value={user.subscription || 'free'}
-                        onChange={(e) => updateUserSubscription(user.id, e.target.value)}
-                        style={styles.select}
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white shadow-md rounded-lg">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Payment</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {users.map(user => (
+              <tr key={user.id}>
+                <td className="px-6 py-4">
+                  <div className="flex items-center">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
+                      <div className="text-sm text-gray-500">{user.email}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {user.ipAddress}
+                    {user.isBanned && (
+                      <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        Banned
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    {user.subscription}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">{user.scriptsRemaining} / {user.scriptsLimit}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {user.lastPayment ? new Date(user.lastPayment).toLocaleDateString() : 'Never'}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_monthly' })}
+                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Monthly Pro
+                    </button>
+                    <button
+                      onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_yearly' })}
+                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                      Yearly Pro
+                    </button>
+                    <button
+                      onClick={() => handleAction('updateSubscription', user.id, { plan: 'free' })}
+                      className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    >
+                      Free
+                    </button>
+                    <button
+                      onClick={() => confirmAction('deleteUser', user.id)}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                    {!user.isBanned ? (
+                      <button
+                        onClick={() => confirmAction('banByIP', user.id, { ipAddress: user.ipAddress })}
+                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
                       >
-                        <option value="free">Free</option>
-                        <option value="pro_monthly">Pro Monthly</option>
-                        <option value="pro_yearly">Pro Yearly</option>
-                      </select>
-                    </td>
-                    <td style={styles.td}>
-                      {user.subscriptionEnd ? (
-                        <div style={styles.expiryInfo}>
-                          {getDaysUntilExpiry(user.subscriptionEnd)} days
-                        </div>
-                      ) : 'N/A'}
-                    </td>
-                    <td style={styles.td}>{user.scriptsRemaining || 0}</td>
-                    <td style={styles.td}>
-                      <div style={styles.actionButtons}>
-                        <button
-                          onClick={() => toggleUserBan(user.id, user.isBanned)}
-                          style={user.isBanned ? styles.unbanButton : styles.banButton}
-                        >
-                          {user.isBanned ? 'Unban' : 'Ban'}
-                        </button>
-                        {user.ipAddress && (
-                          <button
-                            onClick={() => banUsersByIP(user.ipAddress)}
-                            style={styles.banByIPButton}
-                          >
-                            Ban by IP
-                          </button>
-                        )}
-                          <button
-                          onClick={() => deleteUserAccount(user.id)}
-                          style={styles.deleteButton}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                        Ban IP
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleAction('unbanByIP', user.id, { ipAddress: user.ipAddress })}
+                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                      >
+                        Unban IP
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg max-w-md">
+            <h2 className="text-xl font-bold mb-4">Confirm Action</h2>
+            <p className="mb-4">Are you sure you want to perform this action?</p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleAction(actionDetails.action, actionDetails.userId, actionDetails.data);
+                  setShowConfirmation(false);
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
         </div>
+      )}
     </div>
-    </AdminProtectedRoute>
   );
+}
+
+export async function getServerSideProps(context) {
+  const { req } = context;
+  const userEmail = req.headers['x-user-email'];
+
+  if (userEmail !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 } 

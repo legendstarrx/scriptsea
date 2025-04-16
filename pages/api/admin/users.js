@@ -1,4 +1,4 @@
-import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
+import { adminDb, verifyAdmin } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,11 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Verify admin API key
-    if (req.headers.authorization !== process.env.NEXT_PUBLIC_ADMIN_API_KEY) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
+    await verifyAdmin(req);
     const { userId, action, data } = req.body;
 
     switch (action) {
@@ -36,60 +32,11 @@ export default async function handler(req, res) {
         });
         break;
 
-      case 'banUser':
-        if (!userId) {
-          return res.status(400).json({ error: 'User ID is required' });
-        }
-        
-        await adminDb.collection('users').doc(userId).update({
-          isBanned: true,
-          lastUpdated: new Date().toISOString()
-        });
-        break;
-
-      case 'unbanUser':
-        if (!userId) {
-          return res.status(400).json({ error: 'User ID is required' });
-        }
-        
-        await adminDb.collection('users').doc(userId).update({
-          isBanned: false,
-          lastUpdated: new Date().toISOString()
-        });
-        break;
-
       case 'deleteUser':
         if (!userId) {
           return res.status(400).json({ error: 'User ID is required' });
         }
-        
-        try {
-          await adminAuth.deleteUser(userId);
-        } catch (authError) {
-          console.warn('Auth deletion failed:', authError.message);
-        }
         await adminDb.collection('users').doc(userId).delete();
-        break;
-
-      case 'deleteByIP':
-        if (!data?.ipAddress) {
-          return res.status(400).json({ error: 'IP address is required' });
-        }
-        
-        const snapshot = await adminDb.collection('users')
-          .where('ipAddress', '==', data.ipAddress)
-          .get();
-        
-        const deletePromises = snapshot.docs.map(async (doc) => {
-          try {
-            await adminAuth.deleteUser(doc.id);
-          } catch (authError) {
-            console.warn('Auth deletion failed:', authError.message);
-          }
-          return doc.ref.delete();
-        });
-        
-        await Promise.all(deletePromises);
         break;
 
       case 'banByIP':
@@ -97,19 +44,42 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'IP address is required' });
         }
         
-        const banSnapshot = await adminDb.collection('users')
+        // Add IP to banned_ips collection
+        await adminDb.collection('banned_ips').doc(data.ipAddress).set({
+          bannedAt: new Date().toISOString(),
+          bannedBy: data.adminEmail
+        });
+
+        // Update all users with this IP
+        const usersSnapshot = await adminDb.collection('users')
           .where('ipAddress', '==', data.ipAddress)
           .get();
+
+        const batch = adminDb.batch();
+        usersSnapshot.docs.forEach(doc => {
+          batch.update(doc.ref, { isBanned: true });
+        });
+        await batch.commit();
+        break;
+
+      case 'unbanByIP':
+        if (!data?.ipAddress) {
+          return res.status(400).json({ error: 'IP address is required' });
+        }
         
-        const banPromises = banSnapshot.docs.map(doc => 
-          doc.ref.update({
-            isBanned: true,
-            lastUpdated: new Date().toISOString(),
-            banReason: `Banned by IP address: ${data.ipAddress}`
-          })
-        );
-        
-        await Promise.all(banPromises);
+        // Remove IP from banned_ips collection
+        await adminDb.collection('banned_ips').doc(data.ipAddress).delete();
+
+        // Update all users with this IP
+        const bannedUsersSnapshot = await adminDb.collection('users')
+          .where('ipAddress', '==', data.ipAddress)
+          .get();
+
+        const unbanBatch = adminDb.batch();
+        bannedUsersSnapshot.docs.forEach(doc => {
+          unbanBatch.update(doc.ref, { isBanned: false });
+        });
+        await unbanBatch.commit();
         break;
 
       default:
@@ -118,7 +88,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Admin action error:', error);
+    return res.status(500).json({ error: error.message });
   }
 } 
