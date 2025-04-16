@@ -7,6 +7,7 @@ import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import Link from 'next/link';
+import { adminDb } from '../lib/firebaseAdmin';
 
 const styles = {
   container: {
@@ -210,25 +211,48 @@ export default function AdminDashboard() {
     }
   };
 
-  const updateUserSubscription = async (userId, newSubscription) => {
+  const handleSubscriptionChange = async (userId, newPlan) => {
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          action: 'updateSubscription',
-          userId,
-          plan: newSubscription
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update subscription');
+      const now = new Date();
+      const subscriptionEnd = new Date(now);
       
-      fetchUsers();
+      let updateData = {};
+      
+      if (newPlan === 'free') {
+        updateData = {
+          subscription: 'free',
+          subscriptionType: null,
+          scriptsRemaining: 3,
+          scriptsLimit: 3,
+          subscriptionEnd: null,
+          paid: false
+        };
+      } else {
+        // For pro plans (monthly or yearly)
+        if (newPlan === 'yearly') {
+          subscriptionEnd.setFullYear(now.getFullYear() + 1);
+        } else {
+          subscriptionEnd.setMonth(now.getMonth() + 1);
+        }
+
+        updateData = {
+          subscription: 'pro',
+          subscriptionType: newPlan,
+          scriptsRemaining: 100,
+          scriptsLimit: 100,
+          subscriptionEnd: subscriptionEnd.toISOString(),
+          paid: true,
+          upgradedAt: now.toISOString(),
+          lastPayment: now.toISOString(),
+          nextBillingDate: subscriptionEnd.toISOString()
+        };
+      }
+
+      await adminDb.collection('users').doc(userId).update(updateData);
+      fetchUsers(); // Refresh the users list
     } catch (error) {
       console.error('Error updating subscription:', error);
+      alert('Failed to update subscription');
     }
   };
 
@@ -348,28 +372,6 @@ export default function AdminDashboard() {
     return diffDays > 0 ? diffDays : 0;
   };
 
-  const handleSubscriptionChange = async (userId, newValue) => {
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          action: 'updateSubscription',
-          userId,
-          plan: newValue
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update subscription');
-      
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating subscription:', error);
-    }
-  };
-
   if (!user || user.email !== 'legendstarr2024@gmail.com') {
     return null;
   }
@@ -431,59 +433,67 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map(user => (
-                  <tr key={user.id} style={styles.tr}>
-                    <td style={styles.td}>
-                      <div style={styles.userInfo}>
-                        <div style={styles.userName}>{user.displayName || 'N/A'}</div>
-                        <div style={styles.userEmail}>{user.email}</div>
-                      </div>
-                    </td>
-                    <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
-                    <td style={styles.td}>
-                      <select
-                        value={user.subscription === 'pro' ? user.subscriptionType : 'free'}
-                        onChange={(e) => handleSubscriptionChange(user.id, e.target.value)}
-                      >
-                        <option value="free">Free</option>
-                        <option value="monthly">Pro Monthly</option>
-                        <option value="yearly">Pro Yearly</option>
-                      </select>
-                    </td>
-                    <td style={styles.td}>
-                      {user.subscriptionEnd ? (
-                        <div style={styles.expiryInfo}>
-                          {getDaysUntilExpiry(user.subscriptionEnd)} days
+                {filteredUsers.map(user => {
+                  // Calculate days until expiry
+                  const daysLeft = user.subscriptionEnd 
+                    ? Math.ceil((new Date(user.subscriptionEnd) - new Date()) / (1000 * 60 * 60 * 24))
+                    : 'N/A';
+
+                  return (
+                    <tr key={user.id} style={styles.tr}>
+                      <td style={styles.td}>
+                        <div style={styles.userInfo}>
+                          <div style={styles.userName}>{user.displayName || 'N/A'}</div>
+                          <div style={styles.userEmail}>{user.email}</div>
                         </div>
-                      ) : 'N/A'}
-                    </td>
-                    <td style={styles.td}>{user.scriptsRemaining || 0}</td>
-                    <td style={styles.td}>
-                      <div style={styles.actionButtons}>
-                        <button
-                          onClick={() => toggleUserBan(user.id, user.isBanned)}
-                          style={user.isBanned ? styles.unbanButton : styles.banButton}
+                      </td>
+                      <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
+                      <td style={styles.td}>
+                        <select
+                          value={user.subscription === 'pro' ? user.subscriptionType : 'free'}
+                          onChange={(e) => handleSubscriptionChange(user.id, e.target.value)}
+                          style={{
+                            padding: '5px',
+                            borderRadius: '4px',
+                            border: '1px solid #ddd'
+                          }}
                         >
-                          {user.isBanned ? 'Unban' : 'Ban'}
-                        </button>
-                        {user.ipAddress && (
+                          <option value="free">Free</option>
+                          <option value="monthly">Pro Monthly</option>
+                          <option value="yearly">Pro Yearly</option>
+                        </select>
+                      </td>
+                      <td style={styles.td}>
+                        {user.subscription === 'pro' ? `${daysLeft} days` : 'N/A'}
+                      </td>
+                      <td style={styles.td}>{user.scriptsRemaining}/{user.scriptsLimit || 3}</td>
+                      <td style={styles.td}>
+                        <div style={styles.actionButtons}>
                           <button
-                            onClick={() => banUsersByIP(user.ipAddress)}
-                            style={styles.banByIPButton}
+                            onClick={() => toggleUserBan(user.id, user.isBanned)}
+                            style={user.isBanned ? styles.unbanButton : styles.banButton}
                           >
-                            Ban by IP
+                            {user.isBanned ? 'Unban' : 'Ban'}
                           </button>
-                        )}
+                          {user.ipAddress && (
+                            <button
+                              onClick={() => banUsersByIP(user.ipAddress)}
+                              style={styles.banByIPButton}
+                            >
+                              Ban by IP
+                            </button>
+                          )}
                           <button
-                          onClick={() => deleteUserAccount(user.id)}
-                          style={styles.deleteButton}
+                            onClick={() => deleteUserAccount(user.id)}
+                            style={styles.deleteButton}
                           >
                             Delete
                           </button>
                         </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
