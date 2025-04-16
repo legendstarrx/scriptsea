@@ -115,6 +115,11 @@ const nextConfig = {
         tls: false,
         fs: false,
         child_process: false,
+        http2: false,
+        dns: false,
+        'aws-crt': false,
+        'net-browser': false,
+        encoding: false,
       };
     }
     return config;
