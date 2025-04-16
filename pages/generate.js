@@ -1223,51 +1223,95 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        {/* Pass the state and setter to GeneratePageNav */}
+      <div style={{ minHeight: '100vh', backgroundColor: '#f8f9ff' }}>
         <GeneratePageNav 
           showSubscriptionModal={showSubscriptionModal}
           setShowSubscriptionModal={setShowSubscriptionModal}
         />
 
-        <main className="flex-1 p-4 bg-gray-100">
-          <div className="max-w-8xl mx-auto flex flex-col gap-6">
-            {/* Header */}
-            <h1 className="text-2xl text-gray-800 text-center mb-4">
-              Generate Viral Video Script
-            </h1>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '100px 20px 40px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '15px 20px',
+            marginBottom: '20px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#333' }}>
+              Scripts Generated:
+            </span>
+            <span style={{ fontSize: '1.5rem', fontWeight: 'semibold', color: '#FF3366' }}>
+              {userProfile?.scriptsRemaining || 0} scripts remaining out of {userProfile?.subscription === 'pro' ? 100 : 3}
+            </span>
+            {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
+              <button
+                onClick={() => setShowSubscriptionModal(true)}
+                style={{
+                  marginLeft: '10px',
+                  padding: '8px 16px',
+                  backgroundColor: '#FF3366',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '20px',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                }}
+              >
+                Upgrade to Pro
+              </button>
+            )}
+          </div>
 
-            {/* Script Counter */}
-            <div className="bg-white rounded-lg p-4 mb-4 shadow-md flex justify-center items-center gap-4">
-              <span className="text-gray-600">
-                Scripts Generated:
-              </span>
-              <span className="text-lg font-semibold text-gray-800">
-                {userProfile?.scriptsRemaining || 0} scripts remaining out of {userProfile?.subscription === 'pro' ? 100 : 3}
-              </span>
-              {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
-                <button
-                  onClick={() => setShowSubscriptionModal(true)}
-                  className="ml-2 px-4 py-2 bg-red-500 text-white rounded-lg transition duration-200"
-                >
-                  Upgrade to Pro
-                </button>
-              )}
-            </div>
-
-            {/* Main Card */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '20px',
+              padding: '30px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+              boxSizing: 'border-box'
+            }}>
               {/* Error/Success Message */}
               {error && (
-                <div className="bg-green-100 text-green-700 p-3 rounded mb-4 flex items-center gap-2">
-                  <span className="text-xl">
+                <div style={{
+                  background: 'green',
+                  color: 'white',
+                  padding: '10px',
+                  borderRadius: '5px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
                     {error.includes('successfully') ? '✓' : '!'}
                   </span>
                   {error}
                   {!error.includes('successfully') && (
                     <button
                       onClick={() => setError('')}
-                      className="ml-auto bg-transparent border-none p-2 text-green-500 text-sm opacity-70 hover:opacity-100"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'white',
+                        fontSize: '1rem',
+                        cursor: 'pointer'
+                      }}
                     >
                       ×
                     </button>
@@ -1276,11 +1320,11 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               )}
 
               {/* Script Type Selection */}
-              <div className="mb-5">
-                <label className="block text-gray-600 mb-2 text-sm">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                   Script type
                 </label>
-                <div className="flex gap-4 flex-wrap">
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {[
                     { value: 'viral', label: 'Viral Video Script' },
                     { value: 'ad', label: 'Advertisement Script' }
@@ -1288,7 +1332,17 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     <button
                       key={type.value}
                       onClick={() => setScriptType(type.value)}
-                      className="px-4 py-2 rounded border-none bg-gray-100 text-gray-600 transition duration-300 hover:bg-red-100 flex items-center justify-center gap-2"
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#FF3366',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                      }}
                     >
                       {type.value === 'viral' ? '🎥' : '💼'}
                       {type.label}
@@ -1298,25 +1352,40 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               </div>
 
               {/* Video Topic/Ideas Input */}
-              <div className="mb-5">
-                <label className="block text-gray-600 mb-2 text-sm flex items-center gap-2">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                   Video Topic or Ideas
-                  <span className="text-gray-400 text-sm font-normal">
+                  <span style={{ color: '#999', fontSize: '0.9rem' }}>
                     (Type or record your thoughts)
                   </span>
                 </label>
-                <div className="relative flex flex-col gap-2">
-                  <div className="relative flex items-start">
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ position: 'relative' }}>
                     <textarea
                       value={videoTopic}
                       onChange={(e) => setVideoTopic(e.target.value)}
                       placeholder="Enter your video topic or share your creative ideas here..."
-                      className="w-full p-4 pr-12 text-gray-800 border rounded-lg bg-gray-50 transition duration-200 focus:border-red-300 focus:ring-2 focus:ring-red-200 focus:outline-none"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: '1px solid #ccc',
+                        borderRadius: '5px',
+                        resize: 'vertical'
+                      }}
                     />
                     <button
                       onClick={toggleRecording}
                       title={isRecording ? 'Stop recording' : 'Start recording'}
-                      className="absolute top-4 right-4 bg-transparent border-none p-2 rounded-full flex items-center justify-center transition duration-200"
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: 'none',
+                        border: 'none',
+                        padding: '8px',
+                        borderRadius: '50%',
+                        cursor: 'pointer'
+                      }}
                     >
                       <svg 
                         viewBox="0 0 24 24" 
@@ -1331,32 +1400,32 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     </button>
                   </div>
                   {isRecording && (
-                    <div className="p-3 bg-red-100 rounded text-red-700 text-sm flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse"></span>
+                    <div style={{ background: '#ffcccc', color: '#cc0000', padding: '10px', borderRadius: '5px', marginTop: '10px' }}>
+                      <span style={{ width: '16px', height: '16px', background: '#cc0000', borderRadius: '50%', display: 'inline-block', marginRight: '10px' }}></span>
                       Recording your ideas...
                     </div>
                   )}
-                  <p className="mt-2 text-gray-500 text-sm italic">
+                  <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '10px' }}>
                     Share your topic or brainstorm ideas - they'll be crafted into an engaging script
                   </p>
                 </div>
               </div>
 
               {/* Viral Reference Input */}
-              <div className="mb-5">
-                <label className="block text-gray-600 mb-2 text-sm">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                   Viral video reference (optional)
                 </label>
-                <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 transition duration-300 hover:border-red-300">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-2xl">
+                <div style={{ border: '1px solid #ccc', borderRadius: '5px', padding: '10px', background: '#f9f9f9' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <div style={{ width: '32px', height: '32px', background: '#ffcccc', color: '#cc0000', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
                       📎
                     </div>
-                    <div className="text-center">
-                      <p className="text-gray-700 mb-2">
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: '#666', marginBottom: '5px' }}>
                         Paste your video link here
                       </p>
-                      <p className="text-gray-500">
+                      <p style={{ color: '#999', fontSize: '0.9rem' }}>
                         Supports YouTube and TikTok links
                       </p>
                     </div>
@@ -1364,66 +1433,79 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       value={viralReference}
                       onChange={(e) => setViralReference(e.target.value)}
                       placeholder="https://youtube.com/watch?v=..."
-                      className="w-full p-4 text-gray-800 border rounded-lg bg-gray-50 transition duration-200 focus:border-red-300 focus:ring-2 focus:ring-red-200 focus:outline-none"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ccc',
+                        borderRadius: '5px'
+                      }}
                     />
                   </div>
                 </div>
 
                 {isProcessingVideo && (
-                  <div className="mt-4 p-4 bg-gray-100 rounded flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center animate-spin">
-                      ⌛
-                    </div>
-                    <div className="text-gray-600">
-                      Analyzing video style...
-                    </div>
+                  <div style={{ background: '#f9f9f9', padding: '10px', borderRadius: '5px', marginTop: '10px' }}>
+                    <div style={{ width: '24px', height: '24px', background: '#ffcccc', color: '#cc0000', borderRadius: '50%', display: 'inline-block', marginRight: '10px', animation: 'spin 1s linear infinite' }}></div>
+                    <span style={{ color: '#666' }}>Analyzing video style...</span>
                   </div>
                 )}
 
                 {videoInfo && (
-                  <div className="mt-4 p-4 bg-gray-100 rounded flex items-center gap-4 border border-red-200">
-                    <div className="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl">
-                      ✓
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-gray-700 font-semibold mb-2">
-                        {videoInfo.platform} video detected
+                  <div style={{ background: '#f9f9f9', padding: '10px', borderRadius: '5px', marginTop: '10px', border: '1px solid #ccc' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ width: '24px', height: '24px', background: '#ffcccc', color: '#cc0000', borderRadius: '50%', display: 'inline-block' }}>
+                        ✓
                       </div>
-                      <div className="text-gray-500 flex items-center gap-2">
-                        <span className="px-2 py-1 bg-white rounded text-gray-500 border border-gray-300">
-                          ID: {videoInfo.id}
-                        </span>
-                        <a 
-                          href={videoInfo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-red-500 text-sm hover:underline"
-                        >
-                          View video →
-                        </a>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: '#666', fontWeight: 'bold', marginBottom: '5px' }}>
+                          {videoInfo.platform} video detected
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <span style={{ background: '#f9f9f9', padding: '5px', borderRadius: '5px', color: '#666' }}>
+                            ID: {videoInfo.id}
+                          </span>
+                          <a 
+                            href={videoInfo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#FF3366', textDecoration: 'underline' }}
+                          >
+                            View video →
+                          </a>
+                        </div>
                       </div>
+                      <button
+                        onClick={() => setViralReference('')}
+                        style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
+                      >
+                        ✕
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setViralReference('')}
-                      className="text-gray-500 hover:text-red-500"
-                    >
-                      ✕
-                    </button>
                   </div>
                 )}
               </div>
 
               {/* Duration Selection */}
-              <div className="mb-5">
-                <label className="block text-gray-600 mb-2 text-sm">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                   Duration
                 </label>
-                <div className="flex gap-4 flex-wrap items-center">
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {['30 sec', '60 sec', '2 min', '3 min'].map((time) => (
                     <button
                       key={time}
                       onClick={() => setDuration(time)}
-                      className="px-4 py-2 rounded border-none bg-gray-100 text-gray-600 transition duration-300 hover:bg-red-100"
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#FF3366',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                      }}
                     >
                       {time}
                     </button>
@@ -1431,7 +1513,15 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   <select
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
-                    className="px-4 py-2 rounded border-gray-300 bg-white text-gray-600 cursor-pointer font-medium shadow-sm focus:border-red-300 focus:ring-2 focus:ring-red-200 appearance-none bg-url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23666666\' d=\'M6 8L2 4h8z\'/%3E%3C/svg%3E') no-repeat right 12px center py-2 pr-8"
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #ccc',
+                      borderRadius: '5px',
+                      backgroundColor: '#f9f9f9',
+                      color: '#666',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
                   >
                     <option value="" disabled>More options...</option>
                     <option value="5 min">5 minutes</option>
@@ -1444,34 +1534,51 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     <option value="custom">Custom duration...</option>
                   </select>
                   {duration === 'custom' && (
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                       <input
                         type="number"
                         min="1"
                         placeholder="Enter minutes"
                         onChange={(e) => setDuration(`${e.target.value} min`)}
-                        className="px-4 py-2 rounded border-gray-300 bg-white text-gray-600 font-medium shadow-sm focus:border-red-300 focus:ring-2 focus:ring-red-200"
+                        style={{
+                          padding: '8px 16px',
+                          border: '1px solid #ccc',
+                          borderRadius: '5px',
+                          backgroundColor: '#f9f9f9',
+                          color: '#666',
+                          fontSize: '0.9rem'
+                        }}
                       />
-                      <span className="text-gray-600 text-sm">minutes</span>
+                      <span style={{ color: '#666', fontSize: '0.9rem' }}>minutes</span>
                     </div>
                   )}
                 </div>
-                <p className="mt-2 text-gray-500 text-sm">
+                <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '10px' }}>
                   Select from common durations or choose a custom length
                 </p>
               </div>
 
               {/* Tone Selection */}
-              <div className="mb-5">
-                <label className="block text-gray-600 mb-2 text-sm">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                   Tone
                 </label>
-                <div className="flex gap-4 flex-wrap">
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {['Casual', 'Funny', 'Informative', 'Inspirational', 'Creative'].map((tone) => (
                     <button
                       key={tone}
                       onClick={() => setSelectedTone(tone.toLowerCase())}
-                      className="px-4 py-2 rounded border-none bg-gray-100 text-gray-600 transition duration-300 hover:bg-red-100"
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#FF3366',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                      }}
                     >
                       {tone}
                     </button>
@@ -1480,11 +1587,11 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               </div>
 
               {/* Platform Selection */}
-              <div className="mb-6">
-                <label className="block text-gray-600 mb-2 text-sm">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                   Social media
                 </label>
-                <div className="flex gap-4 flex-wrap">
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {['YouTube', 'TikTok', 'Instagram', 'Facebook'].map((platform) => (
                     <button
                       key={platform}
@@ -1492,7 +1599,17 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         setSelectedPlatform(platform.toLowerCase());
                         setSelectedCreator(''); // Reset creator when platform changes
                       }}
-                      className="px-4 py-2 rounded border-none bg-gray-100 text-gray-600 transition duration-300 hover:bg-red-100"
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#FF3366',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                      }}
                     >
                       {platform}
                     </button>
@@ -1502,19 +1619,29 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
               {/* Creator Style Selection */}
               {selectedPlatform && (
-                <div className="mb-6">
-                  <label className="block text-gray-600 mb-2 text-sm">
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                     Creator Style (Optional)
                   </label>
-                  <div className="grid grid-cols-auto-fit minmax(250px, 1fr) gap-4">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '10px' }}>
                     {creatorStyles[selectedPlatform].map((creator) => (
                       <button
                         key={creator.name}
                         onClick={() => setSelectedCreator(creator.name)}
-                        className="px-4 py-3 rounded border border-gray-300 bg-white text-gray-600 transition duration-300 hover:bg-red-100 flex flex-col gap-2"
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: '#FF3366',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '20px',
+                          fontSize: '0.9rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                        }}
                       >
-                        <span className="font-semibold">{creator.name}</span>
-                        <span className="text-sm opacity-70">
+                        <span style={{ fontWeight: 'bold' }}>{creator.name}</span>
+                        <span style={{ color: '#ccc', fontSize: '0.9rem' }}>
                           {creator.description}
                         </span>
                       </button>
@@ -1524,22 +1651,30 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               )}
 
               {/* Visual Suggestions Toggle */}
-              <div className="mb-5">
-                <label className="block text-gray-600 mb-2 text-sm">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#666' }}>
                   Include Visual Suggestions
                 </label>
-                <div className="flex items-center gap-4">
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <button
                     onClick={() => setIncludeVisuals(!includeVisuals)}
-                    className="w-10 h-6 rounded-lg bg-gray-100 text-gray-600 transition duration-200"
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      backgroundColor: '#FF3366',
+                      color: '#666',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
                   >
-                    <div className="w-6 h-6 rounded-full bg-white absolute top-1 left-1 transition duration-200" />
+                    <div style={{ width: '24px', height: '24px', backgroundColor: '#fff', borderRadius: '50%', position: 'relative', top: '4px', left: '4px', transition: 'all 0.2s' }} />
                   </button>
-                  <span className="text-gray-600 text-sm">
+                  <span style={{ color: '#666', fontSize: '0.9rem' }}>
                     {includeVisuals ? 'On' : 'Off'}
                   </span>
                 </div>
-                <p className="mt-2 text-gray-500 text-sm">
+                <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '10px' }}>
                   {includeVisuals 
                     ? 'Script will include visual suggestions like transitions, effects, and thumbnail ideas'
                     : 'Script will focus on content and dialogue only'}
@@ -1550,11 +1685,22 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               <button
                 onClick={handleGenerate}
                 disabled={isGenerating}
-                className="w-full px-4 py-3 bg-red-500 text-white rounded-lg font-semibold text-lg transition duration-300 hover:bg-red-600 flex items-center justify-center gap-4"
+                style={{
+                  width: '100%',
+                  padding: '12px 24px',
+                  backgroundColor: '#FF3366',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '20px',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 20px rgba(255, 51, 102, 0.2)'
+                }}
               >
                 {isGenerating ? (
                   <>
-                    <span className="animate-spin">⌛</span>
+                    <span style={{ animation: 'spin 1s linear infinite' }}></span>
                     Generating...
                   </>
                 ) : (
@@ -1567,10 +1713,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
             {generatedScript && (
               <div 
                 ref={responseRef}
-                className="bg-white rounded-lg p-6 shadow-md transition duration-300"
+                style={{ background: 'white', borderRadius: '20px', padding: '30px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', boxSizing: 'border-box' }}
               >
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg text-gray-700 mb-0">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ color: '#333', marginBottom: '0' }}>
                     Generated Script
                   </h2>
                   <button 
@@ -1607,14 +1753,22 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         setError('Could not copy script. Please try again.');
                       }
                     }}
-                    className="px-4 py-2 bg-transparent text-red-500 border border-red-500 rounded-lg text-sm transition duration-200 flex items-center gap-2 hover:bg-red-100"
+                    style={{
+                      background: 'none',
+                      border: '1px solid #FF3366',
+                      color: '#FF3366',
+                      padding: '10px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
                   >
                     <svg 
                       viewBox="0 0 24 24" 
                       width="16" 
                       height="16" 
                       fill="currentColor"
-                      className="mr-2"
+                      style={{ marginRight: '10px' }}
                     >
                       <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
                     </svg>
@@ -1623,25 +1777,33 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 </div>
                 
                 <div 
-                  className="bg-gray-50 rounded-lg p-4 text-gray-700 line-height-6 text-base"
+                  style={{ background: '#f9f9f9', borderRadius: '10px', padding: '20px', color: '#444' }}
                   dangerouslySetInnerHTML={{ __html: generatedScript }}
                 />
 
                 {/* SEO & Hashtags Section */}
                 {selectedPlatform === 'youtube' && (
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg text-gray-600 mb-0">
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #ccc' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <h3 style={{ color: '#666', marginBottom: '0' }}>
                         SEO & Social Media Tips
                       </h3>
                       <button
                         onClick={generateAdvancedContent}
                         disabled={isGeneratingAdvanced}
-                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm transition duration-300 hover:bg-red-100 flex items-center gap-4"
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#FF3366',
+                          color: 'white',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                        }}
                       >
                         {isGeneratingAdvanced ? (
                           <>
-                            <span className="animate-spin">⌛</span>
+                            <span style={{ animation: 'spin 1s linear infinite' }}></span>
                             Generating...
                           </>
                         ) : (
@@ -1651,23 +1813,23 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     </div>
 
                     {(keywords || hashtags || seoTips) && (
-                      <div className="grid grid-cols-auto-fit minmax(250px, 1fr) gap-6">
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
                         {keywords && (
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <h4 className="text-red-500 mb-2">Keywords</h4>
-                            <p className="text-gray-700">{keywords}</p>
+                          <div style={{ background: '#f9f9f9', borderRadius: '10px', padding: '20px' }}>
+                            <h4 style={{ color: '#FF3366', marginBottom: '10px' }}>Keywords</h4>
+                            <p style={{ color: '#666' }}>{keywords}</p>
                           </div>
                         )}
                         {hashtags && (
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <h4 className="text-red-500 mb-2">Hashtags</h4>
-                            <p className="text-gray-700">{hashtags}</p>
+                          <div style={{ background: '#f9f9f9', borderRadius: '10px', padding: '20px' }}>
+                            <h4 style={{ color: '#FF3366', marginBottom: '10px' }}>Hashtags</h4>
+                            <p style={{ color: '#666' }}>{hashtags}</p>
                           </div>
                         )}
                         {seoTips && (
-                          <div className="bg-gray-50 rounded-lg p-4">
-                            <h4 className="text-red-500 mb-2">SEO Tips</h4>
-                            <p className="text-gray-700">{seoTips}</p>
+                          <div style={{ background: '#f9f9f9', borderRadius: '10px', padding: '20px' }}>
+                            <h4 style={{ color: '#FF3366', marginBottom: '10px' }}>SEO Tips</h4>
+                            <p style={{ color: '#666' }}>{seoTips}</p>
                           </div>
                         )}
                       </div>
@@ -1677,19 +1839,27 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
                 {/* Thumbnail Section */}
                 {selectedPlatform === 'youtube' && (
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg text-gray-600 mb-0">
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #ccc' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <h3 style={{ color: '#666', marginBottom: '0' }}>
                         Thumbnail Ideas
                       </h3>
                       <button
                         onClick={handleGenerateThumbnail}
                         disabled={isGeneratingThumbnail}
-                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm transition duration-300 hover:bg-red-100 flex items-center gap-4"
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#FF3366',
+                          color: 'white',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                        }}
                       >
                         {isGeneratingThumbnail ? (
                           <>
-                            <span className="animate-spin">⌛</span>
+                            <span style={{ animation: 'spin 1s linear infinite' }}></span>
                             Generating...
                           </>
                         ) : (
@@ -1700,7 +1870,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
                     {thumbnailSuggestions && (
                       <div 
-                        className="bg-gray-50 rounded-lg p-4 text-gray-700 line-height-6 text-base"
+                        style={{ background: '#f9f9f9', borderRadius: '10px', padding: '20px', color: '#444' }}
                       >
                         {thumbnailSuggestions.split('\n\n').map((section, index) => {
                           const lines = section.split('\n');
@@ -1708,14 +1878,14 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           const content = lines.slice(1);
                           
                           return (
-                            <div key={index} className="mb-4">
-                              <h4 className="text-red-500 font-semibold mb-2">
+                            <div key={index} style={{ marginBottom: '20px' }}>
+                              <h4 style={{ color: '#FF3366', marginBottom: '10px' }}>
                                 {title}
                               </h4>
-                              <ul className="list-none p-0 m-0">
+                              <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
                                 {content.map((line, lineIndex) => (
-                                  <li key={lineIndex} className="mb-2 pl-6 relative">
-                                    <span className="absolute left-0 top-0 text-red-500">•</span>
+                                  <li key={lineIndex} style={{ position: 'relative', paddingLeft: '20px' }}>
+                                    <span style={{ position: 'absolute', left: '0', top: '0', color: '#FF3366' }}>•</span>
                                     {line}
                                   </li>
                                 ))}
@@ -1730,27 +1900,42 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
                 {/* Load Script Confirmation Modal - Moved outside saved scripts section */}
                 {showLoadConfirm && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-8 max-w-md w-full shadow-lg">
-                      <h3 className="text-lg text-gray-700 mb-4">
+                  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }}>
+                    <div style={{ background: 'white', borderRadius: '20px', padding: '30px', maxWidth: '400px', width: '90%', position: 'relative' }}>
+                      <h3 style={{ color: '#333', marginBottom: '20px' }}>
                         Load Saved Script
                       </h3>
-                      <p className="text-gray-600 mb-4">
+                      <p style={{ color: '#666', marginBottom: '20px' }}>
                         Are you sure you want to load "{scriptToLoad?.title}"? This will replace your current form data.
                       </p>
-                      <div className="flex justify-end gap-4">
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                         <button
                           onClick={() => {
                             setShowLoadConfirm(false);
                             setScriptToLoad(null);
                           }}
-                          className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg transition duration-200"
+                          style={{
+                            padding: '10px 20px',
+                            background: 'none',
+                            border: '1px solid #ccc',
+                            color: '#666',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
                         >
                           Cancel
                         </button>
                         <button
                           onClick={confirmLoadScript}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg transition duration-200"
+                          style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#FF3366',
+                            color: 'white',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
                         >
                           Load Script
                         </button>
@@ -1760,36 +1945,65 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 )}
 
                 {/* Action Buttons */}
-                <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-4">
+                <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #ccc', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                   <button 
                     onClick={saveScript}
-                    className="px-4 py-2 bg-transparent text-red-500 border border-red-500 rounded-lg text-sm transition duration-200"
+                    style={{
+                      background: 'none',
+                      border: '1px solid #FF3366',
+                      color: '#FF3366',
+                      padding: '10px 20px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
                   >
                     Save Script
                   </button>
-                  <div className="relative">
+                  <div style={{ position: 'relative' }}>
                     <button
                       onClick={() => {
                         const dropdown = document.getElementById('exportDropdown');
                         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
                       }}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg transition duration-200"
+                      style={{
+                        padding: '10px 20px',
+                        backgroundColor: '#FF3366',
+                        color: 'white',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
                     >
                       Export
                     </button>
                     <div 
                       id="exportDropdown"
-                      className="absolute top-16 right-0 bg-white rounded-lg shadow-lg p-4 hidden z-50"
+                      style={{ position: 'absolute', top: '100%', right: 0, background: 'white', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)', display: 'none', zIndex: 1002 }}
                     >
                       <button
                         onClick={exportToPDF}
-                        className="w-full px-4 py-2 bg-transparent text-gray-700 transition duration-200"
+                        style={{
+                          width: '100%',
+                          padding: '10px 20px',
+                          background: 'none',
+                          color: '#666',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
                       >
                         Export as PDF
                       </button>
                       <button
                         onClick={exportToWord}
-                        className="w-full px-4 py-2 bg-transparent text-gray-700 transition duration-200"
+                        style={{
+                          width: '100%',
+                          padding: '10px 20px',
+                          background: 'none',
+                          color: '#666',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
                       >
                         Export as Word
                       </button>
@@ -1798,12 +2012,21 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 </div>
 
                 {/* Generate Another Button */}
-                <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+                <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
                   <button
                     onClick={handleGenerateAnother}
-                    className="px-6 py-3 bg-red-500 text-white rounded-lg font-semibold text-lg transition duration-300 flex items-center gap-4 shadow-md"
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: '#FF3366',
+                      color: 'white',
+                      borderRadius: '20px',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 4px 20px rgba(255, 51, 102, 0.2)'
+                    }}
                   >
-                    <span className="text-2xl">✨</span>
+                    <span style={{ fontSize: '1.5rem', marginRight: '10px' }}>✨</span>
                     Generate Another Script
                   </button>
                 </div>
@@ -1813,9 +2036,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
           {/* Saved Scripts Section - Near footer */}
           {savedScripts.length > 0 && (
-            <div className="bg-white rounded-lg p-6 shadow-md mt-8 w-full box-border max-w-8xl mx-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg text-gray-700 mb-0">
+            <div style={{ background: 'white', borderRadius: '20px', padding: '30px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', boxSizing: 'border-box', marginTop: '20px', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ color: '#333', marginBottom: '0' }}>
                   Saved Scripts
                 </h3>
                 <button
@@ -1827,19 +2050,27 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       setTimeout(() => setError(''), 2000);
                     }
                   }}
-                  className="px-4 py-2 bg-transparent text-red-500 border border-red-500 rounded-lg text-sm transition duration-200"
+                  style={{
+                    background: 'none',
+                    border: '1px solid #FF3366',
+                    color: '#FF3366',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   Clear All
                 </button>
               </div>
-              <div className="grid grid-cols-auto-fit minmax(250px, 1fr) gap-6">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
                 {savedScripts.map(script => (
                   <div
                     key={script.id}
-                    className="bg-white rounded-lg p-4 shadow-md border border-gray-200 transition duration-200 hover:shadow-lg cursor-pointer"
+                    style={{ background: 'white', borderRadius: '10px', padding: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', transition: 'all 0.2s' }}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-gray-700 font-semibold mb-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                      <h4 style={{ color: '#333', marginBottom: '0', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {script.title}
                       </h4>
                       <button
@@ -1847,42 +2078,58 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           e.stopPropagation();
                           deleteScript(script.id);
                         }}
-                        className="px-2 py-1 bg-transparent text-red-500 border border-red-500 rounded-lg text-sm transition duration-200 hover:bg-red-100"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#FF3366',
+                          padding: '5px 10px',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
                       >
                         Delete
                       </button>
                     </div>
-                    <div className="flex gap-2 flex-wrap mb-2">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-sm">
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                      <span style={{ background: '#f9f9f9', padding: '5px 10px', borderRadius: '5px', color: '#666' }}>
                         {script.date}
                       </span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-sm">
+                      <span style={{ background: '#f9f9f9', padding: '5px 10px', borderRadius: '5px', color: '#666' }}>
                         {script.type}
                       </span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-sm">
+                      <span style={{ background: '#f9f9f9', padding: '5px 10px', borderRadius: '5px', color: '#666' }}>
                         {script.platform}
                       </span>
                     </div>
                     <div 
                       onClick={() => setExpandedScriptId(expandedScriptId === script.id ? null : script.id)}
-                      className="text-red-500 font-medium text-sm flex items-center gap-2 cursor-pointer"
+                      style={{ color: '#FF3366', fontSize: '0.9rem', display: 'flex', gap: '10px', cursor: 'pointer' }}
                     >
                       {expandedScriptId === script.id ? 'Hide script ▼' : 'View script ▲'}
                     </div>
 
                     {/* Collapsible Script Content */}
                     {expandedScriptId === script.id && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <div className="bg-gray-50 rounded-lg p-4 text-gray-700 line-height-6 text-base">
+                      <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #ccc' }}>
+                        <div style={{ background: '#f9f9f9', borderRadius: '10px', padding: '20px', color: '#444' }}>
                           <div dangerouslySetInnerHTML={{ __html: script.script }} />
                         </div>
-                        <div className="flex justify-end gap-4 mt-4">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               exportToPDF(script);
                             }}
-                            className="px-4 py-2 bg-transparent text-red-500 border border-red-500 rounded-lg text-sm transition duration-200"
+                            style={{
+                              background: 'none',
+                              border: '1px solid #FF3366',
+                              color: '#FF3366',
+                              padding: '10px 20px',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
                           >
                             Export PDF
                           </button>
@@ -1891,7 +2138,14 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                               e.stopPropagation();
                               exportToWord(script);
                             }}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg transition duration-200"
+                            style={{
+                              backgroundColor: '#FF3366',
+                              color: 'white',
+                              padding: '10px 20px',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
                           >
                             Export Word
                           </button>
@@ -1903,7 +2157,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               </div>
             </div>
           )}
-        </main>
+        </div>
 
         <Footer />
       </div>
