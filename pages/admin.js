@@ -190,16 +190,23 @@ export default function AdminDashboard() {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/admin/users', {
         headers: {
           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch users');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Fetched users:', data); // For debugging
       setUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -503,6 +510,21 @@ export default function AdminDashboard() {
             Fix User Scripts/Limits
           </button>
         </div>
+
+        <button
+          onClick={handleCleanup}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            marginBottom: '20px'
+          }}
+        >
+          Clean Up User Data
+        </button>
     </div>
     </AdminProtectedRoute>
   );

@@ -12,14 +12,29 @@ export default async function handler(req, res) {
 
   try {
     const usersSnapshot = await adminDb.collection('users').get();
-    const users = usersSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const users = usersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      const daysLeft = data.subscriptionEnd 
+        ? Math.ceil((new Date(data.subscriptionEnd) - new Date()) / (1000 * 60 * 60 * 24))
+        : 'N/A';
+
+      return {
+        id: doc.id,
+        email: data.email,
+        displayName: data.displayName,
+        ipAddress: data.ipAddress,
+        subscription: data.subscription || 'free',
+        subscriptionType: data.subscriptionType || 'free',
+        subscriptionEnd: data.subscriptionEnd,
+        scriptsRemaining: data.scriptsRemaining || 0,
+        scriptsLimit: data.subscription === 'pro' ? 100 : 3,
+        daysLeft: daysLeft
+      };
+    });
 
     return res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Failed to fetch users' });
   }
 } 
