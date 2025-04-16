@@ -42,12 +42,17 @@ const MobileNav = ({ isMenuOpen, setIsMenuOpen, handleLogout }) => {
     <>
       <div className="mobile-nav">
         <div className="mobile-header">
-          <Link href="/" style={{
-            fontSize: '1.25rem',
-            fontWeight: 'bold',
-            color: '#FF3366',
-            textDecoration: 'none'
-          }}>ScriptSea</Link>
+          <Link 
+            href="/"
+            style={{
+              fontSize: '1.25rem',
+              fontWeight: 'bold',
+              color: '#FF3366',
+              textDecoration: 'none'
+            }}
+          >
+            ScriptSea
+          </Link>
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="menu-button">
             {isMenuOpen ? 'Close' : 'Menu'}
           </button>
