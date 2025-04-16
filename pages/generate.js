@@ -2798,6 +2798,13 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
         <Footer />
       </div>
+
+      {/* Add the modal outside the conditional render but still inside the main wrapper */}
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        userProfile={userProfile}
+      />
     </ProtectedRoute>
   );
 } 
