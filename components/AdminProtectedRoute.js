@@ -1,14 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)) {
-      router.push('/');
+    if (!loading) {
+      const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      setIsAuthorized(isAdmin);
+      
+      if (!isAdmin) {
+        router.push('/');
+      }
     }
   }, [user, loading, router]);
 
@@ -20,9 +26,9 @@ export default function AdminProtectedRoute({ children }) {
     );
   }
 
-  if (user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-    return children;
+  if (!isAuthorized) {
+    return null;
   }
 
-  return null;
+  return children;
 } 
