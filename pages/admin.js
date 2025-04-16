@@ -97,6 +97,7 @@ const styles = {
     borderRadius: '4px',
     border: '1px solid #ddd',
     backgroundColor: 'white',
+    minWidth: '120px',
   },
   banButton: {
     backgroundColor: '#ff4444',
@@ -167,6 +168,14 @@ const styles = {
     padding: '6px 12px',
     borderRadius: '4px',
     cursor: 'pointer',
+    fontSize: '14px',
+  },
+  expiryInfo: {
+    display: 'inline-block',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    backgroundColor: '#2d2d2d',
+    color: '#fff',
     fontSize: '14px',
   },
 };
@@ -332,6 +341,15 @@ export default function AdminDashboard() {
     );
   });
 
+  const getDaysUntilExpiry = (expiryDate) => {
+    if (!expiryDate) return 0;
+    const now = new Date();
+    const expiry = new Date(expiryDate);
+    const diffTime = expiry - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
   if (!user || user.email !== 'legendstarr2024@gmail.com') {
     return null;
   }
@@ -387,6 +405,7 @@ export default function AdminDashboard() {
                   <th style={styles.th}>User</th>
                   <th style={styles.th}>IP Address</th>
                   <th style={styles.th}>Subscription</th>
+                  <th style={styles.th}>Expires In</th>
                   <th style={styles.th}>Scripts Left</th>
                   <th style={styles.th}>Actions</th>
                 </tr>
@@ -408,8 +427,16 @@ export default function AdminDashboard() {
                         style={styles.select}
                       >
                         <option value="free">Free</option>
-                        <option value="pro">Pro</option>
+                        <option value="pro_monthly">Pro Monthly</option>
+                        <option value="pro_yearly">Pro Yearly</option>
                       </select>
+                    </td>
+                    <td style={styles.td}>
+                      {user.subscriptionEnd ? (
+                        <div style={styles.expiryInfo}>
+                          {getDaysUntilExpiry(user.subscriptionEnd)} days
+                        </div>
+                      ) : 'N/A'}
                     </td>
                     <td style={styles.td}>{user.scriptsRemaining || 0}</td>
                     <td style={styles.td}>

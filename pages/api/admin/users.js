@@ -19,10 +19,19 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'Missing required fields' });
         }
         
+        const subscriptionEnd = new Date();
+        if (data.plan === 'pro_yearly') {
+          subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+        } else if (data.plan === 'pro_monthly') {
+          subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+        }
+        
         await adminDb.collection('users').doc(userId).update({
           subscription: data.plan,
-          scriptsRemaining: data.plan === 'pro' ? 100 : 3,
-          lastUpdated: new Date().toISOString()
+          scriptsRemaining: data.plan.startsWith('pro') ? 100 : 3,
+          lastUpdated: new Date().toISOString(),
+          subscriptionEnd: data.plan === 'free' ? null : subscriptionEnd.toISOString(),
+          subscriptionType: data.plan === 'free' ? null : data.plan.includes('yearly') ? 'yearly' : 'monthly'
         });
         break;
 
