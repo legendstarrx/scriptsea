@@ -1,5 +1,5 @@
 import Flutterwave from 'flutterwave-node-v3';
-import admin from '../../../utils/firebase-admin';
+import { adminDb } from '../../../lib/firebaseAdmin';
 
 const flw = new Flutterwave(
   process.env.FLW_PUBLIC_KEY,
@@ -19,8 +19,7 @@ export default async function handler(req, res) {
 
     if (transaction.data.status === "successful") {
       // Update Firestore with new subscription details
-      const db = admin.firestore();
-      await db.collection('users').doc(req.query.userId).update({
+      await adminDb.collection('users').doc(req.query.userId).update({
         subscription: 'pro',
         subscriptionType: req.query.plan, // 'monthly' or 'yearly'
         subscriptionEnd: calculateEndDate(req.query.plan),
