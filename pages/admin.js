@@ -341,11 +341,11 @@ export default function AdminDashboard() {
     );
   });
 
-  const getDaysUntilExpiry = (subscriptionEnd) => {
-    if (!subscriptionEnd) return 0;
-    const end = new Date(subscriptionEnd);
+  const getDaysUntilExpiry = (expiryDate) => {
+    if (!expiryDate) return 0;
     const now = new Date();
-    const diffTime = end - now;
+    const expiry = new Date(expiryDate);
+    const diffTime = expiry - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
@@ -421,15 +421,7 @@ export default function AdminDashboard() {
                     </td>
                     <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
                     <td style={styles.td}>
-                      <select
-                        value={user.subscription || 'free'}
-                        onChange={(e) => updateUserSubscription(user.id, e.target.value)}
-                        style={styles.select}
-                      >
-                        <option value="free">Free</option>
-                        <option value="pro_monthly">Pro Monthly</option>
-                        <option value="pro_yearly">Pro Yearly</option>
-                      </select>
+                      {user.subscription} {user.subscriptionType ? `(${user.subscriptionType})` : ''}
                     </td>
                     <td style={styles.td}>
                       {user.subscriptionEnd ? (

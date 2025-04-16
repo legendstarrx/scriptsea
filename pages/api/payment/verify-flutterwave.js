@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     if (status === 'successful') {
       // Verify the transaction with Flutterwave
-      const response = await fetch(`https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`, {
+      const verifyResponse = await fetch(`https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`,
@@ -18,11 +18,15 @@ export default async function handler(req, res) {
         }
       });
 
-      const data = await response.json();
+      const data = await verifyResponse.json();
 
-      if (data.status === 'success' && data.data.status === 'successful') {
+      if (data.status === 'success') {
+        // Get user details from meta data
         const userId = data.data.meta.userId;
         const planType = data.data.meta.plan_type;
+
+        // Update user subscription in Firestore
+        const userRef = adminDb.collection('users').doc(userId);
         
         // Calculate subscription end date
         const subscriptionEnd = new Date();
@@ -32,8 +36,7 @@ export default async function handler(req, res) {
           subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
         }
 
-        // Update user subscription
-        const userRef = adminDb.collection('users').doc(userId);
+        // Update user document with all necessary fields
         await userRef.update({
           subscription: 'pro',
           scriptsRemaining: 100,
@@ -44,24 +47,23 @@ export default async function handler(req, res) {
           paymentCurrency: data.data.currency,
           subscriptionType: planType,
           paid: true,
-          upgradedAt: new Date().toISOString()
+          upgradedAt: new Date().toISOString(),
+          nextBillingDate: subscriptionEnd.toISOString()
         });
 
-        // Log payment in payments collection
+        // Log payment
         await adminDb.collection('payments').add({
           userId,
           email: data.data.customer.email,
           amount: data.data.amount,
-          currency: data.data.currency,
           status: 'successful',
           type: planType,
-          date: new Date().toISOString(),
+          date: new Date(),
           reference: tx_ref,
           transactionId: transaction_id,
+          currency: data.data.currency,
           paymentMethod: data.data.payment_type,
-          customerName: data.data.customer.name,
-          customerEmail: data.data.customer.email,
-          ipAddress: data.data.ip
+          ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress
         });
 
         return res.redirect(302, `${process.env.NEXT_PUBLIC_BASE_URL}/generate?payment=success`);

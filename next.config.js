@@ -108,20 +108,6 @@ const nextConfig = {
         },
       };
     }
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        net: false,
-        tls: false,
-        fs: false,
-        child_process: false,
-        http2: false,
-        dns: false,
-        'aws-crt': false,
-        'net-browser': false,
-        encoding: false,
-      };
-    }
     return config;
   },
 
