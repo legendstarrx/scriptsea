@@ -1,5 +1,5 @@
 import Flutterwave from 'flutterwave-node-v3';
-import admin from '../../../utils/firebase-admin'; // Assuming this is your Firebase admin setup
+import admin from '../../../utils/firebase-admin';
 
 const flw = new Flutterwave(
   process.env.FLW_PUBLIC_KEY,
