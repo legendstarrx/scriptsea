@@ -215,20 +215,18 @@ export default function AdminDashboard() {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          userId,
+        body: JSON.stringify({
           action: 'updateSubscription',
-          data: { plan: newSubscription }
+          userId,
+          plan: newSubscription
         })
       });
+
+      if (!response.ok) throw new Error('Failed to update subscription');
       
-      if (!response.ok) {
-        throw new Error('Failed to update subscription');
-      }
-      await fetchUsers(); // Refresh the list
+      fetchUsers();
     } catch (error) {
       console.error('Error updating subscription:', error);
     }
@@ -242,7 +240,7 @@ export default function AdminDashboard() {
           'Content-Type': 'application/json',
           'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
         },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           userId,
           action: currentBanStatus ? 'unbanUser' : 'banUser'
         })
@@ -350,6 +348,28 @@ export default function AdminDashboard() {
     return diffDays > 0 ? diffDays : 0;
   };
 
+  const handleSubscriptionChange = async (userId, newValue) => {
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'updateSubscription',
+          userId,
+          plan: newValue
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to update subscription');
+      
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+    }
+  };
+
   if (!user || user.email !== 'legendstarr2024@gmail.com') {
     return null;
   }
@@ -421,7 +441,14 @@ export default function AdminDashboard() {
                     </td>
                     <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
                     <td style={styles.td}>
-                      {user.subscription} {user.subscriptionType ? `(${user.subscriptionType})` : ''}
+                      <select
+                        value={user.subscription === 'pro' ? user.subscriptionType : 'free'}
+                        onChange={(e) => handleSubscriptionChange(user.id, e.target.value)}
+                      >
+                        <option value="free">Free</option>
+                        <option value="monthly">Pro Monthly</option>
+                        <option value="yearly">Pro Yearly</option>
+                      </select>
                     </td>
                     <td style={styles.td}>
                       {user.subscriptionEnd ? (

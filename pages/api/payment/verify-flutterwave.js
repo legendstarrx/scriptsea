@@ -28,24 +28,25 @@ export default async function handler(req, res) {
         // Update user subscription in Firestore
         const userRef = adminDb.collection('users').doc(userId);
         
-        // Calculate subscription end date
-        const subscriptionEnd = new Date();
+        // Calculate subscription end date properly
+        const now = new Date();
+        const subscriptionEnd = new Date(now);
         if (planType === 'yearly') {
-          subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+          subscriptionEnd.setFullYear(now.getFullYear() + 1);
         } else {
-          subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+          subscriptionEnd.setMonth(now.getMonth() + 1);
         }
 
         // Update user document with all necessary fields
         await userRef.update({
           subscription: 'pro',
+          subscriptionType: planType,
           scriptsRemaining: 100,
           scriptsLimit: 100,
           subscriptionEnd: subscriptionEnd.toISOString(),
           lastPayment: new Date().toISOString(),
           paymentAmount: data.data.amount,
           paymentCurrency: data.data.currency,
-          subscriptionType: planType,
           paid: true,
           upgradedAt: new Date().toISOString(),
           nextBillingDate: subscriptionEnd.toISOString()

@@ -11,30 +11,47 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { userId, action, data } = req.body;
+    const { action, userId, plan } = req.body;
 
     switch (action) {
-      case 'updateSubscription':
-        if (!userId || !data?.plan) {
-          return res.status(400).json({ error: 'Missing required fields' });
-        }
+      case 'updateSubscription': {
+        // Calculate subscription end date
+        const now = new Date();
+        const subscriptionEnd = new Date(now);
         
-        const subscriptionEnd = new Date();
-        if (data.plan === 'pro_yearly') {
-          subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
-        } else if (data.plan === 'pro_monthly') {
-          subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+        if (plan === 'free') {
+          // For free plan, reset everything
+          await adminDb.collection('users').doc(userId).update({
+            subscription: 'free',
+            subscriptionType: null,
+            scriptsRemaining: 3,
+            scriptsLimit: 3,
+            subscriptionEnd: null,
+            paid: false
+          });
+        } else {
+          // For pro plans (monthly or yearly)
+          if (plan === 'yearly') {
+            subscriptionEnd.setFullYear(now.getFullYear() + 1);
+          } else {
+            subscriptionEnd.setMonth(now.getMonth() + 1);
+          }
+
+          await adminDb.collection('users').doc(userId).update({
+            subscription: 'pro',
+            subscriptionType: plan, // 'monthly' or 'yearly'
+            scriptsRemaining: 100,
+            scriptsLimit: 100,
+            subscriptionEnd: subscriptionEnd.toISOString(),
+            paid: true,
+            upgradedAt: now.toISOString(),
+            lastPayment: now.toISOString(),
+            nextBillingDate: subscriptionEnd.toISOString()
+          });
         }
-        
-        await adminDb.collection('users').doc(userId).update({
-          subscription: data.plan,
-          scriptsRemaining: data.plan.startsWith('pro') ? 100 : 3,
-          scriptsLimit: data.plan.startsWith('pro') ? 100 : 3,
-          lastUpdated: new Date().toISOString(),
-          subscriptionEnd: data.plan === 'free' ? null : subscriptionEnd.toISOString(),
-          subscriptionType: data.plan === 'free' ? null : data.plan.includes('yearly') ? 'yearly' : 'monthly'
-        });
-        break;
+
+        return res.status(200).json({ success: true });
+      }
 
       case 'banUser':
         if (!userId) {
@@ -118,7 +135,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Admin action error:', error);
+    return res.status(500).json({ error: 'Failed to perform action' });
   }
 } 
