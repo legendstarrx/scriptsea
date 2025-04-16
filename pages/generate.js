@@ -18,7 +18,7 @@ const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 // GeneratePageNav Component
 const GeneratePageNav = () => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -233,8 +233,9 @@ const GeneratePageNav = () => {
       {/* Subscription Modal */}
       {showSubscriptionModal && (
         <SubscriptionModal 
+          isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)} 
-          user={user} 
+          userProfile={userProfile}  // Add userProfile prop
         />
       )}
 
