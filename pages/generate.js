@@ -1211,20 +1211,23 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
   useEffect(() => {
     // Handle payment status
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
+    const { payment } = router.query;
     
-    if (paymentStatus === 'success') {
-      toast.success('Payment successful! Your account has been upgraded to Pro.');
-      // Optionally refresh user data here
-      router.replace('/generate'); // Remove query params
-    } else if (paymentStatus === 'failed') {
-      toast.error('Payment failed. Please try again or contact support.');
-      router.replace('/generate');
-    } else if (paymentStatus === 'error') {
-      const reason = urlParams.get('reason');
-      toast.error(`Payment error: ${reason || 'Unknown error'}. Please contact support.`);
-      router.replace('/generate');
+    if (payment) {
+      switch (payment) {
+        case 'success':
+          toast.success('Payment successful! Your subscription is now active.');
+          router.replace('/generate', undefined, { shallow: true });
+          break;
+        case 'failed':
+          toast.error('Payment failed. Please try again or contact support.');
+          router.replace('/generate', undefined, { shallow: true });
+          break;
+        case 'error':
+          toast.error('An error occurred. Please contact support if payment was deducted.');
+          router.replace('/generate', undefined, { shallow: true });
+          break;
+      }
     }
   }, [router.query]);
 

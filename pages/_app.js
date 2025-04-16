@@ -4,8 +4,6 @@ import Head from 'next/head';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useRouter } from 'next/router';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
@@ -60,17 +58,6 @@ function MyApp({ Component, pageProps }) {
       </Head>
       <Component {...pageProps} />
       <Toaster position="top-center" />
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </AuthProvider>
   );
 }

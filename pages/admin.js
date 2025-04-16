@@ -184,169 +184,108 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { user } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (user?.email === 'legendstarr2024@gmail.com') {
+      fetchUsers();
+    }
+  }, [user]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
-        }
-      });
-      
+      const response = await fetch('/api/admin/get-users');
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error('Failed to fetch users');
       }
-      
       const data = await response.json();
-      console.log('Fetched users:', data);
-      setUsers(data);
+      console.log('Client: Fetched users:', data.users); // Debug log
+      setUsers(data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
-      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const handleSubscriptionChange = async (userId, newPlan) => {
-    if (!window.confirm(`Are you sure you want to change this user's subscription to ${newPlan}?`)) {
-      return;
-    }
-
+  const updateUserSubscription = async (userId, newSubscription) => {
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
         },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           userId,
           action: 'updateSubscription',
-          plan: newPlan
+          data: { plan: newSubscription }
         })
       });
-
+      
       if (!response.ok) {
         throw new Error('Failed to update subscription');
       }
-
-      await fetchUsers();
-      alert('Subscription updated successfully');
+      await fetchUsers(); // Refresh the list
     } catch (error) {
       console.error('Error updating subscription:', error);
-      alert(`Error: ${error.message}`);
     }
   };
 
-  const handleBanUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to ban this user?')) {
-      return;
-    }
-
+  const toggleUserBan = async (userId, currentBanStatus) => {
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+          'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
         },
         body: JSON.stringify({
           userId,
-          action: 'banUser'
+          action: currentBanStatus ? 'unbanUser' : 'banUser'
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to ban user');
+        throw new Error('Failed to toggle ban status');
       }
-
       await fetchUsers();
-      alert('User banned successfully');
     } catch (error) {
-      console.error('Error banning user:', error);
-      alert(`Error: ${error.message}`);
+      console.error('Error toggling ban status:', error);
     }
   };
 
-  const handleBanByIP = async (ipAddress) => {
-    if (!ipAddress || ipAddress === 'N/A') {
-      alert('No IP address available for this user');
-      return;
-    }
-
-    if (!window.confirm(`Are you sure you want to ban all users with IP: ${ipAddress}?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
-        },
-        body: JSON.stringify({
-          action: 'banByIP',
-          data: { ipAddress }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to ban users by IP');
-      }
-
+  const deleteUserAccount = async (userId) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        const response = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          },
+          body: JSON.stringify({
+            userId,
+            action: 'deleteUser'
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete user');
+        }
       await fetchUsers();
-      alert('Users banned by IP successfully');
-    } catch (error) {
-      console.error('Error banning users by IP:', error);
-      alert(`Error: ${error.message}`);
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
-        },
-        body: JSON.stringify({
-          userId,
-          action: 'deleteUser'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete user');
+      } catch (error) {
+        console.error('Error deleting user:', error);
       }
-
-      await fetchUsers();
-      alert('User deleted successfully');
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert(`Error: ${error.message}`);
     }
   };
 
   const deleteUsersByIP = async (ipAddress) => {
     if (window.confirm(`Are you sure you want to delete all users with IP: ${ipAddress}?`)) {
       try {
-        await fetch('/api/admin/users', {
+        const response = await fetch('/api/admin/users', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -357,32 +296,39 @@ export default function AdminDashboard() {
             data: { ipAddress }
           })
         });
-        fetchUsers();
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete users by IP');
+        }
+        await fetchUsers();
       } catch (error) {
         console.error('Error deleting users by IP:', error);
       }
     }
   };
 
-  const handleCleanup = async () => {
-    try {
-      const response = await fetch('/api/admin/cleanup-users', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+  const banUsersByIP = async (ipAddress) => {
+    if (window.confirm(`Are you sure you want to ban all users with IP: ${ipAddress}?`)) {
+      try {
+        const response = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': process.env.NEXT_PUBLIC_ADMIN_API_KEY
+          },
+          body: JSON.stringify({
+            action: 'banByIP',
+            data: { ipAddress }
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to ban users by IP');
         }
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to cleanup users');
+        await fetchUsers();
+      } catch (error) {
+        console.error('Error banning users by IP:', error);
       }
-
-      alert('Cleanup completed successfully');
-      await fetchUsers(); // Refresh the list
-    } catch (error) {
-      console.error('Cleanup error:', error);
-      alert(`Error during cleanup: ${error.message}`);
     }
   };
 
@@ -406,39 +352,6 @@ export default function AdminDashboard() {
 
   if (!user || user.email !== 'legendstarr2024@gmail.com') {
     return null;
-  }
-
-  if (error) {
-    return (
-      <div style={{ color: 'red', padding: '20px' }}>
-        <p>Error: {error}</p>
-        <button 
-          onClick={() => {
-            setError(null);
-            fetchUsers();
-          }}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div style={styles.loading}>
-        <div style={styles.spinner}></div>
-        Loading users...
-      </div>
-    );
   }
 
   return (
@@ -478,7 +391,12 @@ export default function AdminDashboard() {
           </div>
 
         <div style={styles.tableContainer}>
-          {users.length === 0 ? (
+          {loading ? (
+            <div style={styles.loading}>
+              <div style={styles.spinner}></div>
+              Loading users...
+            </div>
+          ) : users.length === 0 ? (
             <div style={styles.noUsers}>No users found</div>
           ) : (
             <table style={styles.table}>
@@ -493,95 +411,63 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map(user => {
-                  // Calculate days until expiry
-                  const daysLeft = user.subscriptionEnd 
-                    ? Math.ceil((new Date(user.subscriptionEnd) - new Date()) / (1000 * 60 * 60 * 24))
-                    : 'N/A';
-
-                  return (
-                    <tr key={user.id} style={styles.tr}>
-                      <td style={styles.td}>
-                        <div style={styles.userInfo}>
-                          <div style={styles.userName}>{user.displayName || 'N/A'}</div>
-                          <div style={styles.userEmail}>{user.email}</div>
+                {filteredUsers.map(user => (
+                  <tr key={user.id} style={styles.tr}>
+                    <td style={styles.td}>
+                      <div style={styles.userInfo}>
+                        <div style={styles.userName}>{user.displayName || 'N/A'}</div>
+                        <div style={styles.userEmail}>{user.email}</div>
+                      </div>
+                    </td>
+                    <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
+                    <td style={styles.td}>
+                      <select
+                        value={user.subscription || 'free'}
+                        onChange={(e) => updateUserSubscription(user.id, e.target.value)}
+                        style={styles.select}
+                      >
+                        <option value="free">Free</option>
+                        <option value="pro_monthly">Pro Monthly</option>
+                        <option value="pro_yearly">Pro Yearly</option>
+                      </select>
+                    </td>
+                    <td style={styles.td}>
+                      {user.subscriptionEnd ? (
+                        <div style={styles.expiryInfo}>
+                          {getDaysUntilExpiry(user.subscriptionEnd)} days
                         </div>
-                      </td>
-                      <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
-                      <td style={styles.td}>
-                        <select
-                          value={user.subscriptionType || 'free'}
-                          onChange={(e) => handleSubscriptionChange(user.id, e.target.value)}
-                          style={{
-                            padding: '5px',
-                            borderRadius: '4px',
-                            border: '1px solid #ddd'
-                          }}
+                      ) : 'N/A'}
+                    </td>
+                    <td style={styles.td}>{user.scriptsRemaining || 0}</td>
+                    <td style={styles.td}>
+                      <div style={styles.actionButtons}>
+                        <button
+                          onClick={() => toggleUserBan(user.id, user.isBanned)}
+                          style={user.isBanned ? styles.unbanButton : styles.banButton}
                         >
-                          <option value="free">Free</option>
-                          <option value="monthly">Pro Monthly</option>
-                          <option value="yearly">Pro Yearly</option>
-                        </select>
-                      </td>
-                      <td style={styles.td}>
-                        {user.subscription === 'free' ? 'N/A' : `${daysLeft} days`}
-                      </td>
-                      <td style={styles.td}>{`${user.scriptsRemaining || 0}/${user.scriptsLimit || 3}`}</td>
-                      <td style={styles.td}>
-                        <div style={styles.actionButtons}>
+                          {user.isBanned ? 'Unban' : 'Ban'}
+                        </button>
+                        {user.ipAddress && (
                           <button
-                            onClick={() => handleBanUser(user.id)}
-                            style={user.isBanned ? styles.unbanButton : styles.banButton}
+                            onClick={() => banUsersByIP(user.ipAddress)}
+                            style={styles.banByIPButton}
                           >
-                            {user.isBanned ? 'Unban' : 'Ban'}
+                            Ban by IP
                           </button>
-                          {user.ipAddress && (
-                            <button
-                              onClick={() => handleBanByIP(user.ipAddress)}
-                              style={styles.banByIPButton}
-                            >
-                              Ban by IP
-                            </button>
-                          )}
+                        )}
                           <button
-                            onClick={() => handleDeleteUser(user.id)}
-                            style={styles.deleteButton}
+                          onClick={() => deleteUserAccount(user.id)}
+                          style={styles.deleteButton}
                           >
                             Delete
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}
-        </div>
-
-        <div className="mt-4">
-          <button
-            onClick={handleCleanup}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Fix User Scripts/Limits
-          </button>
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <button
-            onClick={handleCleanup}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Fix User Data
-          </button>
         </div>
     </div>
     </AdminProtectedRoute>

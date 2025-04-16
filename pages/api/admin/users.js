@@ -1,133 +1,124 @@
-import { adminDb } from '../../../lib/firebaseAdmin';
+import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
-  // Verify admin authorization for all requests
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (req.method === 'GET') {
-    try {
-      const usersSnapshot = await adminDb.collection('users').get();
-      const users = usersSnapshot.docs.map(doc => {
-        const data = doc.data();
-        let daysLeft = 'N/A';
-        
-        if (data.subscriptionEnd) {
-          try {
-            const endDate = new Date(data.subscriptionEnd);
-            const now = new Date();
-            if (!isNaN(endDate.getTime())) {
-              daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-            }
-          } catch (error) {
-            console.error('Error calculating days left:', error);
-          }
+  try {
+    // Verify admin API key
+    if (req.headers.authorization !== process.env.NEXT_PUBLIC_ADMIN_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { userId, action, data } = req.body;
+
+    switch (action) {
+      case 'updateSubscription':
+        if (!userId || !data?.plan) {
+          return res.status(400).json({ error: 'Missing required fields' });
         }
+        
+        const subscriptionEnd = new Date();
+        if (data.plan === 'pro_yearly') {
+          subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+        } else if (data.plan === 'pro_monthly') {
+          subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+        }
+        
+        await adminDb.collection('users').doc(userId).update({
+          subscription: data.plan,
+          scriptsRemaining: data.plan.startsWith('pro') ? 100 : 3,
+          scriptsLimit: data.plan.startsWith('pro') ? 100 : 3,
+          lastUpdated: new Date().toISOString(),
+          subscriptionEnd: data.plan === 'free' ? null : subscriptionEnd.toISOString(),
+          subscriptionType: data.plan === 'free' ? null : data.plan.includes('yearly') ? 'yearly' : 'monthly'
+        });
+        break;
 
-        return {
-          id: doc.id,
-          email: data.email,
-          displayName: data.displayName,
-          ipAddress: data.ipAddress,
-          subscription: data.subscription || 'free',
-          subscriptionType: data.subscriptionType || 'free',
-          subscriptionEnd: data.subscriptionEnd,
-          scriptsRemaining: data.scriptsRemaining || 0,
-          scriptsLimit: data.subscription === 'pro' ? 100 : 3,
-          daysLeft: daysLeft
-        };
-      });
+      case 'banUser':
+        if (!userId) {
+          return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        await adminDb.collection('users').doc(userId).update({
+          isBanned: true,
+          lastUpdated: new Date().toISOString()
+        });
+        break;
 
-      return res.status(200).json(users);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      return res.status(500).json({ error: 'Failed to fetch users' });
-    }
-  }
+      case 'unbanUser':
+        if (!userId) {
+          return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        await adminDb.collection('users').doc(userId).update({
+          isBanned: false,
+          lastUpdated: new Date().toISOString()
+        });
+        break;
 
-  if (req.method === 'POST') {
-    try {
-      const { userId, action, plan, data } = req.body;
-      const userRef = adminDb.collection('users').doc(userId);
-      
-      switch (action) {
-        case 'updateSubscription':
-          const now = new Date();
-          const subscriptionEnd = new Date(now);
-          
-          let updateData = {};
-          
-          if (plan === 'free') {
-            updateData = {
-              subscription: 'free',
-              subscriptionType: 'free',
-              scriptsRemaining: 3,
-              scriptsLimit: 3,
-              subscriptionEnd: null,
-              paid: false
-            };
-          } else {
-            subscriptionEnd.setMonth(subscriptionEnd.getMonth() + (plan === 'yearly' ? 12 : 1));
-            updateData = {
-              subscription: 'pro',
-              subscriptionType: plan,
-              scriptsRemaining: 100,
-              scriptsLimit: 100,
-              subscriptionEnd: subscriptionEnd.toISOString(),
-              paid: true,
-              upgradedAt: now.toISOString(),
-              lastPayment: now.toISOString()
-            };
+      case 'deleteUser':
+        if (!userId) {
+          return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        try {
+          await adminAuth.deleteUser(userId);
+        } catch (authError) {
+          console.warn('Auth deletion failed:', authError.message);
+        }
+        await adminDb.collection('users').doc(userId).delete();
+        break;
+
+      case 'deleteByIP':
+        if (!data?.ipAddress) {
+          return res.status(400).json({ error: 'IP address is required' });
+        }
+        
+        const snapshot = await adminDb.collection('users')
+          .where('ipAddress', '==', data.ipAddress)
+          .get();
+        
+        const deletePromises = snapshot.docs.map(async (doc) => {
+          try {
+            await adminAuth.deleteUser(doc.id);
+          } catch (authError) {
+            console.warn('Auth deletion failed:', authError.message);
           }
-          await userRef.update(updateData);
-          break;
+          return doc.ref.delete();
+        });
+        
+        await Promise.all(deletePromises);
+        break;
 
-        case 'banUser':
-          await userRef.update({
+      case 'banByIP':
+        if (!data?.ipAddress) {
+          return res.status(400).json({ error: 'IP address is required' });
+        }
+        
+        const banSnapshot = await adminDb.collection('users')
+          .where('ipAddress', '==', data.ipAddress)
+          .get();
+        
+        const banPromises = banSnapshot.docs.map(doc => 
+          doc.ref.update({
             isBanned: true,
-            bannedAt: new Date().toISOString()
-          });
-          break;
+            lastUpdated: new Date().toISOString(),
+            banReason: `Banned by IP address: ${data.ipAddress}`
+          })
+        );
+        
+        await Promise.all(banPromises);
+        break;
 
-        case 'unbanUser':
-          await userRef.update({
-            isBanned: false,
-            bannedAt: null
-          });
-          break;
-
-        case 'deleteUser':
-          await userRef.delete();
-          break;
-
-        case 'banByIP':
-          const { ipAddress } = data;
-          const usersSnapshot = await adminDb.collection('users')
-            .where('ipAddress', '==', ipAddress)
-            .get();
-          
-          const batch = adminDb.batch();
-          usersSnapshot.docs.forEach(doc => {
-            batch.update(doc.ref, {
-              isBanned: true,
-              bannedAt: new Date().toISOString()
-            });
-          });
-          await batch.commit();
-          break;
-
-        default:
-          return res.status(400).json({ error: 'Invalid action' });
-      }
-
-      return res.status(200).json({ success: true });
-    } catch (error) {
-      console.error('Error processing action:', error);
-      return res.status(500).json({ error: error.message });
+      default:
+        return res.status(400).json({ error: 'Invalid action' });
     }
-  }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 } 
