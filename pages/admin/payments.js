@@ -4,41 +4,37 @@ import { useAuth } from '../../context/AuthContext';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import AdminProtectedRoute from '../../components/AdminProtectedRoute';
+import { adminDb } from '../../lib/firebaseAdmin';
 
 export default function PaymentsPage() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!user || user.email !== 'legendstarr2024@gmail.com') {
+    if (!userProfile?.isAdmin) {
       router.push('/');
+      return;
     }
-  }, [user]);
 
-  useEffect(() => {
     const fetchPayments = async () => {
-      try {
-        const response = await fetch('/api/admin/payments');
-        if (!response.ok) {
-          throw new Error('Failed to fetch payments');
-        }
-        const data = await response.json();
-        setPayments(data);
-      } catch (err) {
-        setError('Failed to fetch payment history');
-        console.error('Error fetching payments:', err);
-      } finally {
-        setLoading(false);
-      }
+      const paymentsSnapshot = await adminDb
+        .collection('payments')
+        .orderBy('date', 'desc')
+        .get();
+
+      const paymentsData = paymentsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setPayments(paymentsData);
     };
 
-    if (user?.isAdmin) {
-      fetchPayments();
-    }
-  }, [user]);
+    fetchPayments();
+  }, [userProfile]);
 
   if (!user || user.email !== 'legendstarr2024@gmail.com') {
     return null; // Don't render anything while checking auth
@@ -66,28 +62,31 @@ export default function PaymentsPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {payments.map((payment) => (
-                      <tr key={payment.reference} className="hover:bg-gray-50">
+                      <tr key={payment.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(payment.date).toLocaleString()}
+                          {new Date(payment.date).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {payment.email}
+                          {payment.customerName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {payment.customerEmail}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {payment.amount} {payment.currency}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {payment.type}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          ${payment.amount}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -100,9 +99,6 @@ export default function PaymentsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {payment.reference}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {payment.ipAddress || 'N/A'}
                         </td>
                       </tr>
                     ))}
