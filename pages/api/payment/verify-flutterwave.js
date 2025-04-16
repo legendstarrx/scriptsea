@@ -1,6 +1,10 @@
-import { adminDb } from '../../../lib/firebaseAdmin';
-import * as admin from 'firebase-admin';
-import * as flw from 'flutterwave-node';
+import Flutterwave from 'flutterwave-node-v3';
+import admin from '../../../utils/firebase-admin'; // Assuming this is your Firebase admin setup
+
+const flw = new Flutterwave(
+  process.env.FLW_PUBLIC_KEY,
+  process.env.FLW_SECRET_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -37,14 +41,11 @@ export default async function handler(req, res) {
 }
 
 function calculateEndDate(plan) {
-  const now = new Date();
-  const subscriptionEnd = new Date(now);
-  
+  const date = new Date();
   if (plan === 'yearly') {
-    subscriptionEnd.setFullYear(now.getFullYear() + 1);
+    date.setFullYear(date.getFullYear() + 1);
   } else {
-    subscriptionEnd.setMonth(now.getMonth() + 1);
+    date.setMonth(date.getMonth() + 1);
   }
-
-  return subscriptionEnd.toISOString();
+  return date;
 } 
