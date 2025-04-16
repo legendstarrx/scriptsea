@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -22,9 +22,9 @@ function AdminDashboard() {
       return;
     }
     fetchUsers();
-  }, [user]);
+  }, [user, router, fetchUsers]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -58,7 +58,7 @@ function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const handleAction = async (action, userId, data = {}) => {
     try {

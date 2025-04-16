@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext'; // Make sure this path is correct
@@ -44,7 +44,7 @@ export default function PaymentSuccess() {
     if (router.isReady && user) {
       verifyPayment();
     }
-  }, [router.isReady, router.query, user]);
+  }, [router.isReady, router.query, user, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

@@ -11,6 +11,7 @@ import { db } from '../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast'; // or your preferred notification library
 import React, { useState, useEffect, useRef } from 'react'; // Add this at the top with your other imports
+import Link from 'next/link';
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
@@ -44,7 +45,7 @@ const GeneratePageNav = () => {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <a href="/" style={{
+          <Link href="/" style={{
             fontSize: '1.5rem',
             fontWeight: 'bold',
             background: 'linear-gradient(135deg, #FF3366, #FF6B6B)',
@@ -53,7 +54,7 @@ const GeneratePageNav = () => {
             textDecoration: 'none'
           }}>
             ScriptSea
-          </a>
+          </Link>
 
           <div style={{
             display: 'flex',
@@ -1709,7 +1710,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         }}>
                           ID: {videoInfo.id}
                         </span>
-                        <a 
+                        <Link 
                           href={videoInfo.url}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -1723,7 +1724,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           }}
                         >
                           View video →
-                        </a>
+                        </Link>
                       </div>
                     </div>
                     <button
