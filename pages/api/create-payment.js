@@ -1,4 +1,3 @@
-import { adminDb } from '../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,7 +6,32 @@ export default async function handler(req, res) {
 
   try {
     const { plan, userId, email } = req.body;
+    
+    // Set amount based on plan
     const amount = plan === 'yearly' ? 49.99 : 4.99;
+    
+    // Create payment plan for recurring payments
+    const planDetails = {
+      amount: amount * 100, // Convert to cents
+      name: `Pro ${plan} Subscription`,
+      interval: plan === 'yearly' ? 'yearly' : 'monthly',
+      currency: 'USD'
+    };
+
+    const response = await fetch('https://api.flutterwave.com/v3/payment-plans', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(planDetails)
+    });
+
+    const planData = await response.json();
+    
+    if (!planData.data) {
+      throw new Error('Failed to create payment plan');
+    }
 
     // Create payment link
     const paymentData = {
@@ -15,6 +39,7 @@ export default async function handler(req, res) {
       amount: amount,
       currency: 'USD',
       payment_options: 'card',
+      payment_plan: planData.data.id,
       customer: {
         email: email,
       },
@@ -29,7 +54,7 @@ export default async function handler(req, res) {
       }
     };
 
-    const response = await fetch('https://api.flutterwave.com/v3/payments', {
+    const paymentResponse = await fetch('https://api.flutterwave.com/v3/payments', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.FLW_SECRET_KEY}`,
@@ -38,12 +63,12 @@ export default async function handler(req, res) {
       body: JSON.stringify(paymentData)
     });
 
-    const data = await response.json();
+    const payment = await paymentResponse.json();
 
-    if (data.status === 'success') {
+    if (payment.data && payment.data.link) {
       return res.status(200).json({ 
         success: true, 
-        paymentLink: data.data.link 
+        paymentLink: payment.data.link 
       });
     }
 
