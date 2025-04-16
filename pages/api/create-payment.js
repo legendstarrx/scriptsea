@@ -21,7 +21,7 @@ export default async function handler(req, res) {
         userId: userId,
         plan_type: plan
       },
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify-flutterwave`,
+      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify-flutterwave?userId=${userId}&plan=${plan}`,
       customizations: {
         title: 'Pro Subscription',
         description: `${plan} subscription payment`
