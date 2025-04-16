@@ -9,6 +9,7 @@ function AdminDashboard() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [actionDetails, setActionDetails] = useState(null);
 
@@ -22,14 +23,27 @@ function AdminDashboard() {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch('/api/admin/get-users', {
         headers: {
           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
         }
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      
       const data = await response.json();
+      if (!data.users) {
+        throw new Error('Invalid response format');
+      }
+      
       setUsers(data.users);
     } catch (error) {
+      console.error('Error fetching users:', error);
+      setError(error.message);
       toast.error('Failed to fetch users');
     } finally {
       setLoading(false);
@@ -78,104 +92,122 @@ function AdminDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-red-600 text-xl mb-4">Error: {error}</div>
+        <button 
+          onClick={fetchUsers}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow-md rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Payment</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {users.map(user => (
-              <tr key={user.id}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
+      {users.length === 0 ? (
+        <div className="text-center text-gray-600">No users found</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white shadow-md rounded-lg">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Payment</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {users.map(user => (
+                <tr key={user.id}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
+                        <div className="text-sm text-gray-500">{user.email}</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">
-                    {user.ipAddress}
-                    {user.isBanned && (
-                      <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                        Banned
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                    {user.subscription}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{user.scriptsRemaining} / {user.scriptsLimit}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">
-                    {user.lastPayment ? new Date(user.lastPayment).toLocaleDateString() : 'Never'}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_monthly' })}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      Monthly Pro
-                    </button>
-                    <button
-                      onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_yearly' })}
-                      className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                      Yearly Pro
-                    </button>
-                    <button
-                      onClick={() => handleAction('updateSubscription', user.id, { plan: 'free' })}
-                      className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                    >
-                      Free
-                    </button>
-                    <button
-                      onClick={() => confirmAction('deleteUser', user.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                    {!user.isBanned ? (
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {user.ipAddress}
+                      {user.isBanned && (
+                        <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                          Banned
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {user.subscription}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">{user.scriptsRemaining} / {user.scriptsLimit}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {user.lastPayment ? new Date(user.lastPayment).toLocaleDateString() : 'Never'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex space-x-2">
                       <button
-                        onClick={() => confirmAction('banByIP', user.id, { ipAddress: user.ipAddress })}
-                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_monthly' })}
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                       >
-                        Ban IP
+                        Monthly Pro
                       </button>
-                    ) : (
                       <button
-                        onClick={() => handleAction('unbanByIP', user.id, { ipAddress: user.ipAddress })}
+                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_yearly' })}
                         className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                       >
-                        Unban IP
+                        Yearly Pro
                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                      <button
+                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'free' })}
+                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                      >
+                        Free
+                      </button>
+                      <button
+                        onClick={() => confirmAction('deleteUser', user.id)}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                      {!user.isBanned ? (
+                        <button
+                          onClick={() => confirmAction('banByIP', user.id, { ipAddress: user.ipAddress })}
+                          className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        >
+                          Ban IP
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAction('unbanByIP', user.id, { ipAddress: user.ipAddress })}
+                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                        >
+                          Unban IP
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmation && (
