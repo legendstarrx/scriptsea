@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-export default function SubscriptionModal({ onClose, userProfile }) {
+const SubscriptionModal = ({ isOpen, onClose, plan }) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { user } = useAuth();
 
   const plans = {
     monthly: {
@@ -19,32 +19,32 @@ export default function SubscriptionModal({ onClose, userProfile }) {
     }
   };
 
-  const currentSubscription = userProfile?.subscription || 'free';
+  const currentSubscription = plan || 'free';
   const isPro = currentSubscription === 'pro' || currentSubscription === 'premium';
 
-  const handleUpgrade = async (plan) => {
-    setLoading(true);
-    setError('');
+  const handleUpgrade = async (selectedPlan) => {
     try {
-      const response = await fetch('/api/create-subscription', {
+      setLoading(true);
+      const response = await fetch('/api/create-payment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          plan,
-          amount: plans[plan].amount,
-          email: user.email,
-          name: user.displayName || user.email,
-          userId: user.uid
+          plan: selectedPlan,
+          userId: user.uid,
+          email: user.email
         })
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to create subscription');
-      if (data.success && data.paymentLink) window.location.href = data.paymentLink;
-      else throw new Error(data.message || 'Failed to create subscription');
+      if (data.success && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        console.error('Failed to create payment link');
+      }
     } catch (error) {
-      console.error('Subscription error:', error);
-      setError('Failed to process subscription. Please try again later.');
+      console.error('Error initiating payment:', error);
     } finally {
       setLoading(false);
     }
@@ -77,6 +77,8 @@ export default function SubscriptionModal({ onClose, userProfile }) {
       setLoading(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
@@ -311,4 +313,6 @@ export default function SubscriptionModal({ onClose, userProfile }) {
       `}</style>
     </div>
   );
-} 
+};
+
+export default SubscriptionModal; 
