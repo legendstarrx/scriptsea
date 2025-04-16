@@ -20,7 +20,6 @@ const GeneratePageNav = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [showContactModal, setShowContactModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   return (
@@ -228,14 +227,6 @@ const GeneratePageNav = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Subscription Modal */}
-      {showSubscriptionModal && (
-        <SubscriptionModal 
-          onClose={() => setShowSubscriptionModal(false)} 
-          user={user} 
-        />
       )}
 
       {/* Profile Modal */}
@@ -1289,30 +1280,22 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 {userProfile?.scriptsRemaining || 0} scripts remaining out of {userProfile?.subscription === 'pro' ? 100 : 3}
               </span>
               {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
-                <>
-                  <button
-                    onClick={() => setShowSubscriptionModal(true)}
-                    style={{
-                      marginLeft: '10px',
-                      padding: '6px 12px',
-                      backgroundColor: '#FF3366',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '20px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    Upgrade to Pro
-                  </button>
-
-                  <SubscriptionModal
-                    isOpen={showSubscriptionModal}
-                    onClose={() => setShowSubscriptionModal(false)}
-                    userProfile={userProfile}
-                  />
-                </>
+                <button
+                  onClick={() => setShowSubscriptionModal(true)}
+                  style={{
+                    marginLeft: '10px',
+                    padding: '6px 12px',
+                    backgroundColor: '#FF3366',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '20px',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Upgrade to Pro
+                </button>
               )}
             </div>
 
@@ -2799,7 +2782,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         <Footer />
       </div>
 
-      {/* Add the modal outside the conditional render but still inside the main wrapper */}
+      {/* Move the SubscriptionModal outside the conditional render */}
       <SubscriptionModal
         isOpen={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
