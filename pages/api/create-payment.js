@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     const { plan, userId, email } = req.body;
     const amount = plan === 'yearly' ? 49.99 : 4.99;
 
-    // Create payment link
+    // Create payment link with proper redirect URL including userId and plan
     const paymentData = {
       tx_ref: `tx-${Date.now()}`,
       amount: amount,
@@ -22,7 +22,8 @@ export default async function handler(req, res) {
         userId: userId,
         plan_type: plan
       },
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify-flutterwave`,
+      // Include userId and plan in redirect URL
+      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify-flutterwave?userId=${userId}&plan=${plan}`,
       customizations: {
         title: 'Pro Subscription',
         description: `${plan} subscription payment`
