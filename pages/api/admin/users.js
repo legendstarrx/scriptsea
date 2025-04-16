@@ -1,78 +1,25 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    try {
-      const { userId, action, plan } = req.body;
-      
-      if (action === 'updateSubscription') {
-        const now = new Date();
-        const subscriptionEnd = new Date(now);
-        
-        let updateData = {};
-        
-        if (plan === 'free') {
-          updateData = {
-            subscription: 'free',
-            subscriptionType: 'free',
-            scriptsRemaining: 3,
-            scriptsLimit: 3,
-            subscriptionEnd: null,
-            paid: false
-          };
-        } else {
-          // For pro plans (monthly or yearly)
-          if (plan === 'yearly') {
-            subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
-          } else {
-            subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
-          }
-
-          updateData = {
-            subscription: 'pro',
-            subscriptionType: plan,
-            scriptsRemaining: 100,
-            scriptsLimit: 100,
-            subscriptionEnd: subscriptionEnd.toISOString(),
-            paid: true,
-            upgradedAt: now.toISOString(),
-            lastPayment: now.toISOString(),
-            nextBillingDate: subscriptionEnd.toISOString()
-          };
-        }
-
-        await adminDb.collection('users').doc(userId).update(updateData);
-        return res.status(200).json({ success: true });
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Failed to update subscription' });
-    }
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // GET request to fetch users
+  // Verify admin authorization
+  if (req.headers.authorization !== process.env.NEXT_PUBLIC_ADMIN_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
     const usersSnapshot = await adminDb.collection('users').get();
-    const users = usersSnapshot.docs.map(doc => {
-      const data = doc.data();
-      let daysLeft = 0;
-      
-      if (data.subscriptionEnd) {
-        const endDate = new Date(data.subscriptionEnd);
-        const now = new Date();
-        daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-      }
-
-      return {
-        id: doc.id,
-        ...data,
-        daysLeft: data.subscription === 'free' ? 'N/A' : daysLeft
-      };
-    });
+    const users = usersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
     return res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
-    return res.status(500).json({ error: 'Failed to fetch users' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 } 

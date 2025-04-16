@@ -188,33 +188,26 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('/api/admin/users', {
-          headers: {
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
         }
-
-        const data = await response.json();
-        setUsers(data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching users:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    if (user?.email) {
-      fetchUsers();
+      });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleSubscriptionChange = async (userId, newPlan) => {
     try {
@@ -235,8 +228,7 @@ export default function AdminDashboard() {
         throw new Error('Failed to update subscription');
       }
 
-      // Refresh the users list
-      fetchUsers();
+      await fetchUsers(); // Refresh the users list
     } catch (error) {
       console.error('Error updating subscription:', error);
       alert('Failed to update subscription: ' + error.message);
@@ -322,6 +314,31 @@ export default function AdminDashboard() {
       } catch (error) {
         console.error('Error banning users by IP:', error);
       }
+    }
+  };
+
+  const handleCleanup = async () => {
+    try {
+      const response = await fetch('/api/admin/cleanup-users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cleanup users');
+      }
+
+      const data = await response.json();
+      alert(`Cleanup successful: ${data.message}`);
+      
+      // Refresh the users list
+      fetchUsers();
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+      alert('Failed to cleanup users: ' + error.message);
     }
   };
 
@@ -429,7 +446,7 @@ export default function AdminDashboard() {
                       <td style={styles.td}>{user.ipAddress || 'N/A'}</td>
                       <td style={styles.td}>
                         <select
-                          value={user.subscription === 'pro' ? user.subscriptionType : 'free'}
+                          value={user.subscriptionType || 'free'}
                           onChange={(e) => handleSubscriptionChange(user.id, e.target.value)}
                           style={{
                             padding: '5px',
@@ -445,7 +462,7 @@ export default function AdminDashboard() {
                       <td style={styles.td}>
                         {user.subscription === 'free' ? 'N/A' : `${daysLeft} days`}
                       </td>
-                      <td style={styles.td}>{`${user.scriptsRemaining}/${user.scriptsLimit}`}</td>
+                      <td style={styles.td}>{`${user.scriptsRemaining || 0}/${user.scriptsLimit || 3}`}</td>
                       <td style={styles.td}>
                         <div style={styles.actionButtons}>
                           <button
@@ -476,6 +493,15 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           )}
+        </div>
+
+        <div className="mt-4">
+          <button
+            onClick={handleCleanup}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Fix User Scripts/Limits
+          </button>
         </div>
     </div>
     </AdminProtectedRoute>
