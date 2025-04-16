@@ -232,14 +232,19 @@ export default function AdminDashboard() {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to update subscription');
+        throw new Error(data.error || 'Failed to update subscription');
       }
 
       await fetchUsers(); // Refresh the users list
+      // Show success message
+      alert('Subscription updated successfully');
     } catch (error) {
       console.error('Error updating subscription:', error);
-      alert('Failed to update subscription: ' + error.message);
+      // Show error in a more user-friendly way
+      alert(`Error: ${error.message}\nPlease try again or contact support if the issue persists.`);
     }
   };
 
@@ -330,23 +335,20 @@ export default function AdminDashboard() {
       const response = await fetch('/api/admin/cleanup-users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
         }
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error('Failed to cleanup users');
+        throw new Error(data.error || 'Failed to cleanup users');
       }
 
-      const data = await response.json();
-      alert(`Cleanup successful: ${data.message}`);
-      
-      // Refresh the users list
-      fetchUsers();
+      alert('Cleanup completed successfully');
+      await fetchUsers(); // Refresh the list
     } catch (error) {
-      console.error('Error during cleanup:', error);
-      alert('Failed to cleanup users: ' + error.message);
+      console.error('Cleanup error:', error);
+      alert(`Error during cleanup: ${error.message}`);
     }
   };
 
@@ -532,20 +534,21 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        <button
-          onClick={handleCleanup}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
-        >
-          Clean Up User Data
-        </button>
+        <div style={{ marginBottom: '20px' }}>
+          <button
+            onClick={handleCleanup}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Fix User Data
+          </button>
+        </div>
     </div>
     </AdminProtectedRoute>
   );
