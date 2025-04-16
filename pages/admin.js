@@ -7,7 +7,6 @@ import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import Link from 'next/link';
-import { toast } from 'react-toastify';
 
 const styles = {
   container: {
@@ -219,6 +218,10 @@ export default function AdminDashboard() {
   }, []);
 
   const handleSubscriptionChange = async (userId, newPlan) => {
+    if (!window.confirm(`Are you sure you want to change this user's subscription to ${newPlan}?`)) {
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
@@ -233,18 +236,23 @@ export default function AdminDashboard() {
         })
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+      if (!response.ok) {
+        throw new Error('Failed to update subscription');
+      }
 
       await fetchUsers();
-      toast.success('Subscription updated successfully');
+      alert('Subscription updated successfully');
     } catch (error) {
       console.error('Error updating subscription:', error);
-      toast.error(`Failed to update subscription: ${error.message}`);
+      alert(`Error: ${error.message}`);
     }
   };
 
-  const handleBanUser = async (userId, currentBanStatus) => {
+  const handleBanUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to ban this user?')) {
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
@@ -254,22 +262,29 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify({
           userId,
-          action: currentBanStatus ? 'unbanUser' : 'banUser'
+          action: 'banUser'
         })
       });
 
-      if (!response.ok) throw new Error('Failed to update ban status');
+      if (!response.ok) {
+        throw new Error('Failed to ban user');
+      }
+
       await fetchUsers();
-      toast.success(`User ${currentBanStatus ? 'unbanned' : 'banned'} successfully`);
+      alert('User banned successfully');
     } catch (error) {
-      console.error('Error updating ban status:', error);
-      toast.error(`Failed to ${currentBanStatus ? 'unban' : 'ban'} user`);
+      console.error('Error banning user:', error);
+      alert(`Error: ${error.message}`);
     }
   };
 
   const handleBanByIP = async (ipAddress) => {
     if (!ipAddress || ipAddress === 'N/A') {
-      toast.error('No IP address available');
+      alert('No IP address available for this user');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to ban all users with IP: ${ipAddress}?`)) {
       return;
     }
 
@@ -286,17 +301,22 @@ export default function AdminDashboard() {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to ban users by IP');
+      if (!response.ok) {
+        throw new Error('Failed to ban users by IP');
+      }
+
       await fetchUsers();
-      toast.success('Users banned by IP successfully');
+      alert('Users banned by IP successfully');
     } catch (error) {
       console.error('Error banning users by IP:', error);
-      toast.error('Failed to ban users by IP');
+      alert(`Error: ${error.message}`);
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
 
     try {
       const response = await fetch('/api/admin/users', {
@@ -311,12 +331,15 @@ export default function AdminDashboard() {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to delete user');
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
       await fetchUsers();
-      toast.success('User deleted successfully');
+      alert('User deleted successfully');
     } catch (error) {
       console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
+      alert(`Error: ${error.message}`);
     }
   };
 
@@ -507,7 +530,7 @@ export default function AdminDashboard() {
                       <td style={styles.td}>
                         <div style={styles.actionButtons}>
                           <button
-                            onClick={() => handleBanUser(user.id, user.isBanned)}
+                            onClick={() => handleBanUser(user.id)}
                             style={user.isBanned ? styles.unbanButton : styles.banButton}
                           >
                             {user.isBanned ? 'Unban' : 'Ban'}

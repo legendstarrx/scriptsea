@@ -113,16 +113,13 @@ export function AuthProvider({ children }) {
       try {
         console.log('Updating IP address...');
         // Update IP address after successful signup
-        const ipResponse = await fetch('/api/user/ip', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId: user.uid }),
+        const ipAddress = await getUserIP();
+        await updateDoc(doc(db, 'users', user.uid), {
+          ipAddress: ipAddress
         });
         
-        if (!ipResponse.ok) {
-          console.warn('Failed to update IP address, but user was created:', await ipResponse.text());
+        if (!ipAddress) {
+          console.warn('Failed to update IP address, but user was created');
         } else {
           console.log('IP address updated successfully');
         }
@@ -151,12 +148,9 @@ export function AuthProvider({ children }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       // Update IP address after successful login
-      await fetch('/api/user/ip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: userCredential.user.uid }),
+      const ipAddress = await getUserIP();
+      await updateDoc(doc(db, 'users', userCredential.user.uid), {
+        ipAddress: ipAddress
       });
       return userCredential.user;
     } catch (error) {
@@ -322,6 +316,17 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Error getting all users:', error);
       throw error;
+    }
+  };
+
+  const getUserIP = async () => {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      return data.ip;
+    } catch (error) {
+      console.error('Error fetching IP:', error);
+      return null;
     }
   };
 
