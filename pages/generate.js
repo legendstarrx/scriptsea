@@ -328,6 +328,7 @@ export default function Generate() {
   const [expandedScriptId, setExpandedScriptId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // Add ref for the response section
   const responseRef = useRef(null);
@@ -1288,22 +1289,30 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 {userProfile?.scriptsRemaining || 0} scripts remaining out of {userProfile?.subscription === 'pro' ? 100 : 3}
               </span>
               {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
-                <button
-                  onClick={() => router.push('/subscription')}
-                  style={{
-                    marginLeft: '10px',
-                    padding: '6px 12px',
-                    backgroundColor: '#FF3366',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '20px',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  Upgrade to Pro
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowSubscriptionModal(true)}
+                    style={{
+                      marginLeft: '10px',
+                      padding: '6px 12px',
+                      backgroundColor: '#FF3366',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '20px',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Upgrade to Pro
+                  </button>
+
+                  <SubscriptionModal
+                    isOpen={showSubscriptionModal}
+                    onClose={() => setShowSubscriptionModal(false)}
+                    userProfile={userProfile}
+                  />
+                </>
               )}
             </div>
 
