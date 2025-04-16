@@ -1149,7 +1149,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         setError('Could not initialize voice input. Please try again.');
       }
     }
-  }, []);
+  }, [router]); // Added router as dependency
 
   // Update toggleRecording function
   const toggleRecording = async () => {

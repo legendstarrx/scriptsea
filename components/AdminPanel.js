@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const AdminPanel = () => {
@@ -9,11 +9,7 @@ const AdminPanel = () => {
   const [searchIP, setSearchIP] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       const allUsers = await getAllUsers();
@@ -25,7 +21,11 @@ const AdminPanel = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleSearchByIP = async () => {
     if (!searchIP) {

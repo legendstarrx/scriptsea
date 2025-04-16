@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
@@ -37,6 +37,10 @@ const MobileNav = ({ isMenuOpen, setIsMenuOpen, handleLogout }) => {
       ),
     },
   ];
+
+  useEffect(() => {
+    // Your effect code
+  }, [router, isMenuOpen]);
 
   return (
     <>

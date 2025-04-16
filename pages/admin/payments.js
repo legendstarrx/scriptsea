@@ -16,7 +16,7 @@ export default function PaymentsPage() {
     if (!user || user.email !== 'legendstarr2024@gmail.com') {
       router.push('/');
     }
-  }, [user]);
+  }, [user, router]);
 
   useEffect(() => {
     const fetchPayments = async () => {

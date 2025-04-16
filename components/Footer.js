@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 const Footer = () => {
   const router = useRouter();
@@ -27,8 +28,8 @@ const Footer = () => {
           justifyContent: 'center',
           flexWrap: 'wrap'
         }}>
-          <a
-            onClick={() => router.push('/pricing')}
+          <Link
+            href="/pricing"
             style={{
               cursor: 'pointer',
               color: '#666',
@@ -41,9 +42,9 @@ const Footer = () => {
             }}
           >
             Pricing
-          </a>
-          <a
-            onClick={() => router.push('/privacy')}
+          </Link>
+          <Link
+            href="/privacy"
             style={{
               cursor: 'pointer',
               color: '#666',
@@ -56,7 +57,7 @@ const Footer = () => {
             }}
           >
             Privacy Policy
-          </a>
+          </Link>
         </div>
         <div style={{
           color: '#999',
