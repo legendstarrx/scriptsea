@@ -6,17 +6,31 @@ export default function AdminProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   useEffect(() => {
-    if (!loading) {
-      const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      setIsAuthorized(isAdmin);
-      
-      if (!isAdmin) {
-        router.push('/');
+    let mounted = true;
+
+    const checkAuth = async () => {
+      if (!loading) {
+        const isAdmin = user?.email === ADMIN_EMAIL;
+        
+        if (mounted) {
+          setIsAuthorized(isAdmin);
+          
+          if (!isAdmin) {
+            await router.push('/');
+          }
+        }
       }
-    }
-  }, [user, loading, router]);
+    };
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user, loading, router, ADMIN_EMAIL]);
 
   if (loading) {
     return (
@@ -26,9 +40,5 @@ export default function AdminProtectedRoute({ children }) {
     );
   }
 
-  if (!isAuthorized) {
-    return null;
-  }
-
-  return children;
+  return isAuthorized ? children : null;
 } 

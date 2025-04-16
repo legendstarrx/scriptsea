@@ -19,15 +19,6 @@ function AdminDashboard() {
   const [usersPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    // Check auth status before any other operations
-    if (!user?.email || user.email !== ADMIN_EMAIL) {
-      router.push('/');
-      return;
-    }
-    fetchUsers();
-  }, [user, router, fetchUsers]);
-
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -63,6 +54,27 @@ function AdminDashboard() {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      if (!user?.email || user.email !== ADMIN_EMAIL) {
+        router.push('/');
+        return;
+      }
+      
+      if (mounted) {
+        await fetchUsers();
+      }
+    };
+
+    init();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user, router, fetchUsers]);
 
   const handleAction = async (action, userId, data = {}) => {
     try {
@@ -251,10 +263,13 @@ function AdminDashboard() {
 }
 
 // Use getStaticProps to ensure proper server-side initialization
-export async function getStaticProps() {
+export const getStaticProps = async () => {
   return {
-    props: {},
+    props: {
+      protected: true,
+      adminOnly: true
+    }
   };
-}
+};
 
 export default AdminDashboard; 

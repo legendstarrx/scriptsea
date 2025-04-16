@@ -10,8 +10,20 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
+import AdminProtectedRoute from '../components/AdminProtectedRoute';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-function MyApp({ Component, pageProps }: AppProps) {
+// Add this type definition
+type CustomPageProps = {
+  adminOnly?: boolean;
+  protected?: boolean;
+};
+
+type CustomAppProps = AppProps & {
+  Component: AppProps['Component'] & CustomPageProps;
+};
+
+function MyApp({ Component, pageProps }: CustomAppProps) {
   const [isInitializing, setIsInitializing] = useState(true);
   const router = useRouter();
 
@@ -64,7 +76,17 @@ function MyApp({ Component, pageProps }: AppProps) {
       </Head>
       <AuthProvider>
         <div id="app-root" className="min-h-screen">
-          <Component {...pageProps} />
+          {Component.adminOnly ? (
+            <AdminProtectedRoute>
+              <Component {...pageProps} />
+            </AdminProtectedRoute>
+          ) : Component.protected ? (
+            <ProtectedRoute>
+              <Component {...pageProps} />
+            </ProtectedRoute>
+          ) : (
+            <Component {...pageProps} />
+          )}
         </div>
         <Toaster position="top-center" />
       </AuthProvider>
