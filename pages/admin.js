@@ -25,18 +25,25 @@ function AdminDashboard() {
     try {
       setLoading(true);
       setError(null);
+      
+      if (!user?.email) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch('/api/admin/get-users', {
         headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
+          'x-admin-email': user.email
         }
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch users');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch users');
       }
       
       const data = await response.json();
-      if (!data.users) {
+      if (!Array.isArray(data.users)) {
         throw new Error('Invalid response format');
       }
       
@@ -110,102 +117,121 @@ function AdminDashboard() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       
-      {users.length === 0 ? (
-        <div className="text-center text-gray-600">No users found</div>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+          <button 
+            onClick={fetchUsers}
+            className="absolute top-0 right-0 px-4 py-3"
+          >
+            <span className="text-xl">&times;</span>
+          </button>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+        </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white shadow-md rounded-lg">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Payment</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {users.map(user => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+          {users.length === 0 ? (
+            <p className="text-center text-gray-600 py-8">No users found</p>
+          ) : (
+            <table className="min-w-full bg-white shadow-md rounded-lg">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scripts</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Payment</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {users.map(user => (
+                  <tr key={user.id}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {user.ipAddress}
-                      {user.isBanned && (
-                        <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                          Banned
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {user.subscription}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{user.scriptsRemaining} / {user.scriptsLimit}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {user.lastPayment ? new Date(user.lastPayment).toLocaleDateString() : 'Never'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_monthly' })}
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
-                        Monthly Pro
-                      </button>
-                      <button
-                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_yearly' })}
-                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                      >
-                        Yearly Pro
-                      </button>
-                      <button
-                        onClick={() => handleAction('updateSubscription', user.id, { plan: 'free' })}
-                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                      >
-                        Free
-                      </button>
-                      <button
-                        onClick={() => confirmAction('deleteUser', user.id)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                      {!user.isBanned ? (
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {user.ipAddress}
+                        {user.isBanned && (
+                          <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            Banned
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {user.subscription}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">{user.scriptsRemaining} / {user.scriptsLimit}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {user.lastPayment ? new Date(user.lastPayment).toLocaleDateString() : 'Never'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex space-x-2">
                         <button
-                          onClick={() => confirmAction('banByIP', user.id, { ipAddress: user.ipAddress })}
-                          className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                          onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_monthly' })}
+                          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                         >
-                          Ban IP
+                          Monthly Pro
                         </button>
-                      ) : (
                         <button
-                          onClick={() => handleAction('unbanByIP', user.id, { ipAddress: user.ipAddress })}
+                          onClick={() => handleAction('updateSubscription', user.id, { plan: 'pro_yearly' })}
                           className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                         >
-                          Unban IP
+                          Yearly Pro
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        <button
+                          onClick={() => handleAction('updateSubscription', user.id, { plan: 'free' })}
+                          className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                        >
+                          Free
+                        </button>
+                        <button
+                          onClick={() => confirmAction('deleteUser', user.id)}
+                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                        {!user.isBanned ? (
+                          <button
+                            onClick={() => confirmAction('banByIP', user.id, { ipAddress: user.ipAddress })}
+                            className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                          >
+                            Ban IP
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleAction('unbanByIP', user.id, { ipAddress: user.ipAddress })}
+                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                          >
+                            Unban IP
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
