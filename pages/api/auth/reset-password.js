@@ -1,19 +1,23 @@
-import { authLimiter } from '../../../middleware/rateLimit';
+import { resetLimiter } from '../../../middleware/rateLimit';
 import { adminAuth } from '../../../lib/firebaseAdmin';
-
-const resetLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3 // 3 attempts per hour
-});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  await authLimiter(req, res);
-
   try {
+    // Apply rate limiting
+    await new Promise((resolve, reject) => {
+      resetLimiter(req, res, (result) => {
+        if (result instanceof Error) {
+          reject(result);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+
     const { email } = req.body;
     
     // Add basic validation
@@ -32,6 +36,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Password reset error:', error);
-    return res.status(400).json({ error: 'Failed to send reset email' });
+    return res.status(429).json({ error: 'Too many requests, please try again later' });
   }
 } 
