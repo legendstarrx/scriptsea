@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import AdminProtectedRoute from '../components/AdminProtectedRoute';
 
 // Move this outside the component
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 const VALID_ACTIONS = {
     UPDATE_SUBSCRIPTION: 'updateSubscription',

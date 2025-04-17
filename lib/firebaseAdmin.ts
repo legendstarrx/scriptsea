@@ -15,7 +15,6 @@ if (!getApps().length) {
     });
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
-    throw error;
   }
 }
 
@@ -24,7 +23,7 @@ export const adminDb = getFirestore();
 export const adminAuth = getAuth();
 
 // Helper function to verify admin session
-export const verifyAdmin = async (req: NextApiRequest) => {
+export const verifyAdmin = async (req: NextApiRequest): Promise<void> => {
   const adminKey = req.headers.authorization?.split('Bearer ')[1];
   if (adminKey !== process.env.ADMIN_API_KEY) {
     throw new Error('Unauthorized');
