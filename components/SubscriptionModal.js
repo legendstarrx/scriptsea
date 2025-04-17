@@ -15,7 +15,7 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
     yearly: {
       price: '$49.99',
       amount: 80000,
-      features: ['100 scripts per month', 'Priority support', 'Advanced features', '2 months free']
+      features: ['1200 scripts per month', 'Priority support', 'Advanced features', '2 months free']
     }
   };
 
