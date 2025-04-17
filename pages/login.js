@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { toast } from 'react-toastify';
 
 export default function Login() {
   const router = useRouter();
@@ -13,6 +14,13 @@ export default function Login() {
   });
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const { error } = router.query;
+
+  useEffect(() => {
+    if (error === 'banned') {
+      toast.error('Your account has been banned. Please contact support for more information.');
+    }
+  }, [error]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,7 +89,7 @@ export default function Login() {
             </div>
 
             {message.text && (
-              <div className={`text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+              <div className={`text-sm text-${message.type === 'error' ? 'red' : 'green'}-600`}>
                 {message.text}
               </div>
             )}
