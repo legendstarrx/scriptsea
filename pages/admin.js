@@ -72,63 +72,56 @@ function AdminDashboard() {
 
   const handleAction = async (action, userId, data = {}) => {
     try {
-      console.log('Attempting action:', { action, userId, data });
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
-          'x-admin-email': user.email
-        },
-        body: JSON.stringify({ 
-          action,
-          userId,
-          data: {
-            ...data,
-            adminEmail: user.email
-          }
-        })
-      });
+        console.log('Attempting action:', { action, userId, data });
+        const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
+                'x-admin-email': user.email
+            },
+            body: JSON.stringify({ 
+                action,
+                userId,
+                data: {
+                    ...data,
+                    adminEmail: user.email
+                }
+            })
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Action failed');
-      }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Action failed');
+        }
 
-      toast.success('Action completed successfully');
-      fetchUsers();
+        // Update local state based on action
+        if (action === VALID_ACTIONS.BAN_IP) {
+            setUsers(prevUsers => prevUsers.map(u => 
+                u.ipAddress === data.ipAddress ? { ...u, isBanned: true } : u
+            ));
+        } else if (action === VALID_ACTIONS.UNBAN_IP) {
+            setUsers(prevUsers => prevUsers.map(u => 
+                u.ipAddress === data.ipAddress ? { ...u, isBanned: false } : u
+            ));
+        } else if (action === VALID_ACTIONS.DELETE_USER) {
+            setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+        } else if (action === VALID_ACTIONS.UPDATE_SUBSCRIPTION) {
+            setUsers(prevUsers => prevUsers.map(u => 
+                u.id === userId ? { ...u, subscription: data.plan } : u
+            ));
+        }
+
+        toast.success('Action completed successfully');
     } catch (error) {
-      console.error('Action error:', error);
-      toast.error(error.message || 'Failed to perform action');
+        console.error('Action error:', error);
+        toast.error(error.message || 'Failed to perform action');
     }
-  };
+};
 
-  const handleBanIP = async (ipAddress) => {
-    try {
-      const response = await fetch('/api/admin/ban-ip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
-          'x-admin-email': user.email
-        },
-        body: JSON.stringify({ 
-          ipAddress,
-          adminEmail: user.email
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to ban IP');
-      }
-
-      toast.success('IP banned successfully');
-      fetchUsers();
-    } catch (error) {
-      console.error('Ban IP error:', error);
-      toast.error(error.message || 'Failed to ban IP');
-    }
+  const handleBanUnbanIP = (user) => {
+    const action = user.isBanned ? VALID_ACTIONS.UNBAN_IP : VALID_ACTIONS.BAN_IP;
+    handleAction(action, user.id, { ipAddress: user.ipAddress });
   };
 
   const confirmAction = (action, userId, data = {}) => {
@@ -230,10 +223,14 @@ function AdminDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     {user.ipAddress}
                     <button 
-                      onClick={() => handleBanIP(user.ipAddress)}
-                      className="ml-2 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                      onClick={() => handleBanUnbanIP(user)}
+                      className={`ml-2 px-2 py-1 text-xs ${
+                          user.isBanned 
+                              ? 'bg-green-500 hover:bg-green-600' 
+                              : 'bg-red-500 hover:bg-red-600'
+                      } text-white rounded`}
                     >
-                      Ban IP
+                      {user.isBanned ? 'Unban IP' : 'Ban IP'}
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.subscription}</td>
@@ -253,10 +250,10 @@ function AdminDashboard() {
                         Yearly Pro
                       </button>
                       <button 
-                        onClick={() => handleAction('downgrade', user.id)}
-                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                        onClick={() => handleAction(VALID_ACTIONS.UPDATE_SUBSCRIPTION, user.id, { plan: 'free' })}
+                        className="px-2 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"
                       >
-                        Free
+                        Downgrade to Free
                       </button>
                       <button 
                         onClick={() => confirmAction(VALID_ACTIONS.DELETE_USER, user.id)}
