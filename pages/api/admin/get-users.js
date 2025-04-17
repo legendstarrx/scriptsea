@@ -1,4 +1,4 @@
-import { adminDb } from '../../../lib/firebaseAdmin';
+import { adminDb, verifyAdmin } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -6,11 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Check admin authorization
-    const adminEmail = req.headers['x-admin-email'];
-    if (adminEmail !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    await verifyAdmin(req);
 
     const usersSnapshot = await adminDb.collection('users').get();
     const users = [];
@@ -35,10 +31,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ users: users || [] });
   } catch (error) {
     console.error('Error fetching users:', error);
-    return res.status(500).json({ 
-      error: 'Failed to fetch users',
-      details: error.message 
-    });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 } 
  

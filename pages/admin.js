@@ -56,7 +56,7 @@ function AdminDashboard() {
   }, [user]);
 
   useEffect(() => {
-    if (!user?.email || user.email !== ADMIN_EMAIL) {
+    if (!user?.email || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
       router.push('/');
       return;
     }
@@ -69,7 +69,7 @@ function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.ADMIN_SECRET_KEY}`,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
           'x-admin-email': user.email
         },
         body: JSON.stringify({ 
