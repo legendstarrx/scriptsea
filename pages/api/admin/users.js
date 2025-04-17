@@ -2,6 +2,11 @@ import { adminDb, verifyAdmin, deleteUserCompletely } from '../../../lib/firebas
 
 const VALID_ACTIONS = ['updateSubscription', 'deleteUser', 'banByIP', 'unbanByIP'];
 
+const checkUserAccess = async (adminId, targetUserId) => {
+  const adminDoc = await adminDb.collection('admins').doc(adminId).get();
+  return adminDoc.exists && adminDoc.data().role === 'admin';
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
