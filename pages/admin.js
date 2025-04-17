@@ -95,6 +95,22 @@ function AdminDashboard() {
             throw new Error(errorData.error || 'Action failed');
         }
 
+        // If it's a delete action, force revoke all sessions
+        if (action === VALID_ACTIONS.DELETE_USER) {
+            try {
+                await fetch('/api/admin/revoke-sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
+                    },
+                    body: JSON.stringify({ userId })
+                });
+            } catch (error) {
+                console.error('Failed to revoke sessions:', error);
+            }
+        }
+
         // Update local state based on action
         if (action === VALID_ACTIONS.UPDATE_SUBSCRIPTION) {
             setUsers(prevUsers => prevUsers.map(u => {
