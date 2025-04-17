@@ -26,19 +26,36 @@ export default async function handler(req, res) {
         }
         
         const subscriptionEnd = new Date();
-        if (data.plan === 'pro_yearly') {
-          subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
-        } else if (data.plan === 'pro_monthly') {
-          subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+        let subscriptionType, subscription;
+        
+        // Standardize subscription naming
+        switch (data.plan) {
+          case 'pro_monthly':
+            subscriptionType = 'monthly';
+            subscription = 'pro';
+            subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
+            break;
+          case 'pro_yearly':
+            subscriptionType = 'yearly';
+            subscription = 'pro';
+            subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+            break;
+          case 'free':
+            subscriptionType = null;
+            subscription = 'free';
+            break;
+          default:
+            return res.status(400).json({ error: 'Invalid plan type' });
         }
         
+        // Update user document
         await adminDb.collection('users').doc(userId).update({
-          subscription: data.plan,
-          scriptsRemaining: data.plan.startsWith('pro') ? 100 : 3,
-          scriptsLimit: data.plan.startsWith('pro') ? 100 : 3,
+          subscription: subscription, // 'pro' or 'free'
+          scriptsRemaining: subscription === 'pro' ? 100 : 3,
+          scriptsLimit: subscription === 'pro' ? 100 : 3,
           lastUpdated: new Date().toISOString(),
-          subscriptionEnd: data.plan === 'free' ? null : subscriptionEnd.toISOString(),
-          subscriptionType: data.plan === 'free' ? null : data.plan.includes('yearly') ? 'yearly' : 'monthly'
+          subscriptionEnd: subscription === 'free' ? null : subscriptionEnd.toISOString(),
+          subscriptionType: subscriptionType // 'monthly', 'yearly', or null
         });
         break;
 

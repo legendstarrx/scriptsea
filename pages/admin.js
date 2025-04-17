@@ -96,7 +96,23 @@ function AdminDashboard() {
         }
 
         // Update local state based on action
-        if (action === VALID_ACTIONS.BAN_IP) {
+        if (action === VALID_ACTIONS.UPDATE_SUBSCRIPTION) {
+            setUsers(prevUsers => prevUsers.map(u => {
+                if (u.id === userId) {
+                    const subscription = data.plan.startsWith('pro') ? 'pro' : 'free';
+                    const subscriptionType = data.plan === 'free' ? null 
+                        : data.plan === 'pro_yearly' ? 'yearly' : 'monthly';
+                    return {
+                        ...u,
+                        subscription,
+                        subscriptionType,
+                        scriptsRemaining: subscription === 'pro' ? 100 : 3,
+                        scriptsLimit: subscription === 'pro' ? 100 : 3
+                    };
+                }
+                return u;
+            }));
+        } else if (action === VALID_ACTIONS.BAN_IP) {
             setUsers(prevUsers => prevUsers.map(u => 
                 u.ipAddress === data.ipAddress ? { ...u, isBanned: true } : u
             ));
@@ -106,10 +122,6 @@ function AdminDashboard() {
             ));
         } else if (action === VALID_ACTIONS.DELETE_USER) {
             setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
-        } else if (action === VALID_ACTIONS.UPDATE_SUBSCRIPTION) {
-            setUsers(prevUsers => prevUsers.map(u => 
-                u.id === userId ? { ...u, subscription: data.plan } : u
-            ));
         }
 
         toast.success('Action completed successfully');
@@ -233,25 +245,44 @@ function AdminDashboard() {
                       {user.isBanned ? 'Unban IP' : 'Ban IP'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{user.subscription}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {user.subscription === 'pro' 
+                        ? `Pro (${user.subscriptionType})` 
+                        : user.subscription}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.scriptsRemaining}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex space-x-2">
                       <button 
                         onClick={() => handleAction(VALID_ACTIONS.UPDATE_SUBSCRIPTION, user.id, { plan: 'pro_monthly' })}
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        className={`px-3 py-1 ${
+                            user.subscription === 'pro' && user.subscriptionType === 'monthly'
+                                ? 'bg-blue-300'
+                                : 'bg-blue-500 hover:bg-blue-600'
+                        } text-white rounded`}
+                        disabled={user.subscription === 'pro' && user.subscriptionType === 'monthly'}
                       >
                         Monthly Pro
                       </button>
                       <button 
                         onClick={() => handleAction(VALID_ACTIONS.UPDATE_SUBSCRIPTION, user.id, { plan: 'pro_yearly' })}
-                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                        className={`px-3 py-1 ${
+                            user.subscription === 'pro' && user.subscriptionType === 'yearly'
+                                ? 'bg-green-300'
+                                : 'bg-green-500 hover:bg-green-600'
+                        } text-white rounded`}
+                        disabled={user.subscription === 'pro' && user.subscriptionType === 'yearly'}
                       >
                         Yearly Pro
                       </button>
                       <button 
                         onClick={() => handleAction(VALID_ACTIONS.UPDATE_SUBSCRIPTION, user.id, { plan: 'free' })}
-                        className="px-2 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        className={`px-3 py-1 ${
+                            user.subscription === 'free'
+                                ? 'bg-yellow-300'
+                                : 'bg-yellow-500 hover:bg-yellow-600'
+                        } text-white rounded`}
+                        disabled={user.subscription === 'free'}
                       >
                         Downgrade to Free
                       </button>
