@@ -56,7 +56,7 @@ const AdminPanel = () => {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
+  const handleDeleteUser = useCallback(async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         const response = await fetch('/api/admin/users', {
@@ -79,15 +79,17 @@ const AdminPanel = () => {
           throw new Error('Failed to delete user');
         }
 
-        // Remove user from local state
         setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
         toast.success('User deleted successfully');
+        
+        // Refresh user list
+        getAllUsers();
       } catch (error) {
         console.error('Delete user error:', error);
         toast.error('Failed to delete user');
       }
     }
-  };
+  }, [users, getAllUsers]);
 
   const handleDeleteUsersByIP = async (ipAddress) => {
     if (window.confirm(`Are you sure you want to delete all users with IP: ${ipAddress}?`)) {
