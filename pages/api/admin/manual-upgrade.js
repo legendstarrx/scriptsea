@@ -24,7 +24,8 @@ export default async function handler(req, res) {
     const userRef = doc(db, 'users', userEmail);
     await updateDoc(userRef, {
       subscription: 'pro',
-      scriptsRemaining: 100,
+      scriptsRemaining: plan === 'yearly' ? 1200 : 100,
+      scriptsLimit: plan === 'yearly' ? 1200 : 100,
       subscriptionEnd: subscriptionEnd.toISOString(),
       lastPayment: new Date().toISOString(),
       subscriptionType: plan

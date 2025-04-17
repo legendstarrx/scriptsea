@@ -28,8 +28,11 @@ export default async function handler(req, res) {
         };
       } else if (data.subscription === 'pro') {
         updateData = {
-          scriptsRemaining: Math.min(data.scriptsRemaining || 0, 100),
-          scriptsLimit: 100,
+          scriptsRemaining: Math.min(
+            data.scriptsRemaining || 0, 
+            data.subscriptionType === 'yearly' ? 1200 : 100
+          ),
+          scriptsLimit: data.subscriptionType === 'yearly' ? 1200 : 100,
           subscriptionType: data.subscriptionType || 'monthly'
         };
       }
