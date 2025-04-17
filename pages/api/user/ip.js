@@ -1,6 +1,5 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
-import { getClientIp } from 'request-ip';
-import isValidIP from 'is-ip';
+import requestIp from 'request-ip';  // You'll need to install this package
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -9,27 +8,21 @@ export default async function handler(req, res) {
 
   try {
     const { userId } = req.body;
-    const clientIp = getClientIp(req);
+    const ipAddress = requestIp.getClientIp(req) || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    if (!clientIp || !isValidIP(clientIp)) {
-      return res.status(400).json({ error: 'Invalid IP address' });
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Check if IP is banned
-    const bannedIp = await adminDb.collection('banned_ips').doc(clientIp).get();
-    if (bannedIp.exists) {
-      return res.status(403).json({ error: 'IP address is banned' });
-    }
-
-    await adminDb.collection('users').doc(userId).update({
-      ipAddress: clientIp,
-      lastLoginIp: clientIp,
-      lastLoginAt: new Date().toISOString()
+    const userRef = adminDb.collection('users').doc(userId);
+    await userRef.update({
+      ipAddress,
+      lastUpdated: new Date().toISOString()
     });
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error('IP update error:', error);
+    console.error('Error updating IP:', error);
     return res.status(500).json({ error: 'Failed to update IP' });
   }
 } 

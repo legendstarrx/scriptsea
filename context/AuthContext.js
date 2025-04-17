@@ -123,16 +123,20 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // Check IP ban before login
-      const ipCheck = await fetch('/api/check-ip-ban');
-      if (!ipCheck.ok) {
-        throw new Error('Your IP has been banned');
-      }
-
-      // Continue with existing login logic
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return result;
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Update IP address after successful login
+      await fetch('/api/user/ip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: userCredential.user.uid })
+      });
+      
+      return userCredential.user;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -215,8 +219,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = async () => {
-    // No session invalidation
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      throw error;
+    }
   };
 
   const resetPassword = async (email) => {

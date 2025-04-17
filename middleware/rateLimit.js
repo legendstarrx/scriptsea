@@ -1,22 +1,15 @@
 import rateLimit from 'express-rate-limit';
+import { getClientIp } from 'request-ip';
 
-export const createRateLimiter = (options = {}) => {
-  return rateLimit({
-    windowMs: options.windowMs || 15 * 60 * 1000,
-    max: options.max || 5,
-    message: { error: 'Too many requests' },
-    standardHeaders: true,
-    legacyHeaders: false
-  });
-};
-
-// Export configured instances
-export const authLimiter = createRateLimiter();
-
-export const resetLimiter = createRateLimiter({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3 // 3 attempts
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts
+  message: { error: 'Too many attempts, please try again later' },
+  keyGenerator: (req) => getClientIp(req) || 'unknown'
 });
 
-// Export the creator function for custom limits
-export const createLimiter = createRateLimiter; 
+export const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 requests per minute
+  message: { error: 'Too many requests, please try again later' }
+}); 
