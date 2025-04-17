@@ -24,7 +24,8 @@ export default async function handler(req, res) {
       const userRef = adminDb.collection('users').doc(userId);
       await userRef.update({
         subscription: 'pro',
-        scriptsRemaining: 100,
+        scriptsRemaining: plan_type === 'yearly' ? 1200 : 100,
+        scriptsLimit: plan_type === 'yearly' ? 1200 : 100,
         subscriptionEnd: new Date(Date.now() + (plan_type === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000),
         lastPayment: new Date().toISOString(),
         paymentAmount: amount,

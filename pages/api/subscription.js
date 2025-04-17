@@ -19,9 +19,17 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    const userData = userDoc.data();
+    const subscriptionType = userData?.subscriptionType || 'monthly';
+
     await userRef.update({
       subscription: plan,
-      scriptsRemaining: plan === 'pro' ? 100 : 3,
+      scriptsRemaining: plan === 'pro' 
+        ? (subscriptionType === 'yearly' ? 1200 : 100) 
+        : 3,
+      scriptsLimit: plan === 'pro'
+        ? (subscriptionType === 'yearly' ? 1200 : 100)
+        : 3,
       lastUpdated: new Date().toISOString()
     });
 

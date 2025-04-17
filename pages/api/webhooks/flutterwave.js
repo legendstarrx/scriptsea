@@ -43,7 +43,8 @@ export default async function handler(req, res) {
         const userRef = doc(db, 'users', userEmail);
         await updateDoc(userRef, {
           subscription: 'pro',
-          scriptsRemaining: 100,
+          scriptsRemaining: isYearlyPlan ? 1200 : 100,
+          scriptsLimit: isYearlyPlan ? 1200 : 100,
           subscriptionEnd: new Date(Date.now() + (isYearlyPlan ? 365 : 30) * 24 * 60 * 60 * 1000),
           lastPayment: new Date(),
           paymentAmount: amount,

@@ -13,8 +13,11 @@ async function cleanupUsers() {
       });
     } else if (data.subscription === 'pro') {
       await doc.ref.update({
-        scriptsLimit: 100,
-        scriptsRemaining: Math.min(data.scriptsRemaining, 100)
+        scriptsLimit: data.subscriptionType === 'yearly' ? 1200 : 100,
+        scriptsRemaining: Math.min(
+          data.scriptsRemaining,
+          data.subscriptionType === 'yearly' ? 1200 : 100
+        )
       });
     }
   });

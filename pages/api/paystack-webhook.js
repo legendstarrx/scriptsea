@@ -45,7 +45,8 @@ export default async function handler(req, res) {
           lastPayment: new Date().toISOString(),
           nextPaymentDate: new Date(next_payment_date).toISOString(),
           subscriptionId: subscription_code,
-          scriptsRemaining: 100
+          scriptsRemaining: plan.interval === 'yearly' ? 1200 : 100,
+          scriptsLimit: plan.interval === 'yearly' ? 1200 : 100
         });
 
         // Log payment
