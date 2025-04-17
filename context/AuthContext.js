@@ -131,38 +131,38 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      const user = userCredential.user;
+      const result = await signInWithPopup(auth, provider);
+      
+      // Check if IP is banned
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
+      
+      // Check banned_ips collection
+      const bannedIpRef = doc(db, 'banned_ips', ip);
+      const bannedIpDoc = await getDoc(bannedIpRef);
+      
+      if (bannedIpDoc.exists()) {
+        // If IP is banned, sign out and throw error
+        await auth.signOut();
+        throw new Error('This IP address has been banned. Please contact support.');
+      }
 
-      // Create or update user document in Firestore
-      const userData = {
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        subscription: 'free',
-        scriptsRemaining: 3,
-        scriptsGenerated: 0,
-        isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        isBanned: false,
-        subscriptionStatus: 'free',
-        lastPaymentDate: new Date().toISOString()
-      };
-
-      await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
-
-      // Update IP address
-      await fetch('/api/update-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.uid })
-      });
-
-      setUserProfile(userData);
-      return user;
+      // Continue with normal sign in process if IP is not banned
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, 'users', result.user.uid), {
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+          ipAddress: ip,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          subscription: 'free',
+          scriptsRemaining: 3,
+          scriptsLimit: 3
+        });
+      }
+      return result.user;
     } catch (error) {
       console.error('Google sign-in error:', error);
       throw error;

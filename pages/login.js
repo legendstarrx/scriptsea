@@ -57,86 +57,156 @@ export default function Login() {
   return (
     <div>
       <Navigation />
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
-          </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-md shadow-sm -space-y-px">
-              <div>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
-                />
-              </div>
-              <div>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Password"
-                />
-              </div>
+      <main style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem',
+        background: '#f9fafb'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '400px',
+          padding: '2rem',
+          background: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          animation: 'slideIn 0.5s ease-out'
+        }}>
+          <h1 style={{
+            fontSize: '1.875rem',
+            fontWeight: '700',
+            textAlign: 'center',
+            marginBottom: '2rem',
+            color: '#1F2937'
+          }}>Sign in to your account</h1>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+                placeholder="Email address"
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+                placeholder="Password"
+              />
             </div>
 
             {message.text && (
-              <div className={`text-sm text-${message.type === 'error' ? 'red' : 'green'}-600`}>
+              <div style={{
+                color: message.type === 'error' ? '#DC2626' : '#059669',
+                marginBottom: '1rem',
+                fontSize: '0.875rem'
+              }}>
                 {message.text}
               </div>
             )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </div>
-          </form>
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: '#FF3366',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: isLoading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {isLoading ? 'Signing in...' : 'Sign In'}
+            </button>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
-              </div>
+            <div style={{
+              margin: '1.5rem 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem'
+            }}>
+              <div style={{ flex: 1, height: '1px', background: '#ddd' }} />
+              <span style={{ color: '#666' }}>or</span>
+              <div style={{ flex: 1, height: '1px', background: '#ddd' }} />
             </div>
 
-            <div className="mt-6">
-              <button
-                onClick={handleGoogleSignIn}
-                disabled={isLoading}
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <img src="/google.svg" alt="Google logo" className="h-5 w-5 mr-2" />
-                Sign in with Google
-              </button>
-            </div>
-          </div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: 'white',
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <img
+                src="/google.svg"
+                alt="Google"
+                style={{ width: '20px', height: '20px' }}
+              />
+              Sign in with Google
+            </button>
 
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
+            <p style={{
+              marginTop: '1.5rem',
+              textAlign: 'center',
+              color: '#666',
+              fontSize: '0.875rem'
+            }}>
               Don't have an account?{' '}
-              <a href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <a
+                href="/register"
+                style={{
+                  color: '#FF3366',
+                  textDecoration: 'none',
+                  cursor: 'pointer'
+                }}
+              >
                 Sign up
               </a>
             </p>
-          </div>
+          </form>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );
