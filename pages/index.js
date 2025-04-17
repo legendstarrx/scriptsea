@@ -2,8 +2,10 @@ import React from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useRouter } from 'next/router';
+import { useAuthRedirect } from '../hooks/useAuthRedirect';
 
 export default function Home() {
+  useAuthRedirect();
   const router = useRouter();
   const [openFaq, setOpenFaq] = React.useState(null);
 
@@ -234,5 +236,5 @@ export default function Home() {
       <Footer />
     </div>
   );
-  }
+}
   

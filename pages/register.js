@@ -5,6 +5,7 @@ import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { useAuthRedirect } from '../hooks/useAuthRedirect';
 
 // List of temporary email domains to block
 const TEMP_EMAIL_DOMAINS = [
@@ -30,6 +31,7 @@ const PASSWORD_REQUIREMENTS = {
 };
 
 export default function Register() {
+  useAuthRedirect();
   const router = useRouter();
   const { signup, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({

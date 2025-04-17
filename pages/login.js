@@ -5,8 +5,10 @@ import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { useAuthRedirect } from '../hooks/useAuthRedirect';
 
 export default function Login() {
+  const isLoading = useAuthRedirect();
   const router = useRouter();
   const { login, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
@@ -16,9 +18,12 @@ export default function Login() {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetMessage, setResetMessage] = useState(null);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
