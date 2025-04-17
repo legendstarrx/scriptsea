@@ -69,7 +69,8 @@ function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
+          'x-admin-email': user.email
         },
         body: JSON.stringify({ 
           action,
@@ -81,14 +82,44 @@ function AdminDashboard() {
         })
       });
 
-      if (response.ok) {
-        toast.success('Action completed successfully');
-        fetchUsers();
-      } else {
-        throw new Error('Action failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Action failed');
       }
+
+      toast.success('Action completed successfully');
+      fetchUsers();
     } catch (error) {
-      toast.error('Failed to perform action');
+      console.error('Action error:', error);
+      toast.error(error.message || 'Failed to perform action');
+    }
+  };
+
+  const handleBanIP = async (ipAddress) => {
+    try {
+      const response = await fetch('/api/admin/ban-ip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
+          'x-admin-email': user.email
+        },
+        body: JSON.stringify({ 
+          ipAddress,
+          adminEmail: user.email
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to ban IP');
+      }
+
+      toast.success('IP banned successfully');
+      fetchUsers();
+    } catch (error) {
+      console.error('Ban IP error:', error);
+      toast.error(error.message || 'Failed to ban IP');
     }
   };
 
@@ -188,28 +219,44 @@ function AdminDashboard() {
               {currentUsers.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{user.ipAddress}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {user.ipAddress}
+                    <button 
+                      onClick={() => handleBanIP(user.ipAddress)}
+                      className="ml-2 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Ban IP
+                    </button>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.subscription}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.scriptsRemaining}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex space-x-2">
-                      <button onClick={() => handleAction('upgrade', user.id, { plan: 'monthly' })} 
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                      <button 
+                        onClick={() => handleAction('upgrade', user.id, { plan: 'monthly' })}
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
                         Monthly Pro
                       </button>
-                      <button onClick={() => handleAction('upgrade', user.id, { plan: 'yearly' })}
-                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">
+                      <button 
+                        onClick={() => handleAction('upgrade', user.id, { plan: 'yearly' })}
+                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                      >
                         Yearly Pro
                       </button>
-                      <button onClick={() => handleAction('downgrade', user.id)}
-                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600">
+                      <button 
+                        onClick={() => handleAction('downgrade', user.id)}
+                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                      >
                         Free
                       </button>
-                      <button onClick={() => confirmAction('delete', user.id)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
-                          Delete
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => confirmAction('delete', user.id)}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
