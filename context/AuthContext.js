@@ -147,6 +147,13 @@ export function AuthProvider({ children }) {
       const userCredential = await signInWithPopup(auth, provider);
       const user = userCredential.user;
 
+      // Check if user is banned
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists() && userDoc.data().isBanned) {
+        await auth.signOut();
+        throw new Error('Your account has been banned');
+      }
+
       // Create or update user document in Firestore
       const userData = {
         email: user.email,
@@ -175,6 +182,9 @@ export function AuthProvider({ children }) {
       });
 
       setUserProfile(userData);
+      
+      // Redirect to generate page
+      window.location.href = '/generate';
       return user;
     } catch (error) {
       console.error('Google Sign-in error:', error);
