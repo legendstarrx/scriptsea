@@ -20,6 +20,7 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetMessage, setResetMessage] = useState(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(false);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -27,7 +28,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoadingAuth(true);
     
     try {
       await login(formData.email, formData.password);
@@ -45,12 +46,12 @@ export default function Login() {
         text: error.message || 'Login failed. Please try again.'
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingAuth(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+    setIsLoadingAuth(true);
     try {
       const result = await signInWithGoogle();
       if (result?.user) {
@@ -65,7 +66,7 @@ export default function Login() {
         text: error.message || 'Google sign-in failed. Please try again.'
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingAuth(false);
     }
   };
 
@@ -81,7 +82,7 @@ export default function Login() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoadingAuth(true);
     
     try {
       // Add password reset logic here
@@ -90,7 +91,7 @@ export default function Login() {
     } catch (error) {
       setResetMessage({ type: 'error', text: error.message });
     } finally {
-      setIsLoading(false);
+      setIsLoadingAuth(false);
     }
   };
 
@@ -194,7 +195,7 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoadingAuth}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -208,7 +209,7 @@ export default function Login() {
                 marginBottom: '1rem'
               }}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoadingAuth ? 'Signing in...' : 'Sign In'}
             </button>
 
             <div style={{
