@@ -78,17 +78,14 @@ export function AuthProvider({ children }) {
 
   const signup = async (email, password, displayName) => {
     try {
-      console.log('Starting signup process...');
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log('User created in Firebase Auth:', user.uid);
       
       if (displayName) {
         await updateProfile(user, { displayName });
-        console.log('Updated user profile with display name');
       }
       
-      // Create user document in Firestore with correct initial values
+      // Create user document in Firestore
       const userData = {
         email: user.email,
         displayName: displayName || user.displayName,
@@ -99,50 +96,27 @@ export function AuthProvider({ children }) {
         isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        ipAddress: null, // Will be updated by the API call
+        ipAddress: null,
         isBanned: false,
         subscriptionStatus: 'free',
         lastPaymentDate: new Date().toISOString()
       };
       
-      console.log('Creating user document in Firestore...');
       await setDoc(doc(db, 'users', user.uid), userData);
-      console.log('User document created in Firestore');
-      setUserProfile(userData);
-
-      try {
-        console.log('Updating IP address...');
-        // Update IP address after successful signup
-        const ipResponse = await fetch('/api/user/ip', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId: user.uid }),
-        });
-        
-        if (!ipResponse.ok) {
-          console.warn('Failed to update IP address, but user was created:', await ipResponse.text());
-        } else {
-          console.log('IP address updated successfully');
-        }
-      } catch (ipError) {
-        console.warn('Error updating IP address, but user was created:', ipError);
-      }
       
+      // Update IP address
+      await fetch('/api/user/ip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.uid })
+      });
+      
+      setUserProfile(userData);
       return user;
     } catch (error) {
       console.error('Signup error:', error);
-      // Add more specific error handling
-      if (error.code === 'auth/email-already-in-use') {
-        throw new Error('This email is already registered. Please try logging in instead.');
-      } else if (error.code === 'auth/invalid-email') {
-        throw new Error('Invalid email address. Please check and try again.');
-      } else if (error.code === 'auth/operation-not-allowed') {
-        throw new Error('Email/password accounts are not enabled. Please contact support.');
-      } else if (error.code === 'auth/weak-password') {
-        throw new Error('Password is too weak. Please choose a stronger password.');
-      }
       throw error;
     }
   };
@@ -150,16 +124,19 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
       // Update IP address after successful login
       await fetch('/api/user/ip', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: userCredential.user.uid }),
+        body: JSON.stringify({ userId: userCredential.user.uid })
       });
+      
       return userCredential.user;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };

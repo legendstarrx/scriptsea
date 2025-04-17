@@ -1,4 +1,5 @@
 import { adminDb } from '../../../lib/firebaseAdmin';
+import requestIp from 'request-ip';  // You'll need to install this package
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,9 +7,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, ipAddress } = req.body;
+    const { userId } = req.body;
+    const ipAddress = requestIp.getClientIp(req) || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    if (!userId || !ipAddress) {
+    if (!userId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 

@@ -287,7 +287,7 @@ function AdminDashboard() {
                         Downgrade to Free
                       </button>
                       <button 
-                        onClick={() => confirmAction(VALID_ACTIONS.DELETE_USER, user.id)}
+                        onClick={() => handleAction(VALID_ACTIONS.DELETE_USER, user.id)}
                         className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                       >
                         Delete
