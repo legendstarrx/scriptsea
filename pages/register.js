@@ -398,7 +398,7 @@ export default function Register() {
             }}
           >
             <img
-              src="/google.svg"
+              src="https://www.google.com/favicon.ico"
               alt="Google"
               style={{ width: '20px', height: '20px' }}
             />

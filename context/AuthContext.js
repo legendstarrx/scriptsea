@@ -30,37 +30,50 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      
       if (user) {
-        // Check if user is banned
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const userData = userDoc.data();
-        
-        if (userData?.isBanned) {
-          // If user is banned, sign them out
-          await auth.signOut();
-          router.push('/login?error=banned');
-          return;
-        }
-
-        // Set up real-time listener for ban status
-        const unsubscribeBan = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-          const userData = doc.data();
-          if (userData?.isBanned) {
-            auth.signOut();
-            router.push('/login?error=banned');
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const docSnap = await getDoc(userRef);
+          
+          const isAdminUser = user.email === 'legendstarr2024@gmail.com';
+          
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
+            userData.isAdmin = isAdminUser;
+            setUserProfile({
+              ...userData,
+              isAdmin: isAdminUser
+            });
+          } else {
+            const defaultProfile = {
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              subscription: 'free',
+              scriptsRemaining: 3,
+              scriptsGenerated: 0,
+              isAdmin: isAdminUser,
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            };
+            await setDoc(userRef, defaultProfile);
+            setUserProfile(defaultProfile);
           }
-        });
-
-        setUser(user);
+        } catch (error) {
+          console.error('Profile fetch error:', error);
+          setError(error);
+        }
       } else {
         setUser(null);
+        setUserProfile(null);
       }
+      
       setLoading(false);
     });
 
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   const signup = async (email, password, displayName) => {
@@ -130,51 +143,41 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = async () => {
     try {
-      // First attempt Google sign in
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      
-      // After successful sign in, check IP status
-      const ipCheckResponse = await fetch('/api/auth/check-ip');
-      if (!ipCheckResponse.ok) {
-        // If IP is banned, sign out and throw error
-        await auth.signOut();
-        const error = await ipCheckResponse.json();
-        throw new Error(error.message || 'This IP address has been banned');
-      }
-      const { ip } = await ipCheckResponse.json();
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
 
-      // Check if user document exists
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-      
-      if (!userDoc.exists()) {
-        // Create new user document
-        await setDoc(doc(db, 'users', result.user.uid), {
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL,
-          ipAddress: ip,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-          subscription: 'free',
-          scriptsRemaining: 3,
-          scriptsLimit: 3,
-          isBanned: false // Explicitly set banned status
-        });
-      } else {
-        // Update existing user
-        await updateDoc(doc(db, 'users', result.user.uid), {
-          lastLogin: new Date().toISOString(),
-          ipAddress: ip,
-          isBanned: false // Reset banned status on login
-        });
-      }
+      // Create or update user document in Firestore
+      const userData = {
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        subscription: 'free',
+        scriptsRemaining: 3,
+        scriptsGenerated: 0,
+        isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        isBanned: false,
+        subscriptionStatus: 'free',
+        lastPaymentDate: new Date().toISOString()
+      };
 
-      return result.user;
+      await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
+
+      // Update IP address
+      await fetch('/api/update-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.uid })
+      });
+
+      setUserProfile(userData);
+      return user;
     } catch (error) {
-      console.error('Google sign-in error:', error);
-      // If there's an error, ensure user is signed out
-      await auth.signOut();
+      console.error('Google Sign-in error:', error);
       throw error;
     }
   };

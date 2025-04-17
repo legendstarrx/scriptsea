@@ -1,5 +1,4 @@
 import { adminDb, verifyAdmin, deleteUserCompletely } from '../../../lib/firebaseAdmin';
-import { getAuth } from '../../../lib/firebaseAdmin';
 
 const VALID_ACTIONS = ['updateSubscription', 'deleteUser', 'banByIP', 'unbanByIP'];
 
@@ -94,27 +93,10 @@ export default async function handler(req, res) {
           .get();
 
         const batch = adminDb.batch();
-        const bannedUserIds = [];
-        
         usersSnapshot.docs.forEach(doc => {
-          batch.update(doc.ref, { 
-            isBanned: true,
-            bannedAt: new Date().toISOString(),
-            bannedBy: data.adminEmail 
-          });
-          bannedUserIds.push(doc.id);
+          batch.update(doc.ref, { isBanned: true });
         });
         await batch.commit();
-
-        // Revoke Firebase sessions for all banned users
-        await Promise.all(bannedUserIds.map(async (uid) => {
-          try {
-            await getAuth().revokeRefreshTokens(uid);
-          } catch (error) {
-            console.error(`Failed to revoke tokens for user ${uid}:`, error);
-          }
-        }));
-
         break;
 
       case 'unbanByIP':
@@ -122,30 +104,19 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'IP address is required' });
         }
         
-        try {
-          // Remove IP from banned_ips collection
-          await adminDb.collection('banned_ips').doc(data.ipAddress).delete();
+        // Remove IP from banned_ips collection
+        await adminDb.collection('banned_ips').doc(data.ipAddress).delete();
 
-          // Update all users with this IP
-          const bannedUsersSnapshot = await adminDb.collection('users')
-            .where('ipAddress', '==', data.ipAddress)
-            .get();
+        // Update all users with this IP
+        const bannedUsersSnapshot = await adminDb.collection('users')
+          .where('ipAddress', '==', data.ipAddress)
+          .get();
 
-          const unbanBatch = adminDb.batch();
-          bannedUsersSnapshot.docs.forEach(doc => {
-            unbanBatch.update(doc.ref, { 
-              isBanned: false,
-              unbannedAt: new Date().toISOString(),
-              unbannedBy: data.adminEmail 
-            });
-          });
-          await unbanBatch.commit();
-
-          return res.status(200).json({ success: true });
-        } catch (error) {
-          console.error('Error unbanning IP:', error);
-          return res.status(500).json({ error: 'Failed to unban IP' });
-        }
+        const unbanBatch = adminDb.batch();
+        bannedUsersSnapshot.docs.forEach(doc => {
+          unbanBatch.update(doc.ref, { isBanned: false });
+        });
+        await unbanBatch.commit();
         break;
 
       default:

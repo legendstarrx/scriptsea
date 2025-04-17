@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { toast } from 'react-toastify';
-import Link from 'next/link';
 
 export default function Login() {
   const router = useRouter();
@@ -14,14 +14,11 @@ export default function Login() {
     password: ''
   });
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { error } = router.query;
-
-  useEffect(() => {
-    if (error === 'banned') {
-      toast.error('Your account has been banned. Please contact support for more information.');
-    }
-  }, [error]);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetMessage, setResetMessage] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +26,14 @@ export default function Login() {
     
     try {
       await login(formData.email, formData.password);
-      router.push('/generate');
+      setMessage({
+        type: 'success',
+        text: 'Login successful! Redirecting...'
+      });
+      
+      setTimeout(() => {
+        router.push('/generate');
+      }, 1500);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -43,8 +47,13 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
-      router.push('/generate');
+      const result = await signInWithGoogle();
+      if (result?.user) {
+        setMessage({
+          type: 'success',
+          text: 'Login successful! Redirecting...'
+        });
+      }
     } catch (error) {
       setMessage({
         type: 'error',
@@ -55,41 +64,93 @@ export default function Login() {
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear message when user starts typing
+    setMessage({ type: '', text: '' });
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      // Add password reset logic here
+      setResetMessage({ type: 'success', text: 'Password reset instructions sent to your email!' });
+      setShowResetModal(false);
+    } catch (error) {
+      setResetMessage({ type: 'error', text: error.message });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <Navigation />
       <main style={{
-        minHeight: '100vh',
+        flex: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem',
-        background: '#f9fafb'
+        padding: '1rem',
+        background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
       }}>
         <div style={{
           width: '100%',
           maxWidth: '400px',
           padding: '2rem',
           background: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          animation: 'slideIn 0.5s ease-out'
+          borderRadius: '16px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+          marginTop: '2rem'
         }}>
           <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: '700',
-            textAlign: 'center',
+            fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+            color: '#333',
             marginBottom: '2rem',
-            color: '#1F2937'
-          }}>Sign in to your account</h1>
+            textAlign: 'center'
+          }}>
+            Login to Your Account
+          </h1>
+
+          {message.text && (
+            <div style={{
+              padding: '1rem',
+              marginBottom: '1rem',
+              borderRadius: '8px',
+              backgroundColor: message.type === 'success' ? 'rgba(255, 51, 102, 0.1)' : 'rgba(255, 51, 102, 0.1)',
+              color: message.type === 'success' ? '#FF3366' : '#FF3366',
+              border: '1px solid #FF3366',
+              animation: 'slideIn 0.3s ease'
+            }}>
+              {message.text}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666',
+                fontSize: '0.875rem'
+              }}>
+                Email
+              </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={handleChange}
                 required
                 style={{
                   width: '100%',
@@ -98,16 +159,23 @@ export default function Login() {
                   borderRadius: '8px',
                   fontSize: '1rem'
                 }}
-                placeholder="Email address"
               />
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#666',
+                fontSize: '0.875rem'
+              }}>
+                Password
+              </label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={handleChange}
                 required
                 style={{
                   width: '100%',
@@ -116,19 +184,8 @@ export default function Login() {
                   borderRadius: '8px',
                   fontSize: '1rem'
                 }}
-                placeholder="Password"
               />
             </div>
-
-            {message.text && (
-              <div style={{
-                color: message.type === 'error' ? '#DC2626' : '#059669',
-                marginBottom: '1rem',
-                fontSize: '0.875rem'
-              }}>
-                {message.text}
-              </div>
-            )}
 
             <button
               type="submit"
@@ -142,27 +199,27 @@ export default function Login() {
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
-                cursor: isLoading ? 'not-allowed' : 'pointer'
+                cursor: 'pointer',
+                marginBottom: '1rem'
               }}
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
 
             <div style={{
-              margin: '1.5rem 0',
               display: 'flex',
               alignItems: 'center',
+              margin: '1.5rem 0',
               gap: '1rem'
             }}>
-              <div style={{ flex: 1, height: '1px', background: '#ddd' }} />
-              <span style={{ color: '#666' }}>or</span>
-              <div style={{ flex: 1, height: '1px', background: '#ddd' }} />
+              <div style={{ flex: 1, height: '1px', background: '#eee' }} />
+              <span style={{ color: '#666', fontSize: '0.875rem' }}>or</span>
+              <div style={{ flex: 1, height: '1px', background: '#eee' }} />
             </div>
 
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -172,7 +229,7 @@ export default function Login() {
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -180,7 +237,7 @@ export default function Login() {
               }}
             >
               <img
-                src="/google.svg"
+                src="/images/google.svg"
                 alt="Google"
                 style={{ width: '20px', height: '20px' }}
               />
@@ -194,8 +251,8 @@ export default function Login() {
               fontSize: '0.875rem'
             }}>
               Don't have an account?{' '}
-              <Link
-                href="/register"
+              <a
+                onClick={() => router.push('/register')}
                 style={{
                   color: '#FF3366',
                   textDecoration: 'none',
@@ -203,7 +260,7 @@ export default function Login() {
                 }}
               >
                 Sign up
-              </Link>
+              </a>
             </p>
           </form>
         </div>
