@@ -1,5 +1,5 @@
 import { getAuth } from 'firebase-admin/auth';
-import { db } from '../../../lib/firebase';
+import { adminDb, adminAuth } from '../../../lib/firebaseAdmin';
 
 export async function validateAdminRequest(req) {
   try {
@@ -19,7 +19,7 @@ export async function validateAdminRequest(req) {
     const decodedToken = await getAuth().verifyIdToken(token);
     
     // Get user from database
-    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+    const userDoc = await adminDb.collection('users').doc(decodedToken.uid).get();
     const userData = userDoc.data();
 
     // Check if user is admin

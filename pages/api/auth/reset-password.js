@@ -1,4 +1,4 @@
-import { rateLimit } from '../../../middleware/rateLimit';
+import { authLimiter } from '../../../middleware/rateLimit';
 import { adminAuth } from '../../../lib/firebaseAdmin';
 
 const resetLimiter = rateLimit({
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  await resetLimiter(req, res);
+  await authLimiter(req, res);
 
   try {
     const { email } = req.body;
