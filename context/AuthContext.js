@@ -130,21 +130,25 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = async () => {
     try {
-      // Check IP status first
+      // First attempt Google sign in
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      // After successful sign in, check IP status
       const ipCheckResponse = await fetch('/api/auth/check-ip');
       if (!ipCheckResponse.ok) {
+        // If IP is banned, sign out and throw error
+        await auth.signOut();
         const error = await ipCheckResponse.json();
         throw new Error(error.message || 'This IP address has been banned');
       }
       const { ip } = await ipCheckResponse.json();
 
-      // Proceed with Google sign in
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-
-      // Create or update user document
+      // Check if user document exists
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      
       if (!userDoc.exists()) {
+        // Create new user document
         await setDoc(doc(db, 'users', result.user.uid), {
           email: result.user.email,
           displayName: result.user.displayName,
@@ -154,19 +158,23 @@ export function AuthProvider({ children }) {
           lastLogin: new Date().toISOString(),
           subscription: 'free',
           scriptsRemaining: 3,
-          scriptsLimit: 3
+          scriptsLimit: 3,
+          isBanned: false // Explicitly set banned status
         });
       } else {
-        // Update last login and IP
+        // Update existing user
         await updateDoc(doc(db, 'users', result.user.uid), {
           lastLogin: new Date().toISOString(),
-          ipAddress: ip
+          ipAddress: ip,
+          isBanned: false // Reset banned status on login
         });
       }
 
       return result.user;
     } catch (error) {
       console.error('Google sign-in error:', error);
+      // If there's an error, ensure user is signed out
+      await auth.signOut();
       throw error;
     }
   };

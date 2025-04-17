@@ -122,19 +122,30 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'IP address is required' });
         }
         
-        // Remove IP from banned_ips collection
-        await adminDb.collection('banned_ips').doc(data.ipAddress).delete();
+        try {
+          // Remove IP from banned_ips collection
+          await adminDb.collection('banned_ips').doc(data.ipAddress).delete();
 
-        // Update all users with this IP
-        const bannedUsersSnapshot = await adminDb.collection('users')
-          .where('ipAddress', '==', data.ipAddress)
-          .get();
+          // Update all users with this IP
+          const bannedUsersSnapshot = await adminDb.collection('users')
+            .where('ipAddress', '==', data.ipAddress)
+            .get();
 
-        const unbanBatch = adminDb.batch();
-        bannedUsersSnapshot.docs.forEach(doc => {
-          unbanBatch.update(doc.ref, { isBanned: false });
-        });
-        await unbanBatch.commit();
+          const unbanBatch = adminDb.batch();
+          bannedUsersSnapshot.docs.forEach(doc => {
+            unbanBatch.update(doc.ref, { 
+              isBanned: false,
+              unbannedAt: new Date().toISOString(),
+              unbannedBy: data.adminEmail 
+            });
+          });
+          await unbanBatch.commit();
+
+          return res.status(200).json({ success: true });
+        } catch (error) {
+          console.error('Error unbanning IP:', error);
+          return res.status(500).json({ error: 'Failed to unban IP' });
+        }
         break;
 
       default:
