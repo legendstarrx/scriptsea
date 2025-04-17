@@ -1,6 +1,7 @@
 import { getApps, cert, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import type { NextApiRequest } from 'next';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -23,9 +24,9 @@ export const adminDb = getFirestore();
 export const adminAuth = getAuth();
 
 // Helper function to verify admin session
-export const verifyAdmin = async (req) => {
+export const verifyAdmin = async (req: NextApiRequest) => {
   const adminKey = req.headers.authorization?.split('Bearer ')[1];
-  if (adminKey !== process.env.ADMIN_API_KEY) { // Remove NEXT_PUBLIC_
+  if (adminKey !== process.env.ADMIN_API_KEY) {
     throw new Error('Unauthorized');
   }
 };
