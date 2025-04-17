@@ -1,4 +1,4 @@
-import { adminDb, verifyAdmin } from '../../../lib/firebaseAdmin';
+import { adminDb, verifyAdmin, deleteUserCompletely } from '../../../lib/firebaseAdmin';
 
 const VALID_ACTIONS = ['updateSubscription', 'deleteUser', 'banByIP', 'unbanByIP'];
 
@@ -63,7 +63,13 @@ export default async function handler(req, res) {
         if (!userId) {
           return res.status(400).json({ error: 'User ID is required' });
         }
-        await adminDb.collection('users').doc(userId).delete();
+        try {
+          await deleteUserCompletely(userId);
+          return res.status(200).json({ success: true });
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          return res.status(500).json({ error: 'Failed to delete user' });
+        }
         break;
 
       case 'banByIP':

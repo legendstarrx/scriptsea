@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const AdminPanel = () => {
   const { getAllUsers, getUsersByIP, updateSubscription, deleteUserAccount } = useAuth();
@@ -58,11 +59,32 @@ const AdminPanel = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await deleteUserAccount(userId);
-        await loadUsers(); // Reload users to reflect changes
-      } catch (err) {
-        setError('Failed to delete user');
-        console.error(err);
+        const response = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
+            'x-admin-email': users.find(u => u.id === userId)?.email
+          },
+          body: JSON.stringify({
+            action: 'deleteUser',
+            userId,
+            data: {
+              adminEmail: users.find(u => u.id === userId)?.email
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete user');
+        }
+
+        // Remove user from local state
+        setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+        toast.success('User deleted successfully');
+      } catch (error) {
+        console.error('Delete user error:', error);
+        toast.error('Failed to delete user');
       }
     }
   };

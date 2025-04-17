@@ -34,6 +34,7 @@ export default async function handler(req, res) {
       await userRef.update({
         subscription: 'pro',
         scriptsRemaining: 100,
+        scriptsLimit: 100,
         subscriptionEnd: new Date(Date.now() + (plan === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000),
         lastPayment: new Date().toISOString(),
         paymentAmount: data.amount / 100,
