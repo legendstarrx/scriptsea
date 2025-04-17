@@ -144,20 +144,40 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        prompt: 'select_account'
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      // Create or update user document in Firestore
+      const userData = {
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        subscription: 'free',
+        scriptsRemaining: 3,
+        scriptsGenerated: 0,
+        isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        isBanned: false,
+        subscriptionStatus: 'free',
+        lastPaymentDate: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
+
+      // Update IP address
+      await fetch('/api/update-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.uid })
       });
 
-      const result = await signInWithPopup(auth, provider);
-      if (result?.user) {
-        await router.push('/generate');
-        return result;
-      }
+      setUserProfile(userData);
+      return user;
     } catch (error) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        // User closed the popup, don't throw an error
-        return null;
-      }
+      console.error('Google sign-in error:', error);
       throw error;
     }
   };

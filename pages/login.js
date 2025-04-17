@@ -5,6 +5,7 @@ import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 export default function Login() {
   const router = useRouter();
@@ -263,6 +264,10 @@ export default function Login() {
               </a>
             </p>
           </form>
+
+          <div className="mt-4">
+            <GoogleSignInButton onClick={signInWithGoogle} />
+          </div>
         </div>
       </main>
       <Footer />
