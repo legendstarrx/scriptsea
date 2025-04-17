@@ -1,5 +1,7 @@
 import { adminDb, verifyAdmin } from '../../../lib/firebaseAdmin';
 
+const VALID_ACTIONS = ['updateSubscription', 'deleteUser', 'banByIP', 'unbanByIP'];
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -8,6 +10,14 @@ export default async function handler(req, res) {
   try {
     await verifyAdmin(req);
     const { userId, action, data } = req.body;
+
+    if (!VALID_ACTIONS.includes(action)) {
+      return res.status(400).json({ 
+        error: 'Invalid action',
+        message: `Action must be one of: ${VALID_ACTIONS.join(', ')}`,
+        receivedAction: action 
+      });
+    }
 
     switch (action) {
       case 'updateSubscription':

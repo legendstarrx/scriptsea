@@ -7,6 +7,13 @@ import AdminProtectedRoute from '../components/AdminProtectedRoute';
 // Move this outside the component
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
+const VALID_ACTIONS = {
+    UPDATE_SUBSCRIPTION: 'updateSubscription',
+    DELETE_USER: 'deleteUser',
+    BAN_IP: 'banByIP',
+    UNBAN_IP: 'unbanByIP'
+};
+
 function AdminDashboard() {
   const router = useRouter();
   const { user } = useAuth();
@@ -65,6 +72,7 @@ function AdminDashboard() {
 
   const handleAction = async (action, userId, data = {}) => {
     try {
+      console.log('Attempting action:', { action, userId, data });
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
@@ -233,13 +241,13 @@ function AdminDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex space-x-2">
                       <button 
-                        onClick={() => handleAction('upgrade', user.id, { plan: 'monthly' })}
+                        onClick={() => handleAction(VALID_ACTIONS.UPDATE_SUBSCRIPTION, user.id, { plan: 'pro_monthly' })}
                         className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                       >
                         Monthly Pro
                       </button>
                       <button 
-                        onClick={() => handleAction('upgrade', user.id, { plan: 'yearly' })}
+                        onClick={() => handleAction(VALID_ACTIONS.UPDATE_SUBSCRIPTION, user.id, { plan: 'pro_yearly' })}
                         className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
                       >
                         Yearly Pro
@@ -251,7 +259,7 @@ function AdminDashboard() {
                         Free
                       </button>
                       <button 
-                        onClick={() => confirmAction('delete', user.id)}
+                        onClick={() => confirmAction(VALID_ACTIONS.DELETE_USER, user.id)}
                         className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                       >
                         Delete
