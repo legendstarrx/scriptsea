@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import GoogleSignInButton from '../components/GoogleSignInButton';
+import { toast } from 'react-toastify';
 
 export default function Login() {
   const router = useRouter();
@@ -15,11 +13,14 @@ export default function Login() {
     password: ''
   });
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [resetMessage, setResetMessage] = useState(null);
+  const { error } = router.query;
+
+  useEffect(() => {
+    if (error === 'banned') {
+      toast.error('Your account has been banned. Please contact support for more information.');
+    }
+  }, [error]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,14 +28,7 @@ export default function Login() {
     
     try {
       await login(formData.email, formData.password);
-      setMessage({
-        type: 'success',
-        text: 'Login successful! Redirecting...'
-      });
-      
-      setTimeout(() => {
-        router.push('/generate');
-      }, 1500);
+      router.push('/generate');
     } catch (error) {
       setMessage({
         type: 'error',
@@ -48,13 +42,8 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const result = await signInWithGoogle();
-      if (result?.user) {
-        setMessage({
-          type: 'success',
-          text: 'Login successful! Redirecting...'
-        });
-      }
+      await signInWithGoogle();
+      router.push('/generate');
     } catch (error) {
       setMessage({
         type: 'error',
@@ -65,211 +54,89 @@ export default function Login() {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear message when user starts typing
-    setMessage({ type: '', text: '' });
-  };
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      // Add password reset logic here
-      setResetMessage({ type: 'success', text: 'Password reset instructions sent to your email!' });
-      setShowResetModal(false);
-    } catch (error) {
-      setResetMessage({ type: 'error', text: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div>
       <Navigation />
-      <main style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '400px',
-          padding: '2rem',
-          background: 'white',
-          borderRadius: '16px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-          marginTop: '2rem'
-        }}>
-          <h1 style={{
-            fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-            color: '#333',
-            marginBottom: '2rem',
-            textAlign: 'center'
-          }}>
-            Login to Your Account
-          </h1>
-
-          {message.text && (
-            <div style={{
-              padding: '1rem',
-              marginBottom: '1rem',
-              borderRadius: '8px',
-              backgroundColor: message.type === 'success' ? 'rgba(255, 51, 102, 0.1)' : 'rgba(255, 51, 102, 0.1)',
-              color: message.type === 'success' ? '#FF3366' : '#FF3366',
-              border: '1px solid #FF3366',
-              animation: 'slideIn 0.3s ease'
-            }}>
-              {message.text}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                color: '#666',
-                fontSize: '0.875rem'
-              }}>
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '1rem'
-                }}
-              />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
+          </div>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <div className="rounded-md shadow-sm -space-y-px">
+              <div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Email address"
+                />
+              </div>
+              <div>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Password"
+                />
+              </div>
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                color: '#666',
-                fontSize: '0.875rem'
-              }}>
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
+            {message.text && (
+              <div className={`text-sm text-${message.type === 'error' ? 'red' : 'green'}-600`}>
+                {message.text}
+              </div>
+            )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: '#FF3366',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '500',
-                cursor: 'pointer',
-                marginBottom: '1rem'
-              }}
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </button>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              margin: '1.5rem 0',
-              gap: '1rem'
-            }}>
-              <div style={{ flex: 1, height: '1px', background: '#eee' }} />
-              <span style={{ color: '#666', fontSize: '0.875rem' }}>or</span>
-              <div style={{ flex: 1, height: '1px', background: '#eee' }} />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'white',
-                color: '#666',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              <img
-                src="/images/google.svg"
-                alt="Google"
-                style={{ width: '20px', height: '20px' }}
-              />
-              Sign in with Google
-            </button>
-
-            <p style={{
-              marginTop: '1.5rem',
-              textAlign: 'center',
-              color: '#666',
-              fontSize: '0.875rem'
-            }}>
-              Don't have an account?{' '}
-              <a
-                onClick={() => router.push('/register')}
-                style={{
-                  color: '#FF3366',
-                  textDecoration: 'none',
-                  cursor: 'pointer'
-                }}
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <img src="/google.svg" alt="Google logo" className="h-5 w-5 mr-2" />
+                Sign in with Google
+              </button>
+            </div>
+          </div>
+
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <a href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
                 Sign up
               </a>
             </p>
-          </form>
-
-          <div className="mt-4">
-            <GoogleSignInButton onClick={signInWithGoogle} />
           </div>
         </div>
-      </main>
+      </div>
       <Footer />
     </div>
   );

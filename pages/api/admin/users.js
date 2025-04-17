@@ -1,4 +1,5 @@
 import { adminDb, verifyAdmin, deleteUserCompletely } from '../../../lib/firebaseAdmin';
+import { getAuth } from '../../../lib/firebaseAdmin';
 
 const VALID_ACTIONS = ['updateSubscription', 'deleteUser', 'banByIP', 'unbanByIP'];
 
@@ -93,10 +94,27 @@ export default async function handler(req, res) {
           .get();
 
         const batch = adminDb.batch();
+        const bannedUserIds = [];
+        
         usersSnapshot.docs.forEach(doc => {
-          batch.update(doc.ref, { isBanned: true });
+          batch.update(doc.ref, { 
+            isBanned: true,
+            bannedAt: new Date().toISOString(),
+            bannedBy: data.adminEmail 
+          });
+          bannedUserIds.push(doc.id);
         });
         await batch.commit();
+
+        // Revoke Firebase sessions for all banned users
+        await Promise.all(bannedUserIds.map(async (uid) => {
+          try {
+            await getAuth().revokeRefreshTokens(uid);
+          } catch (error) {
+            console.error(`Failed to revoke tokens for user ${uid}:`, error);
+          }
+        }));
+
         break;
 
       case 'unbanByIP':

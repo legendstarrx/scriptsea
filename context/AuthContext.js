@@ -30,50 +30,37 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      
       if (user) {
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(userRef);
-          
-          const isAdminUser = user.email === 'legendstarr2024@gmail.com';
-          
-          if (docSnap.exists()) {
-            const userData = docSnap.data();
-            userData.isAdmin = isAdminUser;
-            setUserProfile({
-              ...userData,
-              isAdmin: isAdminUser
-            });
-          } else {
-            const defaultProfile = {
-              email: user.email,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              subscription: 'free',
-              scriptsRemaining: 3,
-              scriptsGenerated: 0,
-              isAdmin: isAdminUser,
-              createdAt: new Date().toISOString(),
-              lastLogin: new Date().toISOString()
-            };
-            await setDoc(userRef, defaultProfile);
-            setUserProfile(defaultProfile);
-          }
-        } catch (error) {
-          console.error('Profile fetch error:', error);
-          setError(error);
+        // Check if user is banned
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userData = userDoc.data();
+        
+        if (userData?.isBanned) {
+          // If user is banned, sign them out
+          await auth.signOut();
+          router.push('/login?error=banned');
+          return;
         }
+
+        // Set up real-time listener for ban status
+        const unsubscribeBan = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+          const userData = doc.data();
+          if (userData?.isBanned) {
+            auth.signOut();
+            router.push('/login?error=banned');
+          }
+        });
+
+        setUser(user);
       } else {
         setUser(null);
-        setUserProfile(null);
       }
-      
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const signup = async (email, password, displayName) => {
