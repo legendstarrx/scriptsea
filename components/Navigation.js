@@ -6,7 +6,7 @@ import SubscriptionModal from './SubscriptionModal';
 
 export default function Navigation() {
   const router = useRouter();
-  const { user, userProfile, signOut } = useAuth();
+  const { user, userProfile, logout } = useAuth();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // Add null check for subscription status
@@ -17,6 +17,15 @@ export default function Navigation() {
       ? 'https://flutterwave.com/pay/vsxo1pgmcjhl'
       : 'https://flutterwave.com/pay/x1wjudjheco3';
     window.open(paymentLink, '_blank');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
@@ -76,7 +85,7 @@ export default function Navigation() {
                   </button>
                 )}
                 <button
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
                   style={{
                     background: 'none',
                     border: '1px solid #FF3366',
@@ -117,6 +126,20 @@ export default function Navigation() {
                 }}>
                   Sign Up
                 </Link>
+                <button
+                  onClick={() => setShowSubscriptionModal(true)}
+                  style={{
+                    background: '#FF3366',
+                    color: 'white',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    border: 'none'
+                  }}
+                >
+                  Upgrade
+                </button>
               </>
             )}
           </div>
@@ -125,6 +148,7 @@ export default function Navigation() {
 
       {showSubscriptionModal && (
         <SubscriptionModal 
+          isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
           userProfile={userProfile}
         />
