@@ -126,20 +126,6 @@ export default function Navigation() {
                 }}>
                   Sign Up
                 </Link>
-                <button
-                  onClick={() => setShowSubscriptionModal(true)}
-                  style={{
-                    background: '#FF3366',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    border: 'none'
-                  }}
-                >
-                  Upgrade
-                </button>
               </>
             )}
           </div>
