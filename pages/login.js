@@ -59,6 +59,7 @@ export default function Login() {
           type: 'success',
           text: 'Login successful! Redirecting...'
         });
+        router.push('/generate');
       }
     } catch (error) {
       setMessage({
