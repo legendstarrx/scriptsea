@@ -51,18 +51,12 @@ export default function Register() {
   });
 
   const validateEmail = (email) => {
-    // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return { valid: false, message: 'Please enter a valid email address' };
-    }
-
-    // Check for temporary email domains
+    // Good validation including temporary email check
     const domain = email.split('@')[1].toLowerCase();
     if (TEMP_EMAIL_DOMAINS.some(tempDomain => domain.includes(tempDomain))) {
       return { valid: false, message: 'Temporary email addresses are not allowed' };
     }
-
     return { valid: true };
   };
 
