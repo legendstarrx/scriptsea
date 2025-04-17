@@ -5,7 +5,6 @@ import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import Header from '../components/Header';
 
 // List of temporary email domains to block
 const TEMP_EMAIL_DOMAINS = [
@@ -149,285 +148,284 @@ export default function Register() {
   };
 
   return (
-    <>
-      <Header />
-      <div style={{
-        minHeight: '100vh',
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <Navigation />
+      <main style={{
+        flex: 1,
         display: 'flex',
-        flexDirection: 'column',
-        paddingTop: '64px',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        paddingTop: 'calc(80px + 2rem)',
         background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
       }}>
-        <main style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem'
+        <div style={{
+          width: '100%',
+          maxWidth: '400px',
+          padding: '2rem',
+          background: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+          marginTop: '2rem'
         }}>
-          <div style={{
-            width: '100%',
-            maxWidth: '400px',
-            padding: '2rem',
-            background: 'white',
-            borderRadius: '16px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+          <h1 style={{
+            fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+            color: '#333',
+            marginBottom: '2rem',
+            textAlign: 'center'
           }}>
-            <h1 style={{
-              fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-              color: '#333',
-              marginBottom: '2rem',
-              textAlign: 'center'
+            Create Your Account
+          </h1>
+
+          {(error || success) && (
+            <div style={{
+              padding: '1rem',
+              marginBottom: '1rem',
+              borderRadius: '8px',
+              backgroundColor: error ? 'rgba(255, 51, 102, 0.1)' : 'rgba(72, 187, 120, 0.1)',
+              color: error ? '#FF3366' : '#48BB78',
+              border: `1px solid ${error ? '#FF3366' : '#48BB78'}`,
+              animation: 'slideIn 0.3s ease'
             }}>
-              Create Your Account
-            </h1>
+              {error || success}
+            </div>
+          )}
 
-            {(error || success) && (
-              <div style={{
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '8px',
-                backgroundColor: error ? 'rgba(255, 51, 102, 0.1)' : 'rgba(72, 187, 120, 0.1)',
-                color: error ? '#FF3366' : '#48BB78',
-                border: `1px solid ${error ? '#FF3366' : '#48BB78'}`,
-                animation: 'slideIn 0.3s ease'
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                color: '#555',
+                fontSize: '0.9rem'
               }}>
-                {error || success}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  color: '#555',
-                  fontSize: '0.9rem'
-                }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  required
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    transition: 'all 0.2s ease',
-                    ':focus': {
-                      outline: 'none',
-                      borderColor: '#FF3366',
-                      boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                    }
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  color: '#555',
-                  fontSize: '0.9rem'
-                }}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    transition: 'all 0.2s ease',
-                    ':focus': {
-                      outline: 'none',
-                      borderColor: '#FF3366',
-                      boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                    }
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  color: '#555',
-                  fontSize: '0.9rem'
-                }}>
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid #ddd',
-                    fontSize: '1rem',
-                    transition: 'all 0.2s ease',
-                    ':focus': {
-                      outline: 'none',
-                      borderColor: '#FF3366',
-                      boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                    }
-                  }}
-                />
-                
-                {/* Password requirements */}
-                <div style={{
-                  marginTop: '0.75rem',
-                  padding: '0.75rem',
-                  backgroundColor: '#f8f9ff',
-                  borderRadius: '8px',
-                  fontSize: '0.8rem'
-                }}>
-                  <div style={{
-                    color: passwordValidation.length ? '#48BB78' : '#666',
-                    marginBottom: '0.25rem'
-                  }}>
-                    {passwordValidation.length ? '✓' : '○'} 8+ characters
-                  </div>
-                  <div style={{
-                    color: passwordValidation.uppercase ? '#48BB78' : '#666',
-                    marginBottom: '0.25rem'
-                  }}>
-                    {passwordValidation.uppercase ? '✓' : '○'} Uppercase letter
-                  </div>
-                  <div style={{
-                    color: passwordValidation.lowercase ? '#48BB78' : '#666',
-                    marginBottom: '0.25rem'
-                  }}>
-                    {passwordValidation.lowercase ? '✓' : '○'} Lowercase letter
-                  </div>
-                  <div style={{
-                    color: passwordValidation.number ? '#48BB78' : '#666',
-                    marginBottom: '0.25rem'
-                  }}>
-                    {passwordValidation.number ? '✓' : '○'} Number
-                  </div>
-                  <div style={{
-                    color: passwordValidation.special ? '#48BB78' : '#666'
-                  }}>
-                    {passwordValidation.special ? '✓' : '○'} Special character
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
+                Full Name
+              </label>
+              <input
+                type="text"
+                name="fullName"
+                required
+                value={formData.fullName}
+                onChange={handleChange}
                 style={{
-                  background: isLoading ? '#FFE5EC' : '#FF3366',
-                  color: 'white',
+                  width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: 'none',
+                  border: '1px solid #ddd',
                   fontSize: '1rem',
-                  fontWeight: '600',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.7 : 1,
                   transition: 'all 0.2s ease',
-                  ':hover': {
-                    background: '#FF1A53'
+                  ':focus': {
+                    outline: 'none',
+                    borderColor: '#FF3366',
+                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
                   }
                 }}
-              >
-                {isLoading ? (
-                  <>
-                    <span style={{
-                      display: 'inline-block',
-                      width: '16px',
-                      height: '16px',
-                      border: '2px solid #FF3366',
-                      borderTopColor: 'transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }}></span>
-                    Creating Account...
-                  </>
-                ) : (
-                  'Create Account'
-                )}
-              </button>
-            </form>
+              />
+            </div>
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              margin: '1.5rem 0',
-              gap: '1rem'
-            }}>
-              <div style={{ flex: 1, height: '1px', background: '#eee' }} />
-              <span style={{ color: '#666', fontSize: '0.875rem' }}>or</span>
-              <div style={{ flex: 1, height: '1px', background: '#eee' }} />
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                color: '#555',
+                fontSize: '0.9rem'
+              }}>
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ddd',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s ease',
+                  ':focus': {
+                    outline: 'none',
+                    borderColor: '#FF3366',
+                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
+                  }
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                color: '#555',
+                fontSize: '0.9rem'
+              }}>
+                Password
+              </label>
+              <input
+                type="password"
+                name="password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ddd',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s ease',
+                  ':focus': {
+                    outline: 'none',
+                    borderColor: '#FF3366',
+                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
+                  }
+                }}
+              />
+              
+              {/* Password requirements */}
+              <div style={{
+                marginTop: '0.75rem',
+                padding: '0.75rem',
+                backgroundColor: '#f8f9ff',
+                borderRadius: '8px',
+                fontSize: '0.8rem'
+              }}>
+                <div style={{
+                  color: passwordValidation.length ? '#48BB78' : '#666',
+                  marginBottom: '0.25rem'
+                }}>
+                  {passwordValidation.length ? '✓' : '○'} 8+ characters
+                </div>
+                <div style={{
+                  color: passwordValidation.uppercase ? '#48BB78' : '#666',
+                  marginBottom: '0.25rem'
+                }}>
+                  {passwordValidation.uppercase ? '✓' : '○'} Uppercase letter
+                </div>
+                <div style={{
+                  color: passwordValidation.lowercase ? '#48BB78' : '#666',
+                  marginBottom: '0.25rem'
+                }}>
+                  {passwordValidation.lowercase ? '✓' : '○'} Lowercase letter
+                </div>
+                <div style={{
+                  color: passwordValidation.number ? '#48BB78' : '#666',
+                  marginBottom: '0.25rem'
+                }}>
+                  {passwordValidation.number ? '✓' : '○'} Number
+                </div>
+                <div style={{
+                  color: passwordValidation.special ? '#48BB78' : '#666'
+                }}>
+                  {passwordValidation.special ? '✓' : '○'} Special character
+                </div>
+              </div>
             </div>
 
             <button
-              type="button"
-              onClick={handleGoogleSignIn}
+              type="submit"
               disabled={isLoading}
               style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'white',
-                color: '#666',
-                border: '1px solid #ddd',
+                background: isLoading ? '#FFE5EC' : '#FF3366',
+                color: 'white',
+                padding: '12px',
                 borderRadius: '8px',
+                border: 'none',
                 fontSize: '1rem',
-                fontWeight: '500',
+                fontWeight: '600',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
+                opacity: isLoading ? 0.7 : 1,
+                transition: 'all 0.2s ease',
+                ':hover': {
+                  background: '#FF1A53'
+                }
               }}
             >
-              <img
-                src="https://www.google.com/favicon.ico"
-                alt="Google"
-                style={{ width: '20px', height: '20px' }}
-              />
-              Sign up with Google
+              {isLoading ? (
+                <>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid #FF3366',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></span>
+                  Creating Account...
+                </>
+              ) : (
+                'Create Account'
+              )}
             </button>
+          </form>
 
-            <p style={{
-              marginTop: '1.5rem',
-              textAlign: 'center',
-              color: '#666',
-              fontSize: '0.875rem'
-            }}>
-              Already have an account?{' '}
-              <a
-                onClick={() => router.push('/login')}
-                style={{
-                  color: '#FF3366',
-                  textDecoration: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Sign in
-              </a>
-            </p>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: '1.5rem 0',
+            gap: '1rem'
+          }}>
+            <div style={{ flex: 1, height: '1px', background: '#eee' }} />
+            <span style={{ color: '#666', fontSize: '0.875rem' }}>or</span>
+            <div style={{ flex: 1, height: '1px', background: '#eee' }} />
           </div>
-        </main>
-        <Footer />
-      </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              background: 'white',
+              color: '#666',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: '500',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <img
+              src="https://www.google.com/favicon.ico"
+              alt="Google"
+              style={{ width: '20px', height: '20px' }}
+            />
+            Sign up with Google
+          </button>
+
+          <p style={{
+            marginTop: '1.5rem',
+            textAlign: 'center',
+            color: '#666',
+            fontSize: '0.875rem'
+          }}>
+            Already have an account?{' '}
+            <a
+              onClick={() => router.push('/login')}
+              style={{
+                color: '#FF3366',
+                textDecoration: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Sign in
+            </a>
+          </p>
+        </div>
+      </main>
+      <Footer />
 
       <style jsx global>{`
         @keyframes spin {
@@ -446,6 +444,6 @@ export default function Register() {
           }
         }
       `}</style>
-    </>
+    </div>
   );
 } 
