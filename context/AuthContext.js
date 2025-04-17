@@ -130,24 +130,19 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = async () => {
     try {
+      // Check IP status first
+      const ipCheckResponse = await fetch('/api/auth/check-ip');
+      if (!ipCheckResponse.ok) {
+        const error = await ipCheckResponse.json();
+        throw new Error(error.message || 'This IP address has been banned');
+      }
+      const { ip } = await ipCheckResponse.json();
+
+      // Proceed with Google sign in
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
-      // Check if IP is banned
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
-      const { ip } = await ipResponse.json();
-      
-      // Check banned_ips collection
-      const bannedIpRef = doc(db, 'banned_ips', ip);
-      const bannedIpDoc = await getDoc(bannedIpRef);
-      
-      if (bannedIpDoc.exists()) {
-        // If IP is banned, sign out and throw error
-        await auth.signOut();
-        throw new Error('This IP address has been banned. Please contact support.');
-      }
 
-      // Continue with normal sign in process if IP is not banned
+      // Create or update user document
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
       if (!userDoc.exists()) {
         await setDoc(doc(db, 'users', result.user.uid), {
@@ -161,7 +156,14 @@ export function AuthProvider({ children }) {
           scriptsRemaining: 3,
           scriptsLimit: 3
         });
+      } else {
+        // Update last login and IP
+        await updateDoc(doc(db, 'users', result.user.uid), {
+          lastLogin: new Date().toISOString(),
+          ipAddress: ip
+        });
       }
+
       return result.user;
     } catch (error) {
       console.error('Google sign-in error:', error);
