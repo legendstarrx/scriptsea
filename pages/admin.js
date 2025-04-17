@@ -65,6 +65,15 @@ function AdminDashboard() {
 
   const handleAction = async (action, userId, data = {}) => {
     try {
+      console.log('Making request with:', {
+        action,
+        userId,
+        data,
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY}`,
+          'x-admin-email': user.email
+        }
+      });
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: {
@@ -90,7 +99,11 @@ function AdminDashboard() {
       toast.success('Action completed successfully');
       fetchUsers();
     } catch (error) {
-      console.error('Action error:', error);
+      console.error('Detailed action error:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
       toast.error(error.message || 'Failed to perform action');
     }
   };
