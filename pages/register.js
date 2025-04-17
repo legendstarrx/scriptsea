@@ -154,16 +154,16 @@ export default function Register() {
       <div style={{
         minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        paddingTop: '64px',
+        background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
       }}>
         <main style={{
           flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '1rem',
-          paddingTop: 'calc(80px + 2rem)',
-          background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
+          padding: '1rem'
         }}>
           <div style={{
             width: '100%',
@@ -171,8 +171,7 @@ export default function Register() {
             padding: '2rem',
             background: 'white',
             borderRadius: '16px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-            marginTop: '2rem'
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
           }}>
             <h1 style={{
               fontSize: 'clamp(1.5rem, 4vw, 2rem)',
