@@ -150,8 +150,34 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
-      // The result will be handled by the redirect handler in useEffect
+      const result = await signInWithPopup(auth, provider);
+      
+      // Check if user is banned
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      if (userDoc.exists() && userDoc.data().isBanned) {
+        await signOut(auth);
+        throw new Error('Your account has been banned. Please contact support.');
+      }
+
+      // Create/update user data if not banned
+      const userData = {
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
+        subscription: 'free',
+        scriptsRemaining: 3,
+        scriptsGenerated: 0,
+        isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        isBanned: false
+      };
+      
+      await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
+      setUserProfile(userData);
+      
+      // Redirect to generate page after successful Google sign-in
+      router.replace('/generate');
     } catch (error) {
       console.error('Google Sign-in error:', error);
       throw error;
