@@ -10,7 +10,6 @@
     "lint:fix": "next lint --fix"
   },
   "dependencies": {
-    
     "@google/generative-ai": "^0.24.0",
     "critters": "^0.0.23",
     "docx": "^9.3.0",
