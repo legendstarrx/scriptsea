@@ -7,6 +7,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
 import { setDoc, doc } from 'firebase/firestore';
+import Link from 'next/link';
 
 // List of temporary email domains to block
 const TEMP_EMAIL_DOMAINS = [
@@ -463,16 +464,9 @@ export default function Register() {
             fontSize: '0.875rem'
           }}>
             Already have an account?{' '}
-            <a
-              onClick={() => router.push('/login')}
-              style={{
-                color: '#FF3366',
-                textDecoration: 'none',
-                cursor: 'pointer'
-              }}
-            >
+            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       </main>
