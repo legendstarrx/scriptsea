@@ -1,0 +1,66 @@
+{
+  "name": "viral-script-generator",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "critters": "^0.0.23",
+    "docx": "^9.3.0",
+    "dotenv": "^16.4.7",
+    "express-rate-limit": "^7.5.0",
+    "file-saver": "^2.0.5",
+    "firebase": "^11.6.0",
+    "firebase-admin": "^13.2.0",
+    "flutterwave-node-v3": "^1.1.15",
+    "framer-motion": "^12.6.3",
+    "is-ip": "^5.0.1",
+    "jspdf": "^3.0.1",
+    "next": "^14.2.26",
+    "next-auth": "^4.24.11",
+    "next-csrf": "^0.2.1",
+    "rate-limiter-flexible": "^7.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-google-recaptcha": "^3.1.0",
+    "react-hot-toast": "^2.5.2",
+    "react-toastify": "^11.0.5",
+    "request-ip": "^3.3.0",
+    "yup": "^1.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^12.0.0",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
+  "main": ".eslintrc.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/legendstarrx/scriptsea.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/legendstarrx/scriptsea/issues"
+  },
+  "homepage": "https://github.com/legendstarrx/scriptsea#readme"
+}
