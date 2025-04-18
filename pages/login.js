@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { signInWithEmailAndPassword, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -184,12 +185,12 @@ export default function Login() {
                   <div className="relative flex justify-center text-sm">
                     <span className="px-2 bg-white text-gray-500">
                       Don't have an account?{' '}
-                      <a
+                      <Link
                         href="/register"
                         className="font-medium text-indigo-600 hover:text-indigo-500"
                       >
                         Sign up
-                      </a>
+                      </Link>
                     </span>
                   </div>
                 </div>
