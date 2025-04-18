@@ -21,6 +21,7 @@ export default function Login() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetMessage, setResetMessage] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -52,6 +53,8 @@ export default function Login() {
 
   const handleGoogleSignIn = async () => {
     setIsLoadingAuth(true);
+    setErrorMessage('');
+    
     try {
       const result = await signInWithGoogle();
       if (result?.user) {
@@ -61,14 +64,13 @@ export default function Login() {
         });
       }
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.message === 'Your account has been banned' 
-          ? 'Your account has been banned. Please contact support.'
-          : error.message || 'Google sign-in failed. Please try again.'
-      });
-      // If banned, ensure they're logged out
-      if (error.message === 'Your account has been banned') {
+      console.error('Google Sign-in error:', error);
+      setErrorMessage(
+        error.message === 'Your account has been banned. Please contact support.' 
+          ? error.message 
+          : 'Failed to sign in with Google. Please try again.'
+      );
+      if (error.message.includes('banned')) {
         await logout();
       }
     } finally {
@@ -146,6 +148,19 @@ export default function Login() {
               }}
             >
               {message.text}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div style={{
+              padding: '1rem',
+              marginBottom: '1rem',
+              backgroundColor: '#FEE2E2',
+              color: '#DC2626',
+              borderRadius: '8px',
+              textAlign: 'center'
+            }}>
+              {errorMessage}
             </div>
           )}
 
