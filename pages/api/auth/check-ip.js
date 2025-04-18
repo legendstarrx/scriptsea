@@ -1,4 +1,4 @@
-import { adminDb } from '../../../lib/firebaseAdmin';
+import { db } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   try {
@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
     
     // Check if IP is banned
-    const bannedIpDoc = await adminDb.collection('banned_ips').doc(ip).get();
+    const bannedIpDoc = await db.collection('banned_ips').doc(ip).get();
     
     if (bannedIpDoc.exists) {
       return res.status(403).json({ 

@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, db } from '../lib/firebase';
+import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
-import { setDoc, doc } from 'firebase/firestore';
-import Link from 'next/link';
 
 // List of temporary email domains to block
 const TEMP_EMAIL_DOMAINS = [
@@ -33,13 +31,13 @@ const PASSWORD_REQUIREMENTS = {
 };
 
 export default function Register() {
+  useAuthRedirect();
   const router = useRouter();
   const { signup, signInWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -51,9 +49,6 @@ export default function Register() {
     number: false,
     special: false
   });
-
-  // This will handle redirecting authenticated users
-  useAuthRedirect(true);
 
   const validateEmail = (email) => {
     // Basic email format validation
@@ -105,13 +100,8 @@ export default function Register() {
 
     try {
       // Basic validation
-      if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
+      if (!formData.fullName || !formData.email || !formData.password) {
         throw new Error('Please fill in all fields');
-      }
-
-      // Validate passwords match
-      if (formData.password !== formData.confirmPassword) {
-        throw new Error('Passwords do not match');
       }
 
       // Password validation
@@ -122,15 +112,6 @@ export default function Register() {
 
       setSuccess('Creating your account...');
       await signup(formData.email, formData.password, formData.fullName);
-      await setDoc(doc(db, 'users', auth.currentUser.uid), {
-        email: formData.email,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        subscription: 'free',
-        scriptsLimit: 3,
-        scriptsRemaining: 3,
-        banned: false
-      });
       setSuccess('Account created successfully! Redirecting...');
       
       // Delay redirect slightly to show success message
@@ -349,37 +330,6 @@ export default function Register() {
               </div>
             </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: '#555',
-                fontSize: '0.9rem'
-              }}>
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid #ddd',
-                  fontSize: '1rem',
-                  transition: 'all 0.2s ease',
-                  ':focus': {
-                    outline: 'none',
-                    borderColor: '#FF3366',
-                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                  }
-                }}
-              />
-            </div>
-
             <button
               type="submit"
               disabled={isLoading}
@@ -464,9 +414,16 @@ export default function Register() {
             fontSize: '0.875rem'
           }}>
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <a
+              onClick={() => router.push('/login')}
+              style={{
+                color: '#FF3366',
+                textDecoration: 'none',
+                cursor: 'pointer'
+              }}
+            >
               Sign in
-            </Link>
+            </a>
           </p>
         </div>
       </main>

@@ -1,30 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 
-export function useAuthRedirect(redirectIfAuthed = true) {
-  const { user, loading } = useAuth();
+export function useAuthRedirect() {
+  const { user } = useAuth();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Don't redirect while loading auth state
-    if (loading) return;
-
-    // Get the intended destination from query params or default to /generate
-    const destination = router.query.redirect || '/generate';
-    
-    if (redirectIfAuthed) {
-      // Redirect authenticated users away from auth pages
-      if (user) {
-        router.replace(destination);
-      }
+    if (user) {
+      router.push('/generate');
     } else {
-      // Redirect unauthenticated users to login
-      if (!user) {
-        router.replace(`/login?redirect=${encodeURIComponent(router.asPath)}`);
-      }
+      setIsLoading(false);
     }
-  }, [user, loading, router, redirectIfAuthed]);
+  }, [user, router]);
 
-  return { user, loading };
+  return isLoading;
 } 
