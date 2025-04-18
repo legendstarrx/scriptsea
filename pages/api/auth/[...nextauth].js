@@ -1,5 +1,4 @@
-import { getAuth } from 'firebase-admin/auth';
-import { db } from '../../../lib/firebase';
+import { adminAuth, db } from '../../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {

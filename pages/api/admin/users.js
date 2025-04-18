@@ -1,4 +1,4 @@
-import { db } from '../../../lib/firebaseAdmin';
+import { adminAuth, db } from '../../../lib/firebaseAdmin';
 import { verifyAdmin, deleteUserCompletely } from '../../../lib/firebaseAdmin';
 
 const VALID_ACTIONS = ['updateSubscription', 'deleteUser', 'banByIP', 'unbanByIP'];
