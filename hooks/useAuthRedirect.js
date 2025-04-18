@@ -9,7 +9,9 @@ export function useAuthRedirect() {
 
   useEffect(() => {
     if (user) {
-      router.push('/generate');
+      router.push('/generate').then(() => {
+        setIsLoading(false);
+      });
     } else {
       setIsLoading(false);
     }

@@ -37,10 +37,7 @@ export default function Login() {
         type: 'success',
         text: 'Login successful! Redirecting...'
       });
-      
-      setTimeout(() => {
-        router.push('/generate');
-      }, 1500);
+      router.push('/generate');
     } catch (error) {
       setMessage({
         type: 'error',
@@ -62,6 +59,7 @@ export default function Login() {
           type: 'success',
           text: 'Login successful! Redirecting...'
         });
+        router.push('/generate');
       }
     } catch (error) {
       console.error('Google Sign-in error:', error);
