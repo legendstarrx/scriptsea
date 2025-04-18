@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import SubscriptionModal from './SubscriptionModal';
-import ContactModal from './ContactModal';
+import ContactModal from '../pages/generate/ContactModal';
 
 export default function Navigation() {
   const router = useRouter();
