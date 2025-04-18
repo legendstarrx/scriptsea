@@ -36,6 +36,7 @@ export default function PricingModal({ isOpen, onClose }) {
             <p style={{ color: '#666' }}>3 scripts per month</p>
             <p style={{ color: '#666' }}>Basic features</p>
             <p style={{ color: '#666' }}>No credit card required</p>
+            <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>Free</p>
           </div>
           <div style={{
             border: '1px solid #FF3366',
@@ -46,6 +47,7 @@ export default function PricingModal({ isOpen, onClose }) {
             <p style={{ color: '#666' }}>100 scripts per month</p>
             <p style={{ color: '#666' }}>All premium features</p>
             <p style={{ color: '#666' }}>Cancel anytime</p>
+            <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$4.99/month</p>
           </div>
           <div style={{
             border: '1px solid #FF3366',
@@ -56,6 +58,7 @@ export default function PricingModal({ isOpen, onClose }) {
             <p style={{ color: '#666' }}>1200 scripts per year</p>
             <p style={{ color: '#666' }}>All premium features</p>
             <p style={{ color: '#666' }}>Best value</p>
+            <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$49.99/year</p>
           </div>
         </div>
         <button

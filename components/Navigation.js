@@ -108,20 +108,6 @@ export default function Navigation() {
                     Admin Dashboard
                   </Link>
                 )}
-                <button
-                  onClick={() => setShowContactModal(true)}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #FF3366',
-                    color: '#FF3366',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  Contact Us
-                </button>
               </>
             ) : (
               <>
@@ -144,6 +130,20 @@ export default function Navigation() {
                 </Link>
               </>
             )}
+            <button
+              onClick={() => setShowContactModal(true)}
+              style={{
+                background: 'none',
+                border: '1px solid #FF3366',
+                color: '#FF3366',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              Contact Us
+            </button>
           </div>
         </div>
       </nav>
