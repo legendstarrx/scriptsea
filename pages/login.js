@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
+import { auth, googleProvider, db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import { getDoc, doc, updateDoc } from 'firebase/firestore';
 
 export default function Login() {
-  const isLoading = useAuthRedirect();
   const router = useRouter();
   const { login, signInWithGoogle, logout } = useAuth();
   const [formData, setFormData] = useState({
@@ -23,9 +23,8 @@ export default function Login() {
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  // This will handle redirecting authenticated users
+  useAuthRedirect(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -93,6 +92,47 @@ export default function Login() {
     }
   };
 
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setIsLoadingAuth(true);
+    setErrorMessage('');
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const userId = userCredential.user.uid;
+
+      // Check if user is banned
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists() && userDoc.data().banned) {
+        await signOut(auth);
+        throw new Error('Your account has been banned. Please contact support.');
+      }
+
+      // Update last login timestamp
+      await updateDoc(doc(db, 'users', userId), {
+        lastLogin: new Date().toISOString()
+      });
+
+      // Redirect to generate page
+      router.replace('/generate');
+    } catch (err) {
+      console.error('Login error:', err);
+      let errorMessage = 'An error occurred during login. Please try again.';
+      
+      if (err.message === 'Your account has been banned. Please contact support.') {
+        errorMessage = err.message;
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        errorMessage = 'Invalid email or password.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      
+      setErrorMessage(errorMessage);
+    } finally {
+      setIsLoadingAuth(false);
+    }
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -154,7 +194,7 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleEmailLogin}>
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{
                 display: 'block',

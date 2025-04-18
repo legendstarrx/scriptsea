@@ -186,6 +186,9 @@ export function AuthProvider({ children }) {
           
           await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
           setUserProfile(userData);
+          
+          // Redirect to generate page after successful Google sign-in
+          router.replace('/generate');
         }
       } catch (error) {
         console.error('Redirect result error:', error);
@@ -196,7 +199,7 @@ export function AuthProvider({ children }) {
     };
 
     handleRedirectResult();
-  }, []);
+  }, [router]);
 
   const logout = async () => {
     try {
