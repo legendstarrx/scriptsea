@@ -37,7 +37,7 @@ export default function Login() {
         type: 'success',
         text: 'Login successful! Redirecting...'
       });
-      router.push('/generate');
+      await router.replace('/generate');
     } catch (error) {
       setMessage({
         type: 'error',
@@ -59,7 +59,7 @@ export default function Login() {
           type: 'success',
           text: 'Login successful! Redirecting...'
         });
-        router.push('/generate');
+        await router.replace('/generate');
       }
     } catch (error) {
       console.error('Google Sign-in error:', error);

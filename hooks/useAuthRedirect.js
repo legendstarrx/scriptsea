@@ -8,13 +8,11 @@ export function useAuthRedirect() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      router.push('/generate').then(() => {
-        setIsLoading(false);
-      });
-    } else {
-      setIsLoading(false);
+    // Only redirect if user is already logged in when landing on the page
+    if (user && (router.pathname === '/login' || router.pathname === '/register')) {
+      router.replace('/generate');
     }
+    setIsLoading(false);
   }, [user, router]);
 
   return isLoading;
