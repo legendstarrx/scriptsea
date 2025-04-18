@@ -1,4 +1,4 @@
-import { db } from '../../lib/firebaseAdmin';
+import { adminDb } from '../../lib/firebaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     // Get the IP address from the request if not provided
     const userIp = ipAddress || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    await db.collection('users').doc(userId).set({
+    await adminDb.collection('users').doc(userId).set({
       subscription: 'free',
       scriptsRemaining: 3,
       scriptsGenerated: 0,

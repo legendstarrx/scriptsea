@@ -1,5 +1,4 @@
-import { adminAuth, db } from '../../../lib/firebaseAdmin';
-import { verifyAdmin, deleteUserCompletely } from '../../../lib/firebaseAdmin';
+import { adminDb, verifyAdmin, deleteUserCompletely } from '../../../lib/firebaseAdmin';
 
 const VALID_ACTIONS = ['updateSubscription', 'deleteUser', 'banByIP', 'unbanByIP'];
 
@@ -50,7 +49,7 @@ export default async function handler(req, res) {
         }
         
         // Update user document
-        await db.collection('users').doc(userId).update({
+        await adminDb.collection('users').doc(userId).update({
           subscription: subscription, // 'pro' or 'free'
           scriptsRemaining: subscription === 'pro' 
             ? (subscriptionType === 'yearly' ? 1200 : 100) 
@@ -83,17 +82,17 @@ export default async function handler(req, res) {
         }
         
         // Add IP to banned_ips collection
-        await db.collection('banned_ips').doc(data.ipAddress).set({
+        await adminDb.collection('banned_ips').doc(data.ipAddress).set({
           bannedAt: new Date().toISOString(),
           bannedBy: data.adminEmail
         });
 
         // Update all users with this IP
-        const usersSnapshot = await db.collection('users')
+        const usersSnapshot = await adminDb.collection('users')
           .where('ipAddress', '==', data.ipAddress)
           .get();
 
-        const batch = db.batch();
+        const batch = adminDb.batch();
         usersSnapshot.docs.forEach(doc => {
           batch.update(doc.ref, { isBanned: true });
         });
@@ -106,14 +105,14 @@ export default async function handler(req, res) {
         }
         
         // Remove IP from banned_ips collection
-        await db.collection('banned_ips').doc(data.ipAddress).delete();
+        await adminDb.collection('banned_ips').doc(data.ipAddress).delete();
 
         // Update all users with this IP
-        const bannedUsersSnapshot = await db.collection('users')
+        const bannedUsersSnapshot = await adminDb.collection('users')
           .where('ipAddress', '==', data.ipAddress)
           .get();
 
-        const unbanBatch = db.batch();
+        const unbanBatch = adminDb.batch();
         bannedUsersSnapshot.docs.forEach(doc => {
           unbanBatch.update(doc.ref, { isBanned: false });
         });
@@ -127,14 +126,14 @@ export default async function handler(req, res) {
         
         try {
           // Remove IP from banned_ips collection
-          await db.collection('banned_ips').doc(data.ipAddress).delete();
+          await adminDb.collection('banned_ips').doc(data.ipAddress).delete();
 
           // Update all users with this IP
-          const usersSnapshot = await db.collection('users')
+          const usersSnapshot = await adminDb.collection('users')
             .where('ipAddress', '==', data.ipAddress)
             .get();
 
-          const batch = db.batch();
+          const batch = adminDb.batch();
           usersSnapshot.docs.forEach(doc => {
             batch.update(doc.ref, { isBanned: false });
           });

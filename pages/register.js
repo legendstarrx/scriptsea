@@ -134,11 +134,12 @@ export default function Register() {
 
     try {
       setSuccess('Signing in with Google...');
-      const result = await signInWithGoogle();
-      if (result?.user) {
-        setSuccess('Sign in successful! Redirecting...');
+      await signInWithGoogle();
+      setSuccess('Sign in successful! Redirecting...');
+      
+      setTimeout(() => {
         router.push('/generate');
-      }
+      }, 1500);
     } catch (error) {
       console.error('Google sign-in error:', error);
       setError(error.message || 'Failed to sign in with Google. Please try again.');
