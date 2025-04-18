@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -18,6 +18,8 @@ import {
   getRedirectResult
 } from 'firebase/auth';
 import { useRouter } from 'next/router';
+import { sendVerificationEmail } from '../lib/brevo';
+import crypto from 'crypto';
 
 const AuthContext = createContext();
 
@@ -27,6 +29,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+
+  const generateVerificationToken = () => {
+    return crypto.randomBytes(32).toString('hex');
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -43,10 +49,17 @@ export function AuthProvider({ children }) {
             return;
           }
           
-          const isAdminUser = user.email === 'legendstarr2024@gmail.com';
-          
           if (docSnap.exists()) {
             const userData = docSnap.data();
+            if (!userData.emailVerified) {
+              // If email is not verified, sign out the user
+              await signOut(auth);
+              setError('Please verify your email before logging in.');
+              return;
+            }
+            
+            const isAdminUser = user.email === 'legendstarr2024@gmail.com';
+            
             userData.isAdmin = isAdminUser;
             setUserProfile({
               ...userData,
@@ -60,7 +73,7 @@ export function AuthProvider({ children }) {
               subscription: 'free',
               scriptsRemaining: 3,
               scriptsGenerated: 0,
-              isAdmin: isAdminUser,
+              isAdmin: user.email === 'legendstarr2024@gmail.com',
               createdAt: new Date().toISOString(),
               lastLogin: new Date().toISOString()
             };
@@ -91,6 +104,10 @@ export function AuthProvider({ children }) {
         await updateProfile(user, { displayName });
       }
       
+      const verificationToken = generateVerificationToken();
+      const expirationTime = new Date();
+      expirationTime.setHours(expirationTime.getHours() + 24);
+
       // Create user document in Firestore
       const userData = {
         email: user.email,
@@ -105,10 +122,14 @@ export function AuthProvider({ children }) {
         ipAddress: null,
         isBanned: false,
         subscriptionStatus: 'free',
-        lastPaymentDate: new Date().toISOString()
+        lastPaymentDate: new Date().toISOString(),
+        emailVerified: false,
+        verificationToken,
+        verificationTokenExpires: Timestamp.fromDate(expirationTime)
       };
       
       await setDoc(doc(db, 'users', user.uid), userData);
+      await sendVerificationEmail(email, verificationToken);
       
       // Update IP address
       await fetch('/api/user/ip', {
@@ -323,6 +344,16 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const isEmailVerified = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      return userDoc.exists() && userDoc.data().emailVerified === true;
+    } catch (error) {
+      console.error('Error checking email verification:', error);
+      return false;
+    }
+  };
+
   const value = {
     user,
     userProfile,
@@ -338,7 +369,8 @@ export function AuthProvider({ children }) {
     updateSubscription,
     deleteUserAccount,
     getUsersByIP,
-    getAllUsers
+    getAllUsers,
+    isEmailVerified
   };
 
   return (

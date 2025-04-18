@@ -301,8 +301,8 @@ const creatorStyles = {
 export const dynamic = 'force-dynamic';
 
 export default function Generate() {
+  const { user, userProfile, isEmailVerified } = useAuth();
   const router = useRouter();
-  const { user, userProfile, updateUserProfile } = useAuth();
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');
@@ -1233,6 +1233,22 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       }
     }
   }, [router.query]);
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      const verified = await isEmailVerified(user.uid);
+      if (!verified) {
+        router.push('/login?error=verify');
+      }
+    };
+
+    checkAccess();
+  }, [user, router]);
 
   return (
     <ProtectedRoute>
