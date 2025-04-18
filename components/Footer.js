@@ -1,8 +1,12 @@
-import { useRouter } from 'next/router';
-import Link from 'next/link';
+import { useState } from 'react';
+import PricingModal from './PricingModal';
+import PrivacyModal from './PrivacyModal';
+import AboutModal from './AboutModal';
 
 const Footer = () => {
-  const router = useRouter();
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
   const currentYear = new Date().getFullYear();
 
   return (
@@ -28,36 +32,54 @@ const Footer = () => {
           justifyContent: 'center',
           flexWrap: 'wrap'
         }}>
-          <Link
-            href="/pricing"
+          <button
+            onClick={() => setShowPricingModal(true)}
             style={{
-              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
               color: '#666',
               fontSize: '0.9rem',
-              textDecoration: 'none',
-              transition: 'color 0.2s ease',
+              cursor: 'pointer',
+              padding: 0,
               ':hover': {
                 color: '#FF3366'
               }
             }}
           >
             Pricing
-          </Link>
-          <Link
-            href="/privacy"
+          </button>
+          <button
+            onClick={() => setShowPrivacyModal(true)}
             style={{
-              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
               color: '#666',
               fontSize: '0.9rem',
-              textDecoration: 'none',
-              transition: 'color 0.2s ease',
+              cursor: 'pointer',
+              padding: 0,
               ':hover': {
                 color: '#FF3366'
               }
             }}
           >
             Privacy Policy
-          </Link>
+          </button>
+          <button
+            onClick={() => setShowAboutModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#666',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              padding: 0,
+              ':hover': {
+                color: '#FF3366'
+              }
+            }}
+          >
+            About Us
+          </button>
         </div>
         <div style={{
           color: '#999',
@@ -66,6 +88,19 @@ const Footer = () => {
           © {currentYear} ScriptSea. All rights reserved.
         </div>
       </div>
+
+      <PricingModal 
+        isOpen={showPricingModal}
+        onClose={() => setShowPricingModal(false)}
+      />
+      <PrivacyModal 
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
+      <AboutModal 
+        isOpen={showAboutModal}
+        onClose={() => setShowAboutModal(false)}
+      />
     </footer>
   );
 };
