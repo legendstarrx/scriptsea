@@ -150,10 +150,35 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
-      // The result will be handled by the redirect handler in useEffect
+      const result = await signInWithPopup(auth, provider);
+      
+      // Check if user is banned BEFORE creating/updating profile
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      if (userDoc.exists() && userDoc.data().isBanned) {
+        await signOut(auth); // Sign out immediately if banned
+        throw new Error('Your account has been banned. Please contact support.');
+      }
+
+      // Only proceed if not banned
+      const userData = {
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
+        subscription: 'free',
+        scriptsRemaining: 3,
+        scriptsGenerated: 0,
+        isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        isBanned: false
+      };
+
+      await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
+      setUserProfile(userData);
+      return result;
     } catch (error) {
       console.error('Google Sign-in error:', error);
+      await signOut(auth);
       throw error;
     }
   };
@@ -163,43 +188,30 @@ export function AuthProvider({ children }) {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
-          // Check if user is banned
           const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-          if (userDoc.exists() && userDoc.data().isBanned) {
-            await signOut(auth);
-            throw new Error('Your account has been banned. Please contact support.');
+          if (!userDoc.exists()) {
+            const userData = {
+              email: result.user.email,
+              displayName: result.user.displayName,
+              photoURL: result.user.photoURL,
+              subscription: 'free',
+              scriptsRemaining: 3,
+              scriptsGenerated: 0,
+              isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            };
+            await setDoc(doc(db, 'users', result.user.uid), userData);
+            setUserProfile(userData);
           }
-
-          // Create/update user data if not banned
-          const userData = {
-            email: result.user.email,
-            displayName: result.user.displayName,
-            photoURL: result.user.photoURL,
-            subscription: 'free',
-            scriptsRemaining: 3,
-            scriptsGenerated: 0,
-            isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-            isBanned: false
-          };
-          
-          await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
-          setUserProfile(userData);
-          
-          // Redirect to generate page after successful Google sign-in
-          router.replace('/generate');
         }
       } catch (error) {
         console.error('Redirect result error:', error);
-        if (error.message.includes('banned')) {
-          await signOut(auth);
-        }
       }
     };
 
     handleRedirectResult();
-  }, [router]);
+  }, []);
 
   const logout = async () => {
     try {
