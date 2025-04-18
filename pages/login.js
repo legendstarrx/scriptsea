@@ -10,7 +10,7 @@ import { useAuthRedirect } from '../hooks/useAuthRedirect';
 export default function Login() {
   const isLoading = useAuthRedirect();
   const router = useRouter();
-  const { login, signInWithGoogle } = useAuth();
+  const { login, signInWithGoogle, logout } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -63,8 +63,14 @@ export default function Login() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.message || 'Google sign-in failed. Please try again.'
+        text: error.message === 'Your account has been banned' 
+          ? 'Your account has been banned. Please contact support.'
+          : error.message || 'Google sign-in failed. Please try again.'
       });
+      // If banned, ensure they're logged out
+      if (error.message === 'Your account has been banned') {
+        await logout();
+      }
     } finally {
       setIsLoadingAuth(false);
     }
@@ -129,15 +135,16 @@ export default function Login() {
           </h1>
 
           {message.text && (
-            <div style={{
-              padding: '1rem',
-              marginBottom: '1rem',
-              borderRadius: '8px',
-              backgroundColor: message.type === 'success' ? 'rgba(255, 51, 102, 0.1)' : 'rgba(255, 51, 102, 0.1)',
-              color: message.type === 'success' ? '#FF3366' : '#FF3366',
-              border: '1px solid #FF3366',
-              animation: 'slideIn 0.3s ease'
-            }}>
+            <div
+              style={{
+                padding: '1rem',
+                marginBottom: '1rem',
+                borderRadius: '8px',
+                backgroundColor: message.type === 'error' ? '#FEE2E2' : '#DCFCE7',
+                color: message.type === 'error' ? '#DC2626' : '#16A34A',
+                textAlign: 'center'
+              }}
+            >
               {message.text}
             </div>
           )}
@@ -243,7 +250,7 @@ export default function Login() {
               }}
             >
               <img
-                src="/images/google.svg"
+                src="/google.svg"
                 alt="Google"
                 style={{ width: '20px', height: '20px' }}
               />

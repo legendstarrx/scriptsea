@@ -171,6 +171,8 @@ export function AuthProvider({ children }) {
       };
 
       await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
+
+      // Update IP address
       await fetch('/api/update-user', {
         method: 'POST',
         headers: {
@@ -180,10 +182,10 @@ export function AuthProvider({ children }) {
       });
 
       setUserProfile(userData);
-      
       return user;
     } catch (error) {
       console.error('Google Sign-in error:', error);
+      // Ensure the error is propagated
       throw error;
     }
   };
