@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import SubscriptionModal from './SubscriptionModal';
 import ContactModal from './ContactModal';
+import Image from 'next/image';
 
 export default function Navigation() {
   const router = useRouter();
@@ -122,8 +123,9 @@ export default function Navigation() {
                   textDecoration: 'none',
                   background: '#FF3366',
                   color: 'white',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '6px',
+                  fontSize: '0.9rem',
                   fontWeight: '500'
                 }}>
                   Sign Up
@@ -134,15 +136,27 @@ export default function Navigation() {
               onClick={() => setShowContactModal(true)}
               style={{
                 background: 'none',
-                border: '1px solid #FF3366',
-                color: '#FF3366',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
+                border: 'none',
+                padding: '0.3rem',
                 cursor: 'pointer',
-                fontWeight: '500'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
+              title="Contact Us"
             >
-              Contact Us
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="#FF3366"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
             </button>
           </div>
         </div>
