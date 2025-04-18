@@ -53,14 +53,9 @@ export default function Login() {
     setErrorMessage('');
     
     try {
-      const result = await signInWithGoogle();
-      if (result?.user) {
-        setMessage({
-          type: 'success',
-          text: 'Login successful! Redirecting...'
-        });
-        await router.replace('/generate');
-      }
+      await signInWithGoogle();
+      // Don't set any messages or do any redirects here
+      // The redirect and user setup will be handled by AuthContext
     } catch (error) {
       console.error('Google Sign-in error:', error);
       setErrorMessage(
@@ -68,9 +63,6 @@ export default function Login() {
           ? error.message 
           : 'Failed to sign in with Google. Please try again.'
       );
-      if (error.message.includes('banned')) {
-        await logout();
-      }
     } finally {
       setIsLoadingAuth(false);
     }
