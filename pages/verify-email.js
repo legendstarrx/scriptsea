@@ -6,9 +6,10 @@ import Footer from '../components/Footer';
 
 export default function VerifyEmail() {
   const router = useRouter();
-  const { user, checkEmailVerification } = useAuth();
+  const { user, checkEmailVerification, resendVerificationEmail } = useAuth();
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     const checkVerification = async () => {
@@ -20,16 +21,36 @@ export default function VerifyEmail() {
         if (verified) {
           // Redirect to generate page after a short delay to show success message
           setTimeout(() => {
-            router.push('/generate');
+            router.replace('/generate');
           }, 1500);
         }
       } else {
-        router.push('/login');
+        router.replace('/login');
       }
     };
 
     checkVerification();
   }, [user, checkEmailVerification, router]);
+
+  const handleResendEmail = async () => {
+    setIsLoading(true);
+    setMessage({ type: '', text: '' });
+    
+    try {
+      await resendVerificationEmail();
+      setMessage({
+        type: 'success',
+        text: 'Verification email sent! Please check your inbox.'
+      });
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: 'Failed to send verification email. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -156,21 +177,67 @@ export default function VerifyEmail() {
               <p style={{ color: '#666', marginBottom: '1.5rem' }}>
                 Please check your email and click the verification link. If you haven't received the email, you can request a new one.
               </p>
-              <button
-                onClick={() => router.push('/login')}
-                style={{
-                  background: '#FF3366',
-                  color: 'white',
-                  padding: '0.75rem 1.5rem',
+
+              {message.text && (
+                <div style={{
+                  padding: '1rem',
+                  marginBottom: '1.5rem',
                   borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '500'
-                }}
-              >
-                Back to Login
-              </button>
+                  backgroundColor: message.type === 'error' 
+                    ? 'rgba(255, 51, 102, 0.1)' 
+                    : 'rgba(72, 187, 120, 0.1)',
+                  color: message.type === 'error'
+                    ? '#FF3366'
+                    : '#48BB78',
+                  border: `1px solid ${
+                    message.type === 'error'
+                      ? '#FF3366'
+                      : '#48BB78'
+                  }`
+                }}>
+                  {message.text}
+                </div>
+              )}
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}>
+                <button
+                  onClick={handleResendEmail}
+                  disabled={isLoading}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: '#FF3366',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.7 : 1
+                  }}
+                >
+                  {isLoading ? 'Sending...' : 'Resend Verification Email'}
+                </button>
+
+                <button
+                  onClick={() => router.replace('/login')}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'transparent',
+                    color: '#666',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Back to Login
+                </button>
+              </div>
             </>
           )}
         </div>
