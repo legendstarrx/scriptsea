@@ -130,6 +130,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       
       // Update IP address after successful login
       await fetch('/api/user/ip', {
@@ -137,10 +138,23 @@ export function AuthProvider({ children }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: userCredential.user.uid })
+        body: JSON.stringify({ userId: user.uid })
       });
       
-      return userCredential.user;
+      // Set the user state
+      setUser(user);
+      
+      // Get user profile
+      const userRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(userRef);
+      
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        userData.isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+        setUserProfile(userData);
+      }
+      
+      return user;
     } catch (error) {
       console.error('Login error:', error);
       throw error;

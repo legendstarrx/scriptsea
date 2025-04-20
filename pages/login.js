@@ -32,12 +32,14 @@ export default function Login() {
     setIsLoadingAuth(true);
     
     try {
-      await login(formData.email, formData.password);
-      setMessage({
-        type: 'success',
-        text: 'Login successful! Redirecting...'
-      });
-      await router.replace('/generate');
+      const user = await login(formData.email, formData.password);
+      if (user) {
+        setMessage({
+          type: 'success',
+          text: 'Login successful! Redirecting...'
+        });
+        router.push('/generate');
+      }
     } catch (error) {
       setMessage({
         type: 'error',
