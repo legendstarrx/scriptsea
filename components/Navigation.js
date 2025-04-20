@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SubscriptionModal from './SubscriptionModal';
 import ContactModal from './ContactModal';
 import Image from 'next/image';
@@ -10,12 +10,21 @@ const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function Navigation() {
   const router = useRouter();
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile, loading, logout } = useAuth();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Add null check for subscription status
   const isFreePlan = !userProfile?.subscription || userProfile.subscription === 'free';
+
+  useEffect(() => {
+    if (!loading && user?.email) {
+      setIsAdmin(user.email === ADMIN_EMAIL);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user, loading]);
 
   const handleUpgrade = (plan) => {
     const paymentLink = plan === 'monthly' 
@@ -103,10 +112,14 @@ export default function Navigation() {
                 >
                   Sign Out
                 </button>
-                {user && user.email === ADMIN_EMAIL && (
+                {isAdmin && (
                   <Link 
                     href="/admin"
-                    className="nav-link admin-link"
+                    style={{
+                      textDecoration: 'none',
+                      color: '#333',
+                      fontWeight: '500'
+                    }}
                   >
                     Admin Dashboard
                   </Link>

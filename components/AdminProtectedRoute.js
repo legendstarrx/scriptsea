@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function AdminProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -13,13 +13,29 @@ export default function AdminProtectedRoute({ children }) {
     let mounted = true;
 
     const checkAuth = async () => {
+      console.log('AdminProtectedRoute - Checking auth:', {
+        loading,
+        user: user?.email,
+        adminEmail: ADMIN_EMAIL,
+        userProfile: userProfile?.email
+      });
+
       if (!loading) {
-        const isAdmin = user?.email === ADMIN_EMAIL;
+        // First check if we have a user
+        if (!user?.email) {
+          console.log('AdminProtectedRoute - No user email, redirecting');
+          router.push('/');
+          return;
+        }
+
+        const isAdmin = user.email === ADMIN_EMAIL;
+        console.log('AdminProtectedRoute - Is admin:', isAdmin);
         
         if (mounted) {
           setIsAuthorized(isAdmin);
           
-          if (!isAdmin && user) {
+          if (!isAdmin) {
+            console.log('AdminProtectedRoute - Not admin, redirecting');
             router.push('/');
           }
         }
@@ -31,7 +47,7 @@ export default function AdminProtectedRoute({ children }) {
     return () => {
       mounted = false;
     };
-  }, [user, loading, router]);
+  }, [user, loading, router, userProfile]);
 
   if (loading) {
     return (
@@ -41,5 +57,10 @@ export default function AdminProtectedRoute({ children }) {
     );
   }
 
-  return isAuthorized ? children : null;
+  // Only render children if explicitly authorized
+  return isAuthorized ? children : (
+    <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+    </div>
+  );
 } 

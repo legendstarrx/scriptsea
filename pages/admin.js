@@ -16,7 +16,7 @@ const VALID_ACTIONS = {
 
 function AdminDashboard() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,14 +63,30 @@ function AdminDashboard() {
   }, [user]);
 
   useEffect(() => {
+    console.log('Admin Dashboard - Auth state:', {
+      authLoading,
+      userEmail: user?.email,
+      adminEmail: ADMIN_EMAIL,
+      userProfile
+    });
+
     if (!authLoading) {
-      if (!user?.email || user.email !== ADMIN_EMAIL) {
+      if (!user?.email) {
+        console.log('Admin Dashboard - No user email, redirecting');
         router.push('/');
         return;
       }
+
+      if (user.email !== ADMIN_EMAIL) {
+        console.log('Admin Dashboard - Not admin, redirecting');
+        router.push('/');
+        return;
+      }
+
+      console.log('Admin Dashboard - Fetching users');
       fetchUsers();
     }
-  }, [user, authLoading, router, fetchUsers]);
+  }, [user, authLoading, router, fetchUsers, userProfile]);
 
   const handleAction = async (action, userId, data = {}) => {
     try {
