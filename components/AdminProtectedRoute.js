@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
 export default function AdminProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -12,7 +14,7 @@ export default function AdminProtectedRoute({ children }) {
 
     const checkAuth = async () => {
       if (!loading) {
-        const isAdmin = user?.email === 'legendstarr2024@gmail.com';
+        const isAdmin = user?.email === ADMIN_EMAIL;
         
         if (mounted) {
           setIsAuthorized(isAdmin);

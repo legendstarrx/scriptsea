@@ -20,6 +20,7 @@ import {
 import { useRouter } from 'next/router';
 
 const AuthContext = createContext();
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -43,7 +44,7 @@ export function AuthProvider({ children }) {
             return;
           }
           
-          const isAdminUser = user.email === 'legendstarr2024@gmail.com';
+          const isAdminUser = user.email === ADMIN_EMAIL;
           
           if (docSnap.exists()) {
             const userData = docSnap.data();

@@ -5,6 +5,8 @@ import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import AdminProtectedRoute from '../../components/AdminProtectedRoute';
 
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
 export default function PaymentsPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -13,8 +15,9 @@ export default function PaymentsPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!user || user.email !== 'legendstarr2024@gmail.com') {
+    if (!user || user.email !== ADMIN_EMAIL) {
       router.push('/');
+      return;
     }
   }, [user, router]);
 
@@ -40,7 +43,7 @@ export default function PaymentsPage() {
     }
   }, [user]);
 
-  if (!user || user.email !== 'legendstarr2024@gmail.com') {
+  if (!user || user.email !== ADMIN_EMAIL) {
     return null; // Don't render anything while checking auth
   }
 

@@ -6,6 +6,8 @@ import SubscriptionModal from './SubscriptionModal';
 import ContactModal from './ContactModal';
 import Image from 'next/image';
 
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
 export default function Navigation() {
   const router = useRouter();
   const { user, userProfile, logout } = useAuth();
@@ -101,7 +103,7 @@ export default function Navigation() {
                 >
                   Sign Out
                 </button>
-                {user && user.email === 'legendstarr2024@gmail.com' && (
+                {user && user.email === ADMIN_EMAIL && (
                   <Link 
                     href="/admin"
                     className="nav-link admin-link"
