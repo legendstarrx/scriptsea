@@ -18,8 +18,8 @@ export default function AdminProtectedRoute({ children }) {
         if (mounted) {
           setIsAuthorized(isAdmin);
           
-          if (!isAdmin) {
-            await router.push('/');
+          if (!isAdmin && user) {
+            router.push('/');
           }
         }
       }
