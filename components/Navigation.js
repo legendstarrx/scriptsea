@@ -51,14 +51,15 @@ export default function Navigation() {
             textDecoration: 'none',
             color: '#FF3366',
             fontSize: '1.5rem',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            marginRight: '3rem'
           }}>
             ScriptSea
           </Link>
 
           <div style={{
             display: 'flex',
-            gap: '1.5rem',
+            gap: '2rem',
             alignItems: 'center'
           }}>
             {user ? (
@@ -76,10 +77,11 @@ export default function Navigation() {
                     background: 'none',
                     border: '1px solid #FF3366',
                     color: '#FF3366',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '6px',
                     cursor: 'pointer',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    fontSize: '0.9rem'
                   }}
                 >
                   Sign Out
