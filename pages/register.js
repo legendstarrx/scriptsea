@@ -101,11 +101,11 @@ export default function Register() {
 
     try {
       // Check if IP is banned before attempting registration
-      const ipCheck = await fetch('/api/user/check-ip');
+      const ipCheck = await fetch('/api/auth/check-ip');
       const ipData = await ipCheck.json();
       
-      if (ipData.isBanned) {
-        throw new Error('This IP address has been banned. Please contact support.');
+      if (ipData.error === 'IP banned') {
+        throw new Error(ipData.message);
       }
 
       // Basic validation
@@ -158,11 +158,11 @@ export default function Register() {
 
     try {
       // Check if IP is banned before attempting Google sign-in
-      const ipCheck = await fetch('/api/user/check-ip');
+      const ipCheck = await fetch('/api/auth/check-ip');
       const ipData = await ipCheck.json();
       
-      if (ipData.isBanned) {
-        throw new Error('This IP address has been banned. Please contact support.');
+      if (ipData.error === 'IP banned') {
+        throw new Error(ipData.message);
       }
 
       setSuccess('Signing in with Google...');
