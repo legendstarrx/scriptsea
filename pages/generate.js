@@ -1259,7 +1259,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         flexDirection: 'column',
         paddingTop: '80px'
       }}>
-        <Navigation />
+        <GeneratePageNav />
         
         <main style={{
           flex: 1,
