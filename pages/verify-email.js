@@ -12,17 +12,41 @@ export default function VerifyEmail() {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
+    let intervalId;
+
     const checkVerification = async () => {
       if (user) {
-        const verified = await checkEmailVerification();
-        setIsVerified(verified);
-        setIsLoading(false);
-        
-        if (verified) {
-          // Redirect to generate page after a short delay to show success message
-          setTimeout(() => {
-            router.replace('/generate');
-          }, 1500);
+        try {
+          const verified = await checkEmailVerification();
+          setIsVerified(verified);
+          setIsLoading(false);
+          
+          if (verified) {
+            // Clear any existing interval
+            if (intervalId) {
+              clearInterval(intervalId);
+            }
+            // Redirect to generate page after a short delay to show success message
+            setTimeout(() => {
+              router.replace('/generate');
+            }, 1500);
+          } else {
+            // If not verified, check again after 5 seconds
+            intervalId = setInterval(async () => {
+              const recheck = await checkEmailVerification();
+              if (recheck) {
+                setIsVerified(true);
+                setIsLoading(false);
+                clearInterval(intervalId);
+                setTimeout(() => {
+                  router.replace('/generate');
+                }, 1500);
+              }
+            }, 5000);
+          }
+        } catch (error) {
+          console.error('Error checking verification:', error);
+          setIsLoading(false);
         }
       } else {
         router.replace('/login');
@@ -30,6 +54,13 @@ export default function VerifyEmail() {
     };
 
     checkVerification();
+
+    // Cleanup interval on component unmount
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [user, checkEmailVerification, router]);
 
   const handleResendEmail = async () => {

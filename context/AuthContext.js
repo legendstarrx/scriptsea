@@ -373,7 +373,28 @@ export function AuthProvider({ children }) {
     try {
       // Reload the user to get the latest email verification status
       await user.reload();
-      return user.emailVerified;
+      
+      // Check if email is verified
+      const isVerified = user.emailVerified;
+      
+      // If verified, update the user profile in Firestore
+      if (isVerified) {
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+          emailVerified: true,
+          lastLogin: new Date().toISOString()
+        });
+        
+        // Update local user profile state
+        if (userProfile) {
+          setUserProfile(prev => ({
+            ...prev,
+            emailVerified: true
+          }));
+        }
+      }
+      
+      return isVerified;
     } catch (error) {
       console.error('Error checking email verification:', error);
       return false;
