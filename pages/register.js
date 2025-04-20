@@ -100,6 +100,14 @@ export default function Register() {
     setSuccess('');
 
     try {
+      // Check if IP is banned before attempting registration
+      const ipCheck = await fetch('/api/user/check-ip');
+      const ipData = await ipCheck.json();
+      
+      if (ipData.isBanned) {
+        throw new Error('This IP address has been banned. Please contact support.');
+      }
+
       // Basic validation
       if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
         throw new Error('Please fill in all fields');
@@ -126,7 +134,17 @@ export default function Register() {
       }, 1500);
     } catch (error) {
       console.error('Registration error:', error);
-      setError(error.message || 'Failed to create account. Please try again.');
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already registered. Please try logging in.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please use a stronger password.';
+      } else if (error.message.includes('banned')) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
       setSuccess('');
     } finally {
       setIsLoading(false);
@@ -139,6 +157,14 @@ export default function Register() {
     setSuccess('');
 
     try {
+      // Check if IP is banned before attempting Google sign-in
+      const ipCheck = await fetch('/api/user/check-ip');
+      const ipData = await ipCheck.json();
+      
+      if (ipData.isBanned) {
+        throw new Error('This IP address has been banned. Please contact support.');
+      }
+
       setSuccess('Signing in with Google...');
       await signInWithGoogle();
       setSuccess('Sign in successful! Redirecting...');
@@ -148,7 +174,13 @@ export default function Register() {
       }, 1500);
     } catch (error) {
       console.error('Google sign-in error:', error);
-      setError(error.message || 'Failed to sign in with Google. Please try again.');
+      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      
+      if (error.message.includes('banned')) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
       setSuccess('');
     } finally {
       setIsLoading(false);

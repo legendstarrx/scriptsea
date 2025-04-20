@@ -30,8 +30,17 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoadingAuth(true);
+    setErrorMessage('');
     
     try {
+      // Check if IP is banned before attempting login
+      const ipCheck = await fetch('/api/user/check-ip');
+      const ipData = await ipCheck.json();
+      
+      if (ipData.isBanned) {
+        throw new Error('This IP address has been banned. Please contact support.');
+      }
+
       const user = await login(formData.email, formData.password);
       if (user) {
         setMessage({
@@ -41,9 +50,20 @@ export default function Login() {
         router.push('/generate');
       }
     } catch (error) {
+      console.error('Login error:', error);
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        errorMessage = 'Incorrect email or password.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      } else if (error.message.includes('banned')) {
+        errorMessage = error.message;
+      }
+      
       setMessage({
         type: 'error',
-        text: error.message || 'Login failed. Please try again.'
+        text: errorMessage
       });
     } finally {
       setIsLoadingAuth(false);
@@ -55,6 +75,14 @@ export default function Login() {
     setErrorMessage('');
     
     try {
+      // Check if IP is banned before attempting Google sign-in
+      const ipCheck = await fetch('/api/user/check-ip');
+      const ipData = await ipCheck.json();
+      
+      if (ipData.isBanned) {
+        throw new Error('This IP address has been banned. Please contact support.');
+      }
+
       const result = await signInWithGoogle();
       if (result?.user) {
         setMessage({
@@ -65,11 +93,13 @@ export default function Login() {
       }
     } catch (error) {
       console.error('Google Sign-in error:', error);
-      setErrorMessage(
-        error.message === 'Your account has been banned. Please contact support.' 
-          ? error.message 
-          : 'Failed to sign in with Google. Please try again.'
-      );
+      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      
+      if (error.message.includes('banned')) {
+        errorMessage = error.message;
+      }
+      
+      setErrorMessage(errorMessage);
       if (error.message.includes('banned')) {
         await logout();
       }
