@@ -201,6 +201,16 @@ export function AuthProvider({ children }) {
       };
 
       await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
+      
+      // Update IP address after successful sign-in
+      await fetch('/api/user/ip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: result.user.uid })
+      });
+      
       setUserProfile(userData);
       return result;
     } catch (error) {
