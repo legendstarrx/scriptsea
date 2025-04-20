@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
-import SubscriptionModal from './SubscriptionModal';
 import ContactModal from './ContactModal';
 import Image from 'next/image';
 
@@ -11,12 +10,8 @@ const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 export default function Navigation() {
   const router = useRouter();
   const { user, userProfile, loading, logout } = useAuth();
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  // Add null check for subscription status
-  const isFreePlan = !userProfile?.subscription || userProfile.subscription === 'free';
 
   useEffect(() => {
     if (!loading && user?.email) {
@@ -25,13 +20,6 @@ export default function Navigation() {
       setIsAdmin(false);
     }
   }, [user, loading]);
-
-  const handleUpgrade = (plan) => {
-    const paymentLink = plan === 'monthly' 
-      ? 'https://flutterwave.com/pay/vsxo1pgmcjhl'
-      : 'https://flutterwave.com/pay/x1wjudjheco3';
-    window.open(paymentLink, '_blank');
-  };
 
   const handleSignOut = async () => {
     try {
@@ -82,22 +70,6 @@ export default function Navigation() {
                 }}>
                   Generate
                 </Link>
-                {isFreePlan && (
-                  <button
-                    onClick={() => setShowSubscriptionModal(true)}
-                    style={{
-                      background: '#FF3366',
-                      color: 'white',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      border: 'none'
-                    }}
-                  >
-                    Upgrade
-                  </button>
-                )}
                 <button
                   onClick={handleSignOut}
                   style={{
@@ -176,14 +148,6 @@ export default function Navigation() {
           </div>
         </div>
       </nav>
-
-      {showSubscriptionModal && (
-        <SubscriptionModal 
-          isOpen={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)}
-          userProfile={userProfile}
-        />
-      )}
 
       {showContactModal && (
         <ContactModal 
