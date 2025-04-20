@@ -63,12 +63,14 @@ function AdminDashboard() {
   }, [user]);
 
   useEffect(() => {
-    if (!user?.email || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+    if (!loading && (!user?.email || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)) {
       router.push('/');
       return;
     }
-    fetchUsers();
-  }, [user, router, fetchUsers]);
+    if (user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      fetchUsers();
+    }
+  }, [user, loading, router, fetchUsers]);
 
   const handleAction = async (action, userId, data = {}) => {
     try {
