@@ -64,7 +64,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     if (!authLoading) {
-      if (!user?.email || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      if (!user?.email || user.email !== 'legendstarr2024@gmail.com') {
         router.push('/');
         return;
       }
