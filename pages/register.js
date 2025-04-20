@@ -37,7 +37,8 @@ export default function Register() {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -100,7 +101,7 @@ export default function Register() {
 
     try {
       // Basic validation
-      if (!formData.fullName || !formData.email || !formData.password) {
+      if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
         throw new Error('Please fill in all fields');
       }
 
@@ -108,6 +109,11 @@ export default function Register() {
       const validation = validatePassword(formData.password);
       if (!Object.values(validation).every(Boolean)) {
         throw new Error('Please ensure your password meets all requirements');
+      }
+
+      // Confirm password validation
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error('Passwords do not match');
       }
 
       setSuccess('Creating your account...');
@@ -328,6 +334,37 @@ export default function Register() {
                   {passwordValidation.special ? '✓' : '○'} Special character
                 </div>
               </div>
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                color: '#555',
+                fontSize: '0.9rem'
+              }}>
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                required
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ddd',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s ease',
+                  ':focus': {
+                    outline: 'none',
+                    borderColor: '#FF3366',
+                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
+                  }
+                }}
+              />
             </div>
 
             <button
