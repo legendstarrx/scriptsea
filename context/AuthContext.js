@@ -33,6 +33,9 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
+          // Set the user state immediately
+          setUser(user);
+          
           const userRef = doc(db, 'users', user.uid);
           const docSnap = await getDoc(userRef);
           
@@ -51,7 +54,8 @@ export function AuthProvider({ children }) {
             userData.isAdmin = isAdminUser;
             setUserProfile({
               ...userData,
-              isAdmin: isAdminUser
+              isAdmin: isAdminUser,
+              email: user.email // Ensure email is always current
             });
           } else {
             const defaultProfile = {
@@ -133,6 +137,9 @@ export function AuthProvider({ children }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
+      // Set the user state immediately
+      setUser(user);
+      
       // Update IP address after successful login
       await fetch('/api/user/ip', {
         method: 'POST',
@@ -142,17 +149,17 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ userId: user.uid })
       });
       
-      // Set the user state
-      setUser(user);
-      
       // Get user profile
       const userRef = doc(db, 'users', user.uid);
       const docSnap = await getDoc(userRef);
       
       if (docSnap.exists()) {
         const userData = docSnap.data();
-        userData.isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-        setUserProfile(userData);
+        userData.isAdmin = user.email === ADMIN_EMAIL;
+        setUserProfile({
+          ...userData,
+          email: user.email // Ensure email is always current
+        });
       }
       
       return user;
@@ -167,10 +174,15 @@ export function AuthProvider({ children }) {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
+      // Set the user state immediately
+      setUser(result.user);
+      
       // Check if user is banned BEFORE creating/updating profile
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
       if (userDoc.exists() && userDoc.data().isBanned) {
-        await signOut(auth); // Sign out immediately if banned
+        await signOut(auth);
+        setUser(null);
+        setUserProfile(null);
         throw new Error('Your account has been banned. Please contact support.');
       }
 
@@ -182,7 +194,7 @@ export function AuthProvider({ children }) {
         subscription: 'free',
         scriptsRemaining: 3,
         scriptsGenerated: 0,
-        isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+        isAdmin: result.user.email === ADMIN_EMAIL,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         isBanned: false
@@ -194,6 +206,8 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Google Sign-in error:', error);
       await signOut(auth);
+      setUser(null);
+      setUserProfile(null);
       throw error;
     }
   };
