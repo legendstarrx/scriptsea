@@ -8,5 +8,11 @@
         "maxLambdaSize": "50mb"
       }
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://scriptsea-4c5cd.firebaseapp.com/__/auth/:path*"
+    }
   ]
-} 
+}

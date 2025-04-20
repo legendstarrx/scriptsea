@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "scriptsea-4c5cd"
-  }
+    "default": "scriptsea-4c5cd",
+    "staging": "scriptsea-4c5cd"
+  },
+  "targets": {},
+  "etags": {}
 }
