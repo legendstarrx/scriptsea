@@ -9,10 +9,9 @@ import SubscriptionModal from '../components/SubscriptionModal';
 import ProfileModal from '../components/ProfileModal';
 import { db } from '../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { toast } from 'react-hot-toast'; // or your preferred notification library
-import React, { useState, useEffect, useRef } from 'react'; // Add this at the top with your other imports
+import { toast } from 'react-hot-toast';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Navigation from '../components/Navigation';
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
@@ -53,7 +52,6 @@ const GeneratePageNav = () => {
               color: '#FF3366',
               fontSize: '1.5rem',
               fontWeight: 'bold'
-              // ... any other styles you had
             }}
           >
             ScriptSea
@@ -239,7 +237,7 @@ const GeneratePageNav = () => {
         <SubscriptionModal 
           isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)} 
-          userProfile={userProfile}  // Add userProfile prop
+          userProfile={userProfile}
         />
       )}
 
