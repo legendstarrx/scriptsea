@@ -16,7 +16,7 @@ const VALID_ACTIONS = {
 
 function AdminDashboard() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,14 +63,14 @@ function AdminDashboard() {
   }, [user]);
 
   useEffect(() => {
-    if (!loading && (!user?.email || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL)) {
-      router.push('/');
-      return;
-    }
-    if (user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+    if (!authLoading) {
+      if (!user?.email || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+        router.push('/');
+        return;
+      }
       fetchUsers();
     }
-  }, [user, loading, router, fetchUsers]);
+  }, [user, authLoading, router, fetchUsers]);
 
   const handleAction = async (action, userId, data = {}) => {
     try {
@@ -177,6 +177,14 @@ function AdminDashboard() {
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
