@@ -15,7 +15,8 @@ import {
   onAuthStateChanged,
   deleteUser,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  sendEmailVerification
 } from 'firebase/auth';
 import { useRouter } from 'next/router';
 
@@ -96,6 +97,9 @@ export function AuthProvider({ children }) {
         await updateProfile(user, { displayName });
       }
       
+      // Send verification email
+      await sendEmailVerification(user);
+      
       // Create user document in Firestore
       const userData = {
         email: user.email,
@@ -110,7 +114,8 @@ export function AuthProvider({ children }) {
         ipAddress: null,
         isBanned: false,
         subscriptionStatus: 'free',
-        lastPaymentDate: new Date().toISOString()
+        lastPaymentDate: new Date().toISOString(),
+        emailVerified: false
       };
       
       await setDoc(doc(db, 'users', user.uid), userData);
@@ -362,6 +367,32 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const checkEmailVerification = async () => {
+    if (!user) return false;
+    
+    try {
+      // Reload the user to get the latest email verification status
+      await user.reload();
+      return user.emailVerified;
+    } catch (error) {
+      console.error('Error checking email verification:', error);
+      return false;
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    try {
+      if (!auth.currentUser) {
+        throw new Error('No user logged in');
+      }
+      await sendEmailVerification(auth.currentUser);
+      return true;
+    } catch (error) {
+      console.error('Resend verification email error:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     userProfile,
@@ -377,7 +408,9 @@ export function AuthProvider({ children }) {
     updateSubscription,
     deleteUserAccount,
     getUsersByIP,
-    getAllUsers
+    getAllUsers,
+    checkEmailVerification,
+    resendVerificationEmail
   };
 
   return (

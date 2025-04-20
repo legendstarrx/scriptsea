@@ -12,6 +12,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast'; // or your preferred notification library
 import React, { useState, useEffect, useRef } from 'react'; // Add this at the top with your other imports
 import Link from 'next/link';
+import Navigation from '../components/Navigation';
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
@@ -302,7 +303,7 @@ export const dynamic = 'force-dynamic';
 
 export default function Generate() {
   const router = useRouter();
-  const { user, userProfile, updateUserProfile } = useAuth();
+  const { user, userProfile, updateUserProfile, checkEmailVerification } = useAuth();
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');
@@ -1234,6 +1235,24 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     }
   }, [router.query]);
 
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (user) {
+        const isVerified = await checkEmailVerification();
+        if (!isVerified) {
+          router.push('/verify-email');
+        }
+      }
+    };
+
+    checkVerification();
+  }, [user, checkEmailVerification, router]);
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <ProtectedRoute>
       <div style={{
@@ -1242,7 +1261,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         flexDirection: 'column',
         paddingTop: '80px'
       }}>
-        <GeneratePageNav />
+        <Navigation />
         
         <main style={{
           flex: 1,
