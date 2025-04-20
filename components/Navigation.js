@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import ContactModal from './ContactModal';
+import SubscriptionModal from './SubscriptionModal';
 import Image from 'next/image';
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
@@ -11,6 +12,7 @@ export default function Navigation() {
   const router = useRouter();
   const { user, userProfile, loading, logout } = useAuth();
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -20,6 +22,9 @@ export default function Navigation() {
       setIsAdmin(false);
     }
   }, [user, loading]);
+
+  // Add null check for subscription status
+  const isFreePlan = !userProfile?.subscription || userProfile.subscription === 'free';
 
   const handleSignOut = async () => {
     try {
@@ -71,21 +76,34 @@ export default function Navigation() {
                 }}>
                   Generate
                 </Link>
-                <button
-                  onClick={handleSignOut}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #FF3366',
-                    color: '#FF3366',
-                    padding: '0.4rem 0.8rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  Sign Out
-                </button>
+                {isFreePlan && (
+                  <button
+                    onClick={() => setShowSubscriptionModal(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '0.3rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Upgrade to Premium"
+                  >
+                    <svg 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="#FF3366"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+                    </svg>
+                  </button>
+                )}
                 {isAdmin && (
                   <Link 
                     href="/admin"
@@ -155,6 +173,14 @@ export default function Navigation() {
         <ContactModal 
           isOpen={showContactModal}
           onClose={() => setShowContactModal(false)}
+        />
+      )}
+
+      {showSubscriptionModal && (
+        <SubscriptionModal 
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          userProfile={userProfile}
         />
       )}
     </>
