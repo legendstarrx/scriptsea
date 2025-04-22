@@ -1307,7 +1307,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 fontWeight: '600',
                 color: userProfile?.subscription === 'pro' ? '#FF3366' : '#666'
               }}>
-                {userProfile?.scriptsRemaining || 0} scripts remaining out of {userProfile?.subscription === 'pro' ? 100 : 3}
+                {userProfile?.scriptsRemaining || 0} scripts remaining out of {userProfile?.subscription === 'pro' ? (userProfile?.subscriptionType === 'yearly' ? 1200 : 100) : 3}
               </span>
               {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
                 <>
