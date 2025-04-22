@@ -65,17 +65,20 @@ export default async function handler(req, res) {
     });
 
     const payment = await paymentResponse.json();
-
-    if (payment.data && payment.data.link) {
-      return res.status(200).json({ 
-        success: true, 
-        paymentLink: payment.data.link 
-      });
+    
+    if (!payment.data?.link) {
+      throw new Error('Failed to create payment link');
     }
 
-    throw new Error('Failed to create payment link');
+    return res.status(200).json({
+      success: true,
+      paymentLink: payment.data.link
+    });
   } catch (error) {
-    console.error('Payment creation error:', error);
-    return res.status(500).json({ error: 'Failed to create payment' });
+    console.error('Create payment error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create payment. Please try again.'
+    });
   }
 } 
