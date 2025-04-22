@@ -10,7 +10,7 @@ import { useAuthRedirect } from '../hooks/useAuthRedirect';
 export default function Login() {
   const isLoading = useAuthRedirect();
   const router = useRouter();
-  const { login, signInWithGoogle, logout } = useAuth();
+  const { login, signInWithGoogle, logout, resetPassword } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -123,7 +123,7 @@ export default function Login() {
     setIsLoadingAuth(true);
     
     try {
-      // Add password reset logic here
+      await resetPassword(resetEmail);
       setResetMessage({ type: 'success', text: 'Password reset instructions sent to your email!' });
       setShowResetModal(false);
     } catch (error) {
@@ -243,6 +243,25 @@ export default function Login() {
                   fontSize: '1rem'
                 }}
               />
+              <div style={{
+                textAlign: 'right',
+                marginTop: '0.5rem'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#FF3366',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    padding: '0.25rem 0.5rem'
+                  }}
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </div>
 
             <button
@@ -324,6 +343,116 @@ export default function Login() {
         </div>
       </main>
       <Footer />
+
+      {/* Reset Password Modal */}
+      {showResetModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '2rem',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '400px',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => {
+                setShowResetModal(false);
+                setResetMessage(null);
+              }}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1.5rem',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
+
+            <h2 style={{
+              fontSize: '1.5rem',
+              color: '#333',
+              marginBottom: '1.5rem',
+              textAlign: 'center'
+            }}>
+              Reset Password
+            </h2>
+
+            {resetMessage && (
+              <div style={{
+                padding: '1rem',
+                marginBottom: '1rem',
+                borderRadius: '8px',
+                backgroundColor: resetMessage.type === 'error' ? '#FEE2E2' : '#DCFCE7',
+                color: resetMessage.type === 'error' ? '#DC2626' : '#16A34A',
+                textAlign: 'center'
+              }}>
+                {resetMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={handleResetPassword}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#666',
+                  fontSize: '0.875rem'
+                }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoadingAuth}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: '#FF3366',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                {isLoadingAuth ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
