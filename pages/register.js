@@ -308,32 +308,40 @@ export default function Register() {
     setIsLoadingAuth(true);
     setErrorMessage('');
     setError('');
+    setSuccess('');
     
     try {
       const result = await signInWithGoogle();
       if (result?.user) {
-        // Check IP after successful sign-in
-        const ipCheck = await fetch('/api/auth/check-ip');
-        const ipData = await ipCheck.json();
-        
-        if (ipData.error === 'IP banned') {
-          // Set error message before logging out
-          setError(ipData.message);
-          await logout();
-          return; // Return early to prevent redirect
-        }
+        try {
+          // Check IP after successful sign-in
+          const ipCheck = await fetch('/api/auth/check-ip');
+          const ipData = await ipCheck.json();
+          
+          if (ipData.error === 'IP banned') {
+            // Set error message first
+            setError(ipData.message);
+            // Then log out
+            await logout();
+            setIsLoadingAuth(false);
+            return; // Return early to prevent redirect
+          }
 
-        setSuccess('Registration successful! Redirecting...');
-        await router.replace('/generate');
+          // If not banned, proceed with success
+          setSuccess('Registration successful! Redirecting...');
+          await router.replace('/generate');
+        } catch (ipError) {
+          // Handle IP check error
+          console.error('IP check error:', ipError);
+          await logout(); // Log out user if IP check fails
+          setError(ipError.message || 'Error checking IP address. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Google Sign-in error:', error);
       let errorMessage = '';
       
-      // Only show specific error messages for actual error cases
-      if (error.message.includes('banned')) {
-        errorMessage = error.message;
-      } else if (error.code === 'auth/popup-blocked') {
+      if (error.code === 'auth/popup-blocked') {
         errorMessage = 'Popup was blocked. Please allow popups for this site to use Google sign-in.';
       } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
         // Don't show error for user-initiated popup closures
