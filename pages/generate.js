@@ -85,7 +85,7 @@ const GeneratePageNav = () => {
                 <path d="M2 17L12 22L22 17" />
                 <path d="M2 12L12 17L22 12" />
               </svg>
-              Upgrade
+              Upgrade to Pro
             </button>
 
             {/* Contact Button */}
@@ -2130,7 +2130,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   color: '#999'
                 }}>
                   {includeVisuals 
-                    ? 'Script will include visual suggestions like transitions, effects, and thumbnail ideas'
+                    ? 'Script will include visual suggestions like transitions, effects, and shots ideas'
                     : 'Script will focus on content and dialogue only'}
                 </p>
               </div>

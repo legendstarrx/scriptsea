@@ -47,7 +47,7 @@ export default function Home() {
               fontWeight: '500',
               marginBottom: '1.5rem'
             }}>
-              Used by 10,000+ Content Creators
+              Used by Top 1% Content Creators
             </div>
 
             <h1 style={{
@@ -101,7 +101,7 @@ export default function Home() {
                 fontSize: '0.9rem',
                 color: '#666'
               }}>
-                <span style={{ fontWeight: '600', color: '#FF3366' }}>Special Offer:</span> 50% off your first month
+                <span style={{ fontWeight: '600', color: '#FF3366' }}>Special Offer:</span> start now for FREE
               </p>
             </div>
 
