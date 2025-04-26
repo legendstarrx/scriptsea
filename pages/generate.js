@@ -65,7 +65,6 @@ const GeneratePageNav = () => {
             {/* Upgrade Button */}
             <button
               onClick={() => setShowSubscriptionModal(true)}
-              className="upgrade-button"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -81,39 +80,13 @@ const GeneratePageNav = () => {
                 boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
               }}
             >
-              <svg 
-                className="upgrade-icon"
-                width="16" 
-                height="16" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2"
-              >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" />
                 <path d="M2 17L12 22L22 17" />
                 <path d="M2 12L12 17L22 12" />
               </svg>
-              <span className="upgrade-text">Upgrade to</span>
-              <span>Pro</span>
+              Upgrade to Pro
             </button>
-
-            <style jsx>{`
-              @media (max-width: 480px) {
-                .upgrade-button {
-                  padding: 6px 12px !important;
-                  font-size: 0.8rem !important;
-                  gap: 4px !important;
-                }
-                .upgrade-icon {
-                  width: 14px;
-                  height: 14px;
-                }
-                .upgrade-text {
-                  display: none;
-                }
-              }
-            `}</style>
 
             {/* Contact Button */}
             <button
@@ -2347,7 +2320,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             Generating...
                           </>
                         ) : (
-                          'Generate'
+                          'Generate SEO Tips'
                         )}
                       </button>
                     </div>
@@ -2442,7 +2415,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             Generating...
                           </>
                         ) : (
-                          'Generate'
+                          'Suggest Thumbnail'
                         )}
                       </button>
                     </div>

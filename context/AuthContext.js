@@ -115,8 +115,7 @@ export function AuthProvider({ children }) {
         isBanned: false,
         subscriptionStatus: 'free',
         lastPaymentDate: new Date().toISOString(),
-        emailVerified: false,
-        lastVerificationCheck: new Date().toISOString()
+        emailVerified: false
       };
       
       await setDoc(doc(db, 'users', user.uid), userData);
@@ -197,47 +196,31 @@ export function AuthProvider({ children }) {
         email: result.user.email,
         displayName: result.user.displayName,
         photoURL: result.user.photoURL,
-        subscription: userDoc.exists() ? userDoc.data().subscription : 'free',
-        scriptsRemaining: userDoc.exists() ? userDoc.data().scriptsRemaining : 3,
-        scriptsGenerated: userDoc.exists() ? userDoc.data().scriptsGenerated : 0,
+        subscription: 'free',
+        scriptsRemaining: 3,
+        scriptsGenerated: 0,
         isAdmin: result.user.email === ADMIN_EMAIL,
-        createdAt: userDoc.exists() ? userDoc.data().createdAt : new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        isBanned: false,
-        emailVerified: result.user.emailVerified,
-        lastVerificationCheck: new Date().toISOString(),
-        subscriptionStatus: userDoc.exists() ? userDoc.data().subscriptionStatus : 'free',
-        lastPaymentDate: userDoc.exists() && userDoc.data().lastPaymentDate ? 
-          userDoc.data().lastPaymentDate : new Date().toISOString(),
-        ipAddress: null
+        isBanned: false
       };
 
       await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
       
       // Update IP address after successful sign-in
-      try {
-        await fetch('/api/user/ip', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId: result.user.uid })
-        });
-      } catch (ipError) {
-        console.error('Failed to update IP:', ipError);
-        // Don't throw here - IP update failure shouldn't block sign-in
-      }
+      await fetch('/api/user/ip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: result.user.uid })
+      });
       
       setUserProfile(userData);
       return result;
     } catch (error) {
       console.error('Google Sign-in error:', error);
-      // Clean up on error
-      try {
-        await signOut(auth);
-      } catch (signOutError) {
-        console.error('Error during cleanup:', signOutError);
-      }
+      await signOut(auth);
       setUser(null);
       setUserProfile(null);
       throw error;
@@ -388,51 +371,30 @@ export function AuthProvider({ children }) {
     if (!user) return false;
     
     try {
-      // Only reload user if we haven't checked recently
-      if (!userProfile?.lastVerificationCheck || 
-          Date.now() - new Date(userProfile.lastVerificationCheck).getTime() > 5 * 60 * 1000) { // 5 minutes
-        await user.reload();
+      // Reload the user to get the latest email verification status
+      await user.reload();
+      
+      // Check if email is verified
+      const isVerified = user.emailVerified;
+      
+      // If verified, update the user profile in Firestore
+      if (isVerified) {
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+          emailVerified: true,
+          lastLogin: new Date().toISOString()
+        });
         
-        // Check if email is verified
-        const isVerified = user.emailVerified;
-        
-        // If verified, update the user profile in Firestore
-        if (isVerified) {
-          const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, {
-            emailVerified: true,
-            lastLogin: new Date().toISOString(),
-            lastVerificationCheck: new Date().toISOString()
-          });
-          
-          // Update local user profile state
-          if (userProfile) {
-            setUserProfile(prev => ({
-              ...prev,
-              emailVerified: true,
-              lastVerificationCheck: new Date().toISOString()
-            }));
-          }
-        } else {
-          // Update last check time even if not verified
-          const userRef = doc(db, 'users', user.uid);
-          await updateDoc(userRef, {
-            lastVerificationCheck: new Date().toISOString()
-          });
-          
-          if (userProfile) {
-            setUserProfile(prev => ({
-              ...prev,
-              lastVerificationCheck: new Date().toISOString()
-            }));
-          }
+        // Update local user profile state
+        if (userProfile) {
+          setUserProfile(prev => ({
+            ...prev,
+            emailVerified: true
+          }));
         }
-        
-        return isVerified;
       }
       
-      // If we've checked recently, return the cached value
-      return userProfile?.emailVerified || false;
+      return isVerified;
     } catch (error) {
       console.error('Error checking email verification:', error);
       return false;

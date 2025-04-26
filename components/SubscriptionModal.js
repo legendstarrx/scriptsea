@@ -10,34 +10,12 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
     monthly: {
       price: '$4.99',
       amount: 8000,
-      features: [
-        '100 scripts per month',
-        'Save & export scripts as PDF/Word',
-        'Viral video reference analysis',
-        'Advanced SEO & hashtag suggestions',
-        'Thumbnail ideas generator',
-        'Premium script templates',
-        'Creator style matching',
-        'Priority email support',
-        'Early access to new features'
-      ]
+      features: ['100 scripts per month', 'Priority support', 'Advanced features']
     },
     yearly: {
       price: '$49.99',
       amount: 80000,
-      features: [
-        '1200 scripts per year (100/month)',
-        'Save & export scripts as PDF/Word',
-        'Viral video reference analysis',
-        'Advanced SEO & hashtag suggestions',
-        'Thumbnail ideas generator',
-        'Premium script templates',
-        'Creator style matching',
-        'Priority email support',
-        'Early access to new features',
-        '2 months free ($10 savings)',
-        'Guaranteed response within 24h'
-      ]
+      features: ['1200 scripts per month', 'Priority support', 'Advanced features', '2 months free']
     }
   };
 
