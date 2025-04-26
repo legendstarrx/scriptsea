@@ -2347,7 +2347,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             Generating...
                           </>
                         ) : (
-                          'Generate SEO Tips'
+                          'Generate'
                         )}
                       </button>
                     </div>
@@ -2442,7 +2442,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             Generating...
                           </>
                         ) : (
-                          'Suggest Thumbnail'
+                          'Generate'
                         )}
                       </button>
                     </div>

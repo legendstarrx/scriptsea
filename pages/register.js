@@ -310,16 +310,18 @@ export default function Register() {
     setError('');
     
     try {
-      // Check if IP is banned before attempting Google sign-in
-      const ipCheck = await fetch('/api/auth/check-ip');
-      const ipData = await ipCheck.json();
-      
-      if (ipData.error === 'IP banned') {
-        throw new Error(ipData.message);
-      }
-
       const result = await signInWithGoogle();
       if (result?.user) {
+        // Check IP after successful sign-in
+        const ipCheck = await fetch('/api/auth/check-ip');
+        const ipData = await ipCheck.json();
+        
+        if (ipData.error === 'IP banned') {
+          // If IP is banned, log out and show error
+          await logout();
+          throw new Error(ipData.message);
+        }
+
         setSuccess('Registration successful! Redirecting...');
         await router.replace('/generate');
       }
@@ -330,7 +332,6 @@ export default function Register() {
       // Only show specific error messages for actual error cases
       if (error.message.includes('banned')) {
         errorMessage = error.message;
-        await logout();
       } else if (error.code === 'auth/popup-blocked') {
         errorMessage = 'Popup was blocked. Please allow popups for this site to use Google sign-in.';
       } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
