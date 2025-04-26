@@ -1611,6 +1611,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   }}
                   onClick={() => {
                     setShowSubscriptionModal(true);
+                    toast.error('This is a premium feature. Upgrade to Pro to access it!');
                   }}>
                     <div style={{
                       textAlign: 'center',
@@ -1631,6 +1632,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowSubscriptionModal(true);
+                          toast.error('This is a premium feature. Upgrade to Pro to access it!');
                         }}
                         style={{
                           padding: '10px 20px',
@@ -2562,6 +2564,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     onClick={() => {
                       if (userProfile?.subscription === 'free') {
                         setShowSubscriptionModal(true);
+                        toast.error('This is a premium feature. Upgrade to Pro to save your scripts!');
                       } else {
                         saveScript();
                       }
