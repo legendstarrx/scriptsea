@@ -282,9 +282,15 @@ export default function Register() {
       let errorMessage = 'Failed to create account. Please try again.';
       
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'This email is already registered. Please try logging in.';
+        errorMessage = 'This email is already registered. Please try logging in or use a different email.';
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Password is too weak. Please use a stronger password.';
+        errorMessage = 'Password is too weak. Please use a stronger password with at least 8 characters, including uppercase, lowercase, numbers, and special characters.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Email/password accounts are not enabled. Please contact support.';
       } else if (error.message.includes('banned')) {
         errorMessage = error.message;
       } else {
