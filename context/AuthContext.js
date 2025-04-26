@@ -196,16 +196,17 @@ export function AuthProvider({ children }) {
         email: result.user.email,
         displayName: result.user.displayName,
         photoURL: result.user.photoURL,
-        subscription: userDoc.exists() ? userDoc.data().subscription : 'free',
-        scriptsRemaining: userDoc.exists() ? userDoc.data().scriptsRemaining : 3,
-        scriptsGenerated: userDoc.exists() ? userDoc.data().scriptsGenerated : 0,
+        subscription: 'free',
+        scriptsRemaining: 3,
+        scriptsGenerated: 0,
         isAdmin: result.user.email === ADMIN_EMAIL,
         createdAt: userDoc.exists() ? userDoc.data().createdAt : new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         isBanned: false,
         emailVerified: result.user.emailVerified,
-        subscriptionStatus: userDoc.exists() ? userDoc.data().subscriptionStatus : 'free',
-        lastPaymentDate: userDoc.exists() ? userDoc.data().lastPaymentDate : new Date().toISOString()
+        subscriptionStatus: 'free',
+        lastPaymentDate: userDoc.exists() ? userDoc.data().lastPaymentDate : new Date().toISOString(),
+        ipAddress: null
       };
 
       await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
