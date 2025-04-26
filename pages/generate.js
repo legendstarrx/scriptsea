@@ -65,6 +65,7 @@ const GeneratePageNav = () => {
             {/* Upgrade Button */}
             <button
               onClick={() => setShowSubscriptionModal(true)}
+              className="upgrade-button"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -77,31 +78,42 @@ const GeneratePageNav = () => {
                 fontSize: '0.9rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)',
-                '@media (max-width: 480px)': {
-                  padding: '6px 12px',
-                  fontSize: '0.8rem',
-                  gap: '4px'
-                }
+                boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{
-                '@media (max-width: 480px)': {
-                  width: '14px',
-                  height: '14px'
-                }
-              }}>
+              <svg 
+                className="upgrade-icon"
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+              >
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" />
                 <path d="M2 17L12 22L22 17" />
                 <path d="M2 12L12 17L22 12" />
               </svg>
-              <span style={{
-                '@media (max-width: 480px)': {
-                  display: 'none'
-                }
-              }}>Upgrade to</span>
+              <span className="upgrade-text">Upgrade to</span>
               <span>Pro</span>
             </button>
+
+            <style jsx>{`
+              @media (max-width: 480px) {
+                .upgrade-button {
+                  padding: 6px 12px !important;
+                  font-size: 0.8rem !important;
+                  gap: 4px !important;
+                }
+                .upgrade-icon {
+                  width: 14px;
+                  height: 14px;
+                }
+                .upgrade-text {
+                  display: none;
+                }
+              }
+            `}</style>
 
             {/* Contact Button */}
             <button
