@@ -184,15 +184,30 @@ export default function Register() {
   useEffect(() => {
     const checkIpStatus = async () => {
       try {
-        const ipCheck = await fetch('/api/auth/check-ip');
-        const ipData = await ipCheck.json();
+        const ipCheck = await fetch('/api/auth/check-ip', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
         
+        if (!ipCheck.ok) {
+          const errorData = await ipCheck.json();
+          if (ipCheck.status === 403 && errorData.error) {
+            setIsBanned(true);
+            setError(errorData.message || 'Access denied. Please contact support.');
+          }
+          return;
+        }
+
+        const ipData = await ipCheck.json();
         if (ipData.error === 'IP banned') {
           setIsBanned(true);
           setError(ipData.message);
         }
       } catch (error) {
         console.error('Error checking IP status:', error);
+        // Don't block registration on IP check failure
       }
     };
 
@@ -260,9 +275,21 @@ export default function Register() {
 
     try {
       // Check if IP is banned before attempting registration
-      const ipCheck = await fetch('/api/auth/check-ip');
+      const ipCheck = await fetch('/api/auth/check-ip', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!ipCheck.ok) {
+        const errorData = await ipCheck.json();
+        if (ipCheck.status === 403 && errorData.error) {
+          throw new Error(errorData.message || 'Access denied. Please contact support.');
+        }
+      }
+
       const ipData = await ipCheck.json();
-      
       if (ipData.error === 'IP banned') {
         throw new Error(ipData.message);
       }
@@ -335,9 +362,26 @@ export default function Register() {
       if (result?.user) {
         try {
           // Check IP after successful sign-in
-          const ipCheck = await fetch('/api/auth/check-ip');
+          const ipCheck = await fetch('/api/auth/check-ip', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!ipCheck.ok) {
+            const errorData = await ipCheck.json();
+            if (ipCheck.status === 403 && errorData.error) {
+              // Set error message first
+              setError(errorData.message || 'Access denied. Please contact support.');
+              // Then log out
+              await logout();
+              setIsLoadingAuth(false);
+              return; // Return early to prevent redirect
+            }
+          }
+
           const ipData = await ipCheck.json();
-          
           if (ipData.error === 'IP banned') {
             // Set error message first
             setError(ipData.message);
