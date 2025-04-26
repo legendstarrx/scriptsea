@@ -2292,6 +2292,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
+                            toast.error('This is a premium feature. Upgrade to Pro to access it!');
                           } else {
                             generateAdvancedContent();
                           }
@@ -2386,6 +2387,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
+                            toast.error('This is a premium feature. Upgrade to Pro to access it!');
                           } else {
                             handleGenerateThumbnail();
                           }
