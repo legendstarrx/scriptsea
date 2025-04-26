@@ -115,7 +115,8 @@ export function AuthProvider({ children }) {
         isBanned: false,
         subscriptionStatus: 'free',
         lastPaymentDate: new Date().toISOString(),
-        emailVerified: false
+        emailVerified: false,
+        lastVerificationCheck: new Date().toISOString()
       };
       
       await setDoc(doc(db, 'users', user.uid), userData);
@@ -204,6 +205,7 @@ export function AuthProvider({ children }) {
         lastLogin: new Date().toISOString(),
         isBanned: false,
         emailVerified: result.user.emailVerified,
+        lastVerificationCheck: new Date().toISOString(),
         subscriptionStatus: userDoc.exists() ? userDoc.data().subscriptionStatus : 'free',
         lastPaymentDate: userDoc.exists() && userDoc.data().lastPaymentDate ? 
           userDoc.data().lastPaymentDate : new Date().toISOString(),
@@ -386,30 +388,51 @@ export function AuthProvider({ children }) {
     if (!user) return false;
     
     try {
-      // Reload the user to get the latest email verification status
-      await user.reload();
-      
-      // Check if email is verified
-      const isVerified = user.emailVerified;
-      
-      // If verified, update the user profile in Firestore
-      if (isVerified) {
-        const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, {
-          emailVerified: true,
-          lastLogin: new Date().toISOString()
-        });
+      // Only reload user if we haven't checked recently
+      if (!userProfile?.lastVerificationCheck || 
+          Date.now() - new Date(userProfile.lastVerificationCheck).getTime() > 5 * 60 * 1000) { // 5 minutes
+        await user.reload();
         
-        // Update local user profile state
-        if (userProfile) {
-          setUserProfile(prev => ({
-            ...prev,
-            emailVerified: true
-          }));
+        // Check if email is verified
+        const isVerified = user.emailVerified;
+        
+        // If verified, update the user profile in Firestore
+        if (isVerified) {
+          const userRef = doc(db, 'users', user.uid);
+          await updateDoc(userRef, {
+            emailVerified: true,
+            lastLogin: new Date().toISOString(),
+            lastVerificationCheck: new Date().toISOString()
+          });
+          
+          // Update local user profile state
+          if (userProfile) {
+            setUserProfile(prev => ({
+              ...prev,
+              emailVerified: true,
+              lastVerificationCheck: new Date().toISOString()
+            }));
+          }
+        } else {
+          // Update last check time even if not verified
+          const userRef = doc(db, 'users', user.uid);
+          await updateDoc(userRef, {
+            lastVerificationCheck: new Date().toISOString()
+          });
+          
+          if (userProfile) {
+            setUserProfile(prev => ({
+              ...prev,
+              lastVerificationCheck: new Date().toISOString()
+            }));
+          }
         }
+        
+        return isVerified;
       }
       
-      return isVerified;
+      // If we've checked recently, return the cached value
+      return userProfile?.emailVerified || false;
     } catch (error) {
       console.error('Error checking email verification:', error);
       return false;

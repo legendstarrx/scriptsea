@@ -307,6 +307,7 @@ export default function Register() {
   const handleGoogleSignIn = async () => {
     setIsLoadingAuth(true);
     setErrorMessage('');
+    setError('');
     
     try {
       // Check if IP is banned before attempting Google sign-in
@@ -324,22 +325,28 @@ export default function Register() {
       }
     } catch (error) {
       console.error('Google Sign-in error:', error);
-      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      let errorMessage = '';
       
+      // Only show specific error messages for actual error cases
       if (error.message.includes('banned')) {
         errorMessage = error.message;
-        setError(errorMessage);
-      } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Please unblock popups in your browser or sign in using email and password.';
-        setError(errorMessage);
+        await logout();
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'Popup was blocked. Please allow popups for this site to use Google sign-in.';
+      } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        // Don't show error for user-initiated popup closures
+        return;
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
       } else if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'This email is already registered. Please try logging in with your email and password.';
-        setError(errorMessage);
+      } else {
+        // For any other errors, show a generic message
+        errorMessage = 'Failed to sign in with Google. Please try again or use email/password.';
       }
       
-      setErrorMessage(errorMessage);
-      if (error.message.includes('banned')) {
-        await logout();
+      if (errorMessage) {
+        setError(errorMessage);
       }
     } finally {
       setIsLoadingAuth(false);
