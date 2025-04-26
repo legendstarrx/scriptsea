@@ -360,7 +360,7 @@ export default function Register() {
         <div style={{
           width: '100%',
           maxWidth: '400px',
-          padding: '2rem',
+          padding: '2.5rem',
           background: 'white',
           borderRadius: '16px',
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',

@@ -53,7 +53,7 @@ export default function Login() {
       console.error('Login error:', error);
       let errorMessage = 'Login failed. Please try again.';
       
-      if (error.code === 'auth/wrong-password') {
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
         errorMessage = 'Incorrect password. Please try again.';
       } else if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email. Please check your email or sign up.';
@@ -67,7 +67,6 @@ export default function Login() {
         errorMessage = error.message;
       }
       
-      setErrorMessage(errorMessage);
       setMessage({
         type: 'error',
         text: errorMessage
@@ -160,7 +159,7 @@ export default function Login() {
         <div style={{
           width: '100%',
           maxWidth: '400px',
-          padding: '2rem',
+          padding: '2.5rem',
           background: 'white',
           borderRadius: '16px',
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
