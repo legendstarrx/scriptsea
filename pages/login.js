@@ -390,14 +390,14 @@ export default function Login() {
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: '#FF3366',
-                color: 'white',
+                backgroundColor: isBanned ? '#e0e0e0' : '#FF3366',
+                color: isBanned ? '#999' : 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
                 cursor: isBanned ? 'not-allowed' : 'pointer',
-                opacity: isBanned ? 0.7 : 1,
+                opacity: isLoadingAuth || isBanned ? 0.7 : 1,
                 transition: 'all 0.2s'
               }}
             >
@@ -418,18 +418,18 @@ export default function Login() {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              disabled={isBanned}
+              disabled={isLoadingAuth || isBanned}
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: 'white',
-                color: '#333',
+                backgroundColor: isBanned ? '#f5f5f5' : 'white',
+                color: isBanned ? '#999' : '#333',
                 border: '1px solid #ddd',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
                 cursor: isBanned ? 'not-allowed' : 'pointer',
-                opacity: isBanned ? 0.7 : 1,
+                opacity: isLoadingAuth || isBanned ? 0.7 : 1,
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
@@ -437,7 +437,11 @@ export default function Login() {
                 gap: '8px'
               }}
             >
-              <img src="/google.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+              <img src="/google.svg" alt="Google" style={{ 
+                width: '20px', 
+                height: '20px',
+                opacity: isBanned ? 0.5 : 1 
+              }} />
               Sign in with Google
             </button>
 
@@ -451,10 +455,10 @@ export default function Login() {
               <a
                 onClick={() => !isBanned && router.push('/register')}
                 style={{
-                  color: '#FF3366',
+                  color: isBanned ? '#999' : '#FF3366',
                   textDecoration: 'none',
                   cursor: isBanned ? 'not-allowed' : 'pointer',
-                  opacity: isBanned ? 0.6 : 1
+                  opacity: isBanned ? 0.7 : 1
                 }}
               >
                 Sign up
