@@ -67,6 +67,7 @@ export default function Login() {
         errorMessage = error.message;
       }
       
+      setErrorMessage(errorMessage);
       setMessage({
         type: 'error',
         text: errorMessage

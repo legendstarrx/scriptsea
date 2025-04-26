@@ -619,15 +619,19 @@ export default function Register() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              transition: 'all 0.2s ease',
+              ':hover': {
+                background: '#f8f9ff'
+              }
             }}
           >
             <img
-              src="https://www.google.com/favicon.ico"
+              src="/google.svg"
               alt="Google"
               style={{ width: '20px', height: '20px' }}
             />
-            Sign up with Google
+            {isLoadingAuth ? 'Signing up...' : 'Sign up with Google'}
           </button>
 
           <p style={{
