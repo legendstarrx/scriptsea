@@ -34,7 +34,9 @@ export default function PricingModal({ isOpen, onClose }) {
           }}>
             <h3 style={{ color: '#333' }}>Free Plan</h3>
             <p style={{ color: '#666' }}>3 scripts per month</p>
-            <p style={{ color: '#666' }}>Basic features</p>
+            <p style={{ color: '#666' }}>Basic script generation</p>
+            <p style={{ color: '#666' }}>Standard support</p>
+            <p style={{ color: '#666' }}>Copy scripts to clipboard</p>
             <p style={{ color: '#666' }}>No credit card required</p>
             <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>Free</p>
           </div>
@@ -45,7 +47,13 @@ export default function PricingModal({ isOpen, onClose }) {
           }}>
             <h3 style={{ color: '#333' }}>Pro Monthly</h3>
             <p style={{ color: '#666' }}>100 scripts per month</p>
-            <p style={{ color: '#666' }}>All premium features</p>
+            <p style={{ color: '#666' }}>Export to PDF & Word</p>
+            <p style={{ color: '#666' }}>Save unlimited scripts</p>
+            <p style={{ color: '#666' }}>Viral video analysis</p>
+            <p style={{ color: '#666' }}>SEO optimization</p>
+            <p style={{ color: '#666' }}>Thumbnail suggestions</p>
+            <p style={{ color: '#666' }}>Creator style matching</p>
+            <p style={{ color: '#666' }}>Priority support</p>
             <p style={{ color: '#666' }}>Cancel anytime</p>
             <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$4.99/month</p>
           </div>
@@ -56,8 +64,14 @@ export default function PricingModal({ isOpen, onClose }) {
           }}>
             <h3 style={{ color: '#333' }}>Pro Yearly</h3>
             <p style={{ color: '#666' }}>1200 scripts per year</p>
-            <p style={{ color: '#666' }}>All premium features</p>
-            <p style={{ color: '#666' }}>Best value</p>
+            <p style={{ color: '#666' }}>Export to PDF & Word</p>
+            <p style={{ color: '#666' }}>Save unlimited scripts</p>
+            <p style={{ color: '#666' }}>Viral video analysis</p>
+            <p style={{ color: '#666' }}>SEO optimization</p>
+            <p style={{ color: '#666' }}>Thumbnail suggestions</p>
+            <p style={{ color: '#666' }}>Creator style matching</p>
+            <p style={{ color: '#666' }}>Priority support</p>
+            <p style={{ color: '#666' }}>2 months free</p>
             <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$49.99/year</p>
           </div>
         </div>
