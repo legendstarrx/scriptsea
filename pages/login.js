@@ -139,10 +139,30 @@ export default function Login() {
       if (result?.user) {
         try {
           // Check IP after successful sign-in
-          const ipCheck = await fetch('/api/auth/check-ip');
-          const ipData = await ipCheck.json();
+          const ipCheck = await fetch('/api/auth/check-ip', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!ipCheck.ok) {
+            const errorData = await ipCheck.json();
+            if (ipCheck.status === 403 && errorData.error) {
+              // Set error message first
+              setMessage({
+                type: 'error',
+                text: errorData.message || 'Access denied. Please contact support.'
+              });
+              // Then log out
+              await logout();
+              setIsLoadingAuth(false);
+              return; // Return early to prevent redirect
+            }
+          }
           
-          if (ipData.error === 'IP banned') {
+          const ipData = await ipCheck.json();
+          if (ipData.error === 'IP banned' || ipData.error === 'VPN detected') {
             // Set error message first
             setMessage({
               type: 'error',

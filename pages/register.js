@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
@@ -178,6 +178,41 @@ export default function Register() {
   });
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isBanned, setIsBanned] = useState(false);
+
+  // Check IP status on page load
+  useEffect(() => {
+    const checkIpStatus = async () => {
+      try {
+        const ipCheck = await fetch('/api/auth/check-ip', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!ipCheck.ok) {
+          const errorData = await ipCheck.json();
+          if (ipCheck.status === 403 && errorData.error) {
+            setIsBanned(true);
+            setError(errorData.message || 'Access denied. Please contact support.');
+          }
+          return;
+        }
+
+        const ipData = await ipCheck.json();
+        if (ipData.error === 'IP banned' || ipData.error === 'VPN detected') {
+          setIsBanned(true);
+          setError(ipData.message);
+        }
+      } catch (error) {
+        console.error('Error checking IP status:', error);
+        // Don't block registration on IP check failure
+      }
+    };
+
+    checkIpStatus();
+  }, []);
 
   const validateEmail = (email) => {
     // Basic email format validation
@@ -240,10 +275,22 @@ export default function Register() {
 
     try {
       // Check if IP is banned before attempting registration
-      const ipCheck = await fetch('/api/auth/check-ip');
+      const ipCheck = await fetch('/api/auth/check-ip', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!ipCheck.ok) {
+        const errorData = await ipCheck.json();
+        if (ipCheck.status === 403 && errorData.error) {
+          throw new Error(errorData.message || 'Access denied. Please contact support.');
+        }
+      }
+
       const ipData = await ipCheck.json();
-      
-      if (ipData.error === 'IP banned') {
+      if (ipData.error === 'IP banned' || ipData.error === 'VPN detected') {
         throw new Error(ipData.message);
       }
 
@@ -307,34 +354,73 @@ export default function Register() {
   const handleGoogleSignIn = async () => {
     setIsLoadingAuth(true);
     setErrorMessage('');
+    setError('');
+    setSuccess('');
     
     try {
-      // Check if IP is banned before attempting Google sign-in
-      const ipCheck = await fetch('/api/auth/check-ip');
-      const ipData = await ipCheck.json();
-      
-      if (ipData.error === 'IP banned') {
-        throw new Error(ipData.message);
-      }
-
       const result = await signInWithGoogle();
       if (result?.user) {
-        setSuccess('Registration successful! Redirecting...');
-        await router.replace('/generate');
+        try {
+          // Check IP after successful sign-in
+          const ipCheck = await fetch('/api/auth/check-ip', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!ipCheck.ok) {
+            const errorData = await ipCheck.json();
+            if (ipCheck.status === 403 && errorData.error) {
+              // Set error message first
+              setError(errorData.message || 'Access denied. Please contact support.');
+              // Then log out
+              await logout();
+              setIsLoadingAuth(false);
+              return; // Return early to prevent redirect
+            }
+          }
+
+          const ipData = await ipCheck.json();
+          if (ipData.error === 'IP banned' || ipData.error === 'VPN detected') {
+            // Set error message first
+            setError(ipData.message);
+            // Then log out
+            await logout();
+            setIsLoadingAuth(false);
+            return; // Return early to prevent redirect
+          }
+
+          // If not banned, proceed with success
+          setSuccess('Registration successful! Redirecting...');
+          await router.replace('/generate');
+        } catch (ipError) {
+          // Handle IP check error
+          console.error('IP check error:', ipError);
+          await logout(); // Log out user if IP check fails
+          setError(ipError.message || 'Error checking IP address. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Google Sign-in error:', error);
-      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      let errorMessage = '';
       
-      if (error.message.includes('banned')) {
-        errorMessage = error.message;
-      } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-        errorMessage = 'Please unblock popups in your browser or sign in using email and password.';
+      if (error.code === 'auth/popup-blocked') {
+        errorMessage = 'Popup was blocked. Please allow popups for this site to use Google sign-in.';
+      } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        // Don't show error for user-initiated popup closures
+        return;
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already registered. Please try logging in with your email and password.';
+      } else {
+        // For any other errors, show a generic message
+        errorMessage = 'Failed to sign in with Google. Please try again or use email/password.';
       }
       
-      setErrorMessage(errorMessage);
-      if (error.message.includes('banned')) {
-        await logout();
+      if (errorMessage) {
+        setError(errorMessage);
       }
     } finally {
       setIsLoadingAuth(false);
