@@ -1622,7 +1622,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   }}
                   onClick={() => {
                     setShowSubscriptionModal(true);
-                    toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                    setTimeout(() => {
+                      toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                    }, 100);
                   }}>
                     <div style={{
                       textAlign: 'center',
@@ -1643,7 +1645,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowSubscriptionModal(true);
-                          toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                          setTimeout(() => {
+                            toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                          }, 100);
                         }}
                         style={{
                           padding: '10px 20px',
@@ -2295,7 +2299,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                            setTimeout(() => {
+                              toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                            }, 100);
                           } else {
                             generateAdvancedContent();
                           }
@@ -2390,7 +2396,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                            setTimeout(() => {
+                              toast.error('This is a premium feature. Upgrade to Pro to access it!');
+                            }, 100);
                           } else {
                             handleGenerateThumbnail();
                           }
@@ -2565,7 +2573,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     onClick={() => {
                       if (userProfile?.subscription === 'free') {
                         setShowSubscriptionModal(true);
-                        toast.error('This is a premium feature. Upgrade to Pro to save your scripts!');
+                        setTimeout(() => {
+                          toast.error('This is a premium feature. Upgrade to Pro to save your scripts!');
+                        }, 100);
                       } else {
                         saveScript();
                       }
@@ -2588,7 +2598,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       onClick={() => {
                         if (userProfile?.subscription === 'free') {
                           setShowSubscriptionModal(true);
-                          toast.error('This is a premium feature. Upgrade to Pro to export your scripts!');
+                          setTimeout(() => {
+                            toast.error('This is a premium feature. Upgrade to Pro to export your scripts!');
+                          }, 100);
                         } else {
                           const dropdown = document.getElementById('exportDropdown');
                           dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
