@@ -87,7 +87,7 @@ const GeneratePageNav = () => {
                 <path d="M2 17L12 22L22 17" />
                 <path d="M2 12L12 17L22 12" />
               </svg>
-              Upgrade to Pro
+              Upgrade
             </button>
 
             {/* Contact Button */}
@@ -1088,7 +1088,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     setVideoInfo(null);
     setError('');
 
-    // Scroll back to top
+    // Scroll back to top smoothly
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -2322,7 +2322,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             Generating...
                           </>
                         ) : (
-                          'Generate SEO Tips'
+                          'Generate'
                         )}
                       </button>
                     </div>
@@ -2417,7 +2417,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             Generating...
                           </>
                         ) : (
-                          'Suggest Thumbnail'
+                          'Generate'
                         )}
                       </button>
                     </div>
