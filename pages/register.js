@@ -328,10 +328,13 @@ export default function Register() {
       
       if (error.message.includes('banned')) {
         errorMessage = error.message;
+        setError(errorMessage);
       } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
         errorMessage = 'Please unblock popups in your browser or sign in using email and password.';
+        setError(errorMessage);
       } else if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'This email is already registered. Please try logging in with your email and password.';
+        setError(errorMessage);
       }
       
       setErrorMessage(errorMessage);
