@@ -159,7 +159,7 @@ const PASSWORD_REQUIREMENTS = {
 export default function Register() {
   useAuthRedirect();
   const router = useRouter();
-  const { signup, signInWithGoogle } = useAuth();
+  const { signup, signInWithGoogle, logout } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -176,6 +176,8 @@ export default function Register() {
     number: false,
     special: false
   });
+  const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const validateEmail = (email) => {
     // Basic email format validation
@@ -297,10 +299,9 @@ export default function Register() {
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-
+    setIsLoadingAuth(true);
+    setErrorMessage('');
+    
     try {
       // Check if IP is banned before attempting Google sign-in
       const ipCheck = await fetch('/api/auth/check-ip');
@@ -310,25 +311,27 @@ export default function Register() {
         throw new Error(ipData.message);
       }
 
-      setSuccess('Signing in with Google...');
-      await signInWithGoogle();
-      setSuccess('Sign in successful! Redirecting...');
-      
-      setTimeout(() => {
-        router.push('/generate');
-      }, 1500);
+      const result = await signInWithGoogle();
+      if (result?.user) {
+        setSuccess('Registration successful! Redirecting...');
+        await router.replace('/generate');
+      }
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error('Google Sign-in error:', error);
       let errorMessage = 'Failed to sign in with Google. Please try again.';
       
       if (error.message.includes('banned')) {
         errorMessage = error.message;
+      } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Please unblock popups in your browser or sign in using email and password.';
       }
       
-      setError(errorMessage);
-      setSuccess('');
+      setErrorMessage(errorMessage);
+      if (error.message.includes('banned')) {
+        await logout();
+      }
     } finally {
-      setIsLoading(false);
+      setIsLoadingAuth(false);
     }
   };
 
@@ -596,7 +599,7 @@ export default function Register() {
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={isLoading}
+            disabled={isLoadingAuth}
             style={{
               width: '100%',
               padding: '0.75rem',
@@ -606,7 +609,7 @@ export default function Register() {
               borderRadius: '8px',
               fontSize: '1rem',
               fontWeight: '500',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
+              cursor: isLoadingAuth ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

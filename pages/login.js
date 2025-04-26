@@ -97,6 +97,8 @@ export default function Login() {
       
       if (error.message.includes('banned')) {
         errorMessage = error.message;
+      } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Please unblock popups in your browser or sign in using email and password.';
       }
       
       setErrorMessage(errorMessage);
