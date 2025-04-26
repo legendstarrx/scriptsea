@@ -954,12 +954,22 @@ export default function Generate() {
   const handleGenerate = async () => {
     if (!videoTopic) {
       setError('Please enter a video topic');
+      // Scroll to error message
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
       return;
     }
 
     // Check if user has scripts remaining
     if (userProfile?.scriptsRemaining <= 0) {
       setError('You have reached your script limit. Please upgrade to Pro to generate more scripts.');
+      // Scroll to error message
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
       return;
     }
 
@@ -1004,6 +1014,11 @@ export default function Generate() {
     } catch (err) {
       console.error('Generation error:', err);
       setError('Error generating script. Please try again.');
+      // Scroll to error message
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -1070,6 +1085,12 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     setThumbnailSuggestions('');
     setVideoInfo(null);
     setError('');
+
+    // Scroll back to top
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   // Update voice recognition setup
@@ -1307,7 +1328,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 fontWeight: '600',
                 color: userProfile?.subscription === 'pro' ? '#FF3366' : '#666'
               }}>
-                {userProfile?.scriptsRemaining || 0} scripts remaining out of {userProfile?.subscription === 'pro' ? (userProfile?.subscriptionType === 'yearly' ? 1200 : 100) : 3}
+                {userProfile?.scriptsRemaining || 0} scripts out of {userProfile?.subscription === 'pro' ? (userProfile?.subscriptionType === 'yearly' ? 1200 : 100) : 3}
               </span>
               {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
                 <>
@@ -1325,7 +1346,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       transition: 'all 0.2s'
                     }}
                   >
-                    Upgrade to Pro
+                    Upgrade
                   </button>
 
                   <SubscriptionModal
@@ -1563,7 +1584,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               </div>
 
               {/* Viral Reference Input */}
-              <div style={{ marginBottom: '25px' }}>
+              <div style={{ marginBottom: '25px', position: 'relative' }}>
                 <label style={{
                   display: 'block',
                   color: '#666',
@@ -1572,6 +1593,84 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 }}>
                   Viral video reference (optional)
                 </label>
+                {userProfile?.subscription === 'free' && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '30px',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backdropFilter: 'blur(2px)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    toast.error('Upgrade to Pro to access Viral Video Reference', {
+                      duration: 4000,
+                      icon: '🔒',
+                      style: {
+                        background: '#FF3366',
+                        color: 'white',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        fontSize: '0.9rem'
+                      }
+                    });
+                    setShowSubscriptionModal(true);
+                  }}>
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '20px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+                    }}>
+                      <div style={{
+                        fontSize: '1.2rem',
+                        color: '#FF3366',
+                        marginBottom: '10px',
+                        fontWeight: '600'
+                      }}>
+                        Premium Feature
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.error('Upgrade to Pro to access Viral Video Reference', {
+                            duration: 4000,
+                            icon: '🔒',
+                            style: {
+                              background: '#FF3366',
+                              color: 'white',
+                              borderRadius: '12px',
+                              padding: '16px',
+                              fontSize: '0.9rem'
+                            }
+                          });
+                          setShowSubscriptionModal(true);
+                        }}
+                        style={{
+                          padding: '10px 20px',
+                          backgroundColor: '#FF3366',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '20px',
+                          fontSize: '0.9rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 4px 15px rgba(255, 51, 102, 0.2)'
+                        }}
+                      >
+                        Upgrade to Pro
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div style={{
                   border: '2px dashed #e0e0e0',
                   borderRadius: '16px',
@@ -2212,7 +2311,24 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         SEO & Social Media Tips
                       </h3>
                       <button
-                        onClick={generateAdvancedContent}
+                        onClick={() => {
+                          if (userProfile?.subscription === 'free') {
+                            toast.error('Upgrade to Pro to access SEO & Social Media Tips', {
+                              duration: 4000,
+                              icon: '🔒',
+                              style: {
+                                background: '#FF3366',
+                                color: 'white',
+                                borderRadius: '12px',
+                                padding: '16px',
+                                fontSize: '0.9rem'
+                              }
+                            });
+                            setShowSubscriptionModal(true);
+                          } else {
+                            generateAdvancedContent();
+                          }
+                        }}
                         disabled={isGeneratingAdvanced}
                         style={{
                           padding: '8px 16px',
@@ -2238,7 +2354,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         )}
                       </button>
                     </div>
-
                     {(keywords || hashtags || seoTips) && (
                       <div style={{
                         display: 'grid',
@@ -2301,7 +2416,24 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         Thumbnail Ideas
                       </h3>
                       <button
-                        onClick={handleGenerateThumbnail}
+                        onClick={() => {
+                          if (userProfile?.subscription === 'free') {
+                            toast.error('Upgrade to Pro to access Thumbnail Ideas', {
+                              duration: 4000,
+                              icon: '🔒',
+                              style: {
+                                background: '#FF3366',
+                                color: 'white',
+                                borderRadius: '12px',
+                                padding: '16px',
+                                fontSize: '0.9rem'
+                              }
+                            });
+                            setShowSubscriptionModal(true);
+                          } else {
+                            handleGenerateThumbnail();
+                          }
+                        }}
                         disabled={isGeneratingThumbnail}
                         style={{
                           padding: '8px 16px',
@@ -2327,7 +2459,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         )}
                       </button>
                     </div>
-
                     {thumbnailSuggestions && (
                       <div 
                         style={{
@@ -2470,7 +2601,24 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   justifyContent: 'flex-end'
                 }}>
                   <button 
-                    onClick={saveScript}
+                    onClick={() => {
+                      if (userProfile?.subscription === 'free') {
+                        toast.error('Upgrade to Pro to save scripts', {
+                          duration: 4000,
+                          icon: '🔒',
+                          style: {
+                            background: '#FF3366',
+                            color: 'white',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            fontSize: '0.9rem'
+                          }
+                        });
+                        setShowSubscriptionModal(true);
+                      } else {
+                        saveScript();
+                      }
+                    }}
                     style={{
                       padding: '8px 16px',
                       backgroundColor: 'transparent',
