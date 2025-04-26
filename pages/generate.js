@@ -1610,17 +1610,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     cursor: 'pointer'
                   }}
                   onClick={() => {
-                    toast.error('Upgrade to Pro to access Viral Video Reference', {
-                      duration: 4000,
-                      icon: '🔒',
-                      style: {
-                        background: '#FF3366',
-                        color: 'white',
-                        borderRadius: '12px',
-                        padding: '16px',
-                        fontSize: '0.9rem'
-                      }
-                    });
                     setShowSubscriptionModal(true);
                   }}>
                     <div style={{
@@ -1641,17 +1630,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          toast.error('Upgrade to Pro to access Viral Video Reference', {
-                            duration: 4000,
-                            icon: '🔒',
-                            style: {
-                              background: '#FF3366',
-                              color: 'white',
-                              borderRadius: '12px',
-                              padding: '16px',
-                              fontSize: '0.9rem'
-                            }
-                          });
                           setShowSubscriptionModal(true);
                         }}
                         style={{
@@ -2313,17 +2291,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       <button
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
-                            toast.error('Upgrade to Pro to access SEO & Social Media Tips', {
-                              duration: 4000,
-                              icon: '🔒',
-                              style: {
-                                background: '#FF3366',
-                                color: 'white',
-                                borderRadius: '12px',
-                                padding: '16px',
-                                fontSize: '0.9rem'
-                              }
-                            });
                             setShowSubscriptionModal(true);
                           } else {
                             generateAdvancedContent();
@@ -2418,17 +2385,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       <button
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
-                            toast.error('Upgrade to Pro to access Thumbnail Ideas', {
-                              duration: 4000,
-                              icon: '🔒',
-                              style: {
-                                background: '#FF3366',
-                                color: 'white',
-                                borderRadius: '12px',
-                                padding: '16px',
-                                fontSize: '0.9rem'
-                              }
-                            });
                             setShowSubscriptionModal(true);
                           } else {
                             handleGenerateThumbnail();
@@ -2603,17 +2559,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   <button 
                     onClick={() => {
                       if (userProfile?.subscription === 'free') {
-                        toast.error('Upgrade to Pro to save scripts', {
-                          duration: 4000,
-                          icon: '🔒',
-                          style: {
-                            background: '#FF3366',
-                            color: 'white',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            fontSize: '0.9rem'
-                          }
-                        });
                         setShowSubscriptionModal(true);
                       } else {
                         saveScript();
