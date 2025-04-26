@@ -88,9 +88,10 @@ export default function Login() {
         const ipData = await ipCheck.json();
         
         if (ipData.error === 'IP banned') {
-          // If IP is banned, log out and show error
+          // Set error message before logging out
+          setErrorMessage(ipData.message);
           await logout();
-          throw new Error(ipData.message);
+          return; // Return early to prevent redirect
         }
 
         setMessage({
@@ -169,7 +170,7 @@ export default function Login() {
         <div style={{
           width: '100%',
           maxWidth: '400px',
-          padding: '2.5rem',
+          padding: '2rem',
           paddingTop: 'calc(50px + 1rem)',
           background: 'white',
           borderRadius: '16px',

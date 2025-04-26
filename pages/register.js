@@ -317,9 +317,10 @@ export default function Register() {
         const ipData = await ipCheck.json();
         
         if (ipData.error === 'IP banned') {
-          // If IP is banned, log out and show error
+          // Set error message before logging out
+          setError(ipData.message);
           await logout();
-          throw new Error(ipData.message);
+          return; // Return early to prevent redirect
         }
 
         setSuccess('Registration successful! Redirecting...');
