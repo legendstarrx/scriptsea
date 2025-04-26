@@ -179,6 +179,7 @@ export default function Register() {
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isBanned, setIsBanned] = useState(false);
+  const [isVPNDetected, setIsVPNDetected] = useState(false);
 
   // Check IP status on page load
   useEffect(() => {
@@ -201,18 +202,22 @@ export default function Register() {
         }
 
         const ipData = await ipCheck.json();
-        if (ipData.error === 'IP banned' || ipData.error === 'VPN detected') {
+        if (ipData.error === 'IP banned') {
           setIsBanned(true);
           setError(ipData.message);
+        } else if (ipData.error === 'VPN detected') {
+          setIsVPNDetected(true);
+          setError(ipData.message || 'VPN usage is not allowed. Please disable your VPN to continue.');
         }
       } catch (error) {
         console.error('Error checking IP status:', error);
-        // Don't block registration on IP check failure
       }
     };
 
     checkIpStatus();
   }, []);
+
+  const isAccessBlocked = isBanned || isVPNDetected;
 
   const validateEmail = (email) => {
     // Basic email format validation
@@ -491,18 +496,16 @@ export default function Register() {
                 required
                 value={formData.fullName}
                 onChange={handleChange}
+                disabled={isAccessBlocked}
                 style={{
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
                   border: '1px solid #ddd',
                   fontSize: '1rem',
-                  transition: 'all 0.2s ease',
-                  ':focus': {
-                    outline: 'none',
-                    borderColor: '#FF3366',
-                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                  }
+                  opacity: isAccessBlocked ? 0.6 : 1,
+                  cursor: isAccessBlocked ? 'not-allowed' : 'text',
+                  transition: 'all 0.2s ease'
                 }}
               />
             </div>
@@ -522,18 +525,16 @@ export default function Register() {
                 required
                 value={formData.email}
                 onChange={handleChange}
+                disabled={isAccessBlocked}
                 style={{
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
                   border: '1px solid #ddd',
                   fontSize: '1rem',
-                  transition: 'all 0.2s ease',
-                  ':focus': {
-                    outline: 'none',
-                    borderColor: '#FF3366',
-                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                  }
+                  opacity: isAccessBlocked ? 0.6 : 1,
+                  cursor: isAccessBlocked ? 'not-allowed' : 'text',
+                  transition: 'all 0.2s ease'
                 }}
               />
             </div>
@@ -553,18 +554,16 @@ export default function Register() {
                 required
                 value={formData.password}
                 onChange={handleChange}
+                disabled={isAccessBlocked}
                 style={{
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
                   border: '1px solid #ddd',
                   fontSize: '1rem',
-                  transition: 'all 0.2s ease',
-                  ':focus': {
-                    outline: 'none',
-                    borderColor: '#FF3366',
-                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                  }
+                  opacity: isAccessBlocked ? 0.6 : 1,
+                  cursor: isAccessBlocked ? 'not-allowed' : 'text',
+                  transition: 'all 0.2s ease'
                 }}
               />
               
@@ -623,36 +622,34 @@ export default function Register() {
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                disabled={isAccessBlocked}
                 style={{
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
                   border: '1px solid #ddd',
                   fontSize: '1rem',
-                  transition: 'all 0.2s ease',
-                  ':focus': {
-                    outline: 'none',
-                    borderColor: '#FF3366',
-                    boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                  }
+                  opacity: isAccessBlocked ? 0.6 : 1,
+                  cursor: isAccessBlocked ? 'not-allowed' : 'text',
+                  transition: 'all 0.2s ease'
                 }}
               />
             </div>
 
             <button
               type="submit"
-              disabled={isLoading || isBanned}
+              disabled={isLoading || isAccessBlocked}
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: isBanned ? '#e0e0e0' : '#FF3366',
-                color: isBanned ? '#999' : 'white',
+                backgroundColor: isAccessBlocked ? '#e0e0e0' : '#FF3366',
+                color: isAccessBlocked ? '#999' : 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
-                cursor: isBanned ? 'not-allowed' : 'pointer',
-                opacity: isLoading || isBanned ? 0.7 : 1,
+                cursor: isAccessBlocked ? 'not-allowed' : 'pointer',
+                opacity: isLoading || isAccessBlocked ? 0.7 : 1,
                 transition: 'all 0.2s'
               }}
             >
@@ -674,18 +671,18 @@ export default function Register() {
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={isLoadingAuth || isBanned}
+            disabled={isLoadingAuth || isAccessBlocked}
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: isBanned ? '#f5f5f5' : 'white',
-              color: isBanned ? '#999' : '#333',
+              backgroundColor: isAccessBlocked ? '#f5f5f5' : 'white',
+              color: isAccessBlocked ? '#999' : '#333',
               border: '1px solid #ddd',
               borderRadius: '8px',
               fontSize: '1rem',
               fontWeight: '500',
-              cursor: isBanned ? 'not-allowed' : 'pointer',
-              opacity: isLoadingAuth || isBanned ? 0.7 : 1,
+              cursor: isAccessBlocked ? 'not-allowed' : 'pointer',
+              opacity: isLoadingAuth || isAccessBlocked ? 0.7 : 1,
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
@@ -696,7 +693,7 @@ export default function Register() {
             <img src="/google.svg" alt="Google" style={{ 
               width: '20px', 
               height: '20px',
-              opacity: isBanned ? 0.5 : 1 
+              opacity: isAccessBlocked ? 0.5 : 1 
             }} />
             Sign up with Google
           </button>
@@ -709,12 +706,12 @@ export default function Register() {
           }}>
             Already have an account?{' '}
             <a
-              onClick={() => !isBanned && router.push('/login')}
+              onClick={() => !isAccessBlocked && router.push('/login')}
               style={{
-                color: isBanned ? '#999' : '#FF3366',
+                color: isAccessBlocked ? '#999' : '#FF3366',
                 textDecoration: 'none',
-                cursor: isBanned ? 'not-allowed' : 'pointer',
-                opacity: isBanned ? 0.7 : 1
+                cursor: isAccessBlocked ? 'not-allowed' : 'pointer',
+                opacity: isAccessBlocked ? 0.7 : 1
               }}
             >
               Sign in

@@ -23,6 +23,7 @@ export default function Login() {
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isBanned, setIsBanned] = useState(false);
+  const [isVPNDetected, setIsVPNDetected] = useState(false);
 
   // Check IP status on page load
   useEffect(() => {
@@ -54,15 +55,22 @@ export default function Login() {
             type: 'error',
             text: ipData.message
           });
+        } else if (ipData.error === 'VPN detected') {
+          setIsVPNDetected(true);
+          setMessage({
+            type: 'error',
+            text: ipData.message || 'VPN usage is not allowed. Please disable your VPN to continue.'
+          });
         }
       } catch (error) {
         console.error('Error checking IP status:', error);
-        // Don't block login on IP check failure
       }
     };
 
     checkIpStatus();
   }, []);
+
+  const isAccessBlocked = isBanned || isVPNDetected;
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -322,15 +330,15 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                disabled={isBanned}
+                disabled={isAccessBlocked}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   border: '1px solid #ddd',
                   borderRadius: '8px',
                   fontSize: '1rem',
-                  opacity: isBanned ? 0.6 : 1,
-                  cursor: isBanned ? 'not-allowed' : 'text'
+                  opacity: isAccessBlocked ? 0.6 : 1,
+                  cursor: isAccessBlocked ? 'not-allowed' : 'text'
                 }}
               />
             </div>
@@ -350,15 +358,15 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                disabled={isBanned}
+                disabled={isAccessBlocked}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   border: '1px solid #ddd',
                   borderRadius: '8px',
                   fontSize: '1rem',
-                  opacity: isBanned ? 0.6 : 1,
-                  cursor: isBanned ? 'not-allowed' : 'text'
+                  opacity: isAccessBlocked ? 0.6 : 1,
+                  cursor: isAccessBlocked ? 'not-allowed' : 'text'
                 }}
               />
               <div style={{
@@ -368,15 +376,15 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowResetModal(true)}
-                  disabled={isBanned}
+                  disabled={isAccessBlocked}
                   style={{
                     background: 'none',
                     border: 'none',
                     color: '#FF3366',
                     fontSize: '0.875rem',
-                    cursor: isBanned ? 'not-allowed' : 'pointer',
+                    cursor: isAccessBlocked ? 'not-allowed' : 'pointer',
                     padding: '0.25rem 0.5rem',
-                    opacity: isBanned ? 0.6 : 1
+                    opacity: isAccessBlocked ? 0.6 : 1
                   }}
                 >
                   Forgot Password?
@@ -386,18 +394,18 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={isLoadingAuth || isBanned}
+              disabled={isLoadingAuth || isAccessBlocked}
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: isBanned ? '#e0e0e0' : '#FF3366',
-                color: isBanned ? '#999' : 'white',
+                backgroundColor: isAccessBlocked ? '#e0e0e0' : '#FF3366',
+                color: isAccessBlocked ? '#999' : 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
-                cursor: isBanned ? 'not-allowed' : 'pointer',
-                opacity: isLoadingAuth || isBanned ? 0.7 : 1,
+                cursor: isAccessBlocked ? 'not-allowed' : 'pointer',
+                opacity: isLoadingAuth || isAccessBlocked ? 0.7 : 1,
                 transition: 'all 0.2s'
               }}
             >
@@ -418,18 +426,18 @@ export default function Login() {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              disabled={isLoadingAuth || isBanned}
+              disabled={isLoadingAuth || isAccessBlocked}
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: isBanned ? '#f5f5f5' : 'white',
-                color: isBanned ? '#999' : '#333',
+                backgroundColor: isAccessBlocked ? '#f5f5f5' : 'white',
+                color: isAccessBlocked ? '#999' : '#333',
                 border: '1px solid #ddd',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
-                cursor: isBanned ? 'not-allowed' : 'pointer',
-                opacity: isLoadingAuth || isBanned ? 0.7 : 1,
+                cursor: isAccessBlocked ? 'not-allowed' : 'pointer',
+                opacity: isLoadingAuth || isAccessBlocked ? 0.7 : 1,
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
@@ -440,7 +448,7 @@ export default function Login() {
               <img src="/google.svg" alt="Google" style={{ 
                 width: '20px', 
                 height: '20px',
-                opacity: isBanned ? 0.5 : 1 
+                opacity: isAccessBlocked ? 0.5 : 1 
               }} />
               Sign in with Google
             </button>
@@ -453,12 +461,12 @@ export default function Login() {
             }}>
               Don't have an account?{' '}
               <a
-                onClick={() => !isBanned && router.push('/register')}
+                onClick={() => !isAccessBlocked && router.push('/register')}
                 style={{
-                  color: isBanned ? '#999' : '#FF3366',
+                  color: isAccessBlocked ? '#999' : '#FF3366',
                   textDecoration: 'none',
-                  cursor: isBanned ? 'not-allowed' : 'pointer',
-                  opacity: isBanned ? 0.7 : 1
+                  cursor: isAccessBlocked ? 'not-allowed' : 'pointer',
+                  opacity: isAccessBlocked ? 0.7 : 1
                 }}
               >
                 Sign up
@@ -470,7 +478,7 @@ export default function Login() {
       <Footer />
 
       {/* Reset Password Modal */}
-      {showResetModal && !isBanned && (
+      {showResetModal && !isAccessBlocked && (
         <div style={{
           position: 'fixed',
           top: 0,
