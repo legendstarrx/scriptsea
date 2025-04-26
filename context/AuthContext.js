@@ -196,31 +196,44 @@ export function AuthProvider({ children }) {
         email: result.user.email,
         displayName: result.user.displayName,
         photoURL: result.user.photoURL,
-        subscription: 'free',
-        scriptsRemaining: 3,
-        scriptsGenerated: 0,
+        subscription: userDoc.exists() ? userDoc.data().subscription : 'free',
+        scriptsRemaining: userDoc.exists() ? userDoc.data().scriptsRemaining : 3,
+        scriptsGenerated: userDoc.exists() ? userDoc.data().scriptsGenerated : 0,
         isAdmin: result.user.email === ADMIN_EMAIL,
-        createdAt: new Date().toISOString(),
+        createdAt: userDoc.exists() ? userDoc.data().createdAt : new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        isBanned: false
+        isBanned: false,
+        emailVerified: result.user.emailVerified,
+        subscriptionStatus: userDoc.exists() ? userDoc.data().subscriptionStatus : 'free',
+        lastPaymentDate: userDoc.exists() ? userDoc.data().lastPaymentDate : new Date().toISOString()
       };
 
       await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
       
       // Update IP address after successful sign-in
-      await fetch('/api/user/ip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: result.user.uid })
-      });
+      try {
+        await fetch('/api/user/ip', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: result.user.uid })
+        });
+      } catch (ipError) {
+        console.error('Failed to update IP:', ipError);
+        // Don't throw here - IP update failure shouldn't block sign-in
+      }
       
       setUserProfile(userData);
       return result;
     } catch (error) {
       console.error('Google Sign-in error:', error);
-      await signOut(auth);
+      // Clean up on error
+      try {
+        await signOut(auth);
+      } catch (signOutError) {
+        console.error('Error during cleanup:', signOutError);
+      }
       setUser(null);
       setUserProfile(null);
       throw error;
