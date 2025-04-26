@@ -257,16 +257,16 @@ export default function Login() {
           </h1>
 
           {message.text && (
-            <div
-              style={{
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '8px',
-                backgroundColor: message.type === 'error' ? '#FEE2E2' : '#DCFCE7',
-                color: message.type === 'error' ? '#DC2626' : '#16A34A',
-                textAlign: 'center'
-              }}
-            >
+            <div style={{
+              padding: '1rem',
+              marginBottom: '1rem',
+              borderRadius: '8px',
+              backgroundColor: message.type === 'error' ? 'rgba(255, 51, 102, 0.1)' : 'rgba(72, 187, 120, 0.1)',
+              color: message.type === 'error' ? '#FF3366' : '#48BB78',
+              border: `1px solid ${message.type === 'error' ? '#FF3366' : '#48BB78'}`,
+              animation: 'slideIn 0.3s ease',
+              textAlign: 'center'
+            }}>
               {message.text}
             </div>
           )}
@@ -275,9 +275,11 @@ export default function Login() {
             <div style={{
               padding: '1rem',
               marginBottom: '1rem',
-              backgroundColor: '#FEE2E2',
-              color: '#DC2626',
               borderRadius: '8px',
+              backgroundColor: 'rgba(255, 51, 102, 0.1)',
+              color: '#FF3366',
+              border: '1px solid #FF3366',
+              animation: 'slideIn 0.3s ease',
               textAlign: 'center'
             }}>
               {errorMessage}
@@ -555,6 +557,19 @@ export default function Login() {
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 } 
