@@ -1088,10 +1088,12 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     setVideoInfo(null);
     setError('');
 
-    // Scroll back to top smoothly
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
+    // Use requestAnimationFrame to ensure scroll happens after state updates
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     });
   };
 
@@ -2187,7 +2189,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '20px'
+                  marginBottom: '20px',
+                  gap: '12px'
                 }}>
                   <h2 style={{
                     fontSize: '1.2rem',
@@ -2196,68 +2199,91 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   }}>
                     Generated Script
                   </h2>
-                  <button 
-                    onClick={async () => {
-                      try {
-                        // Create a temporary div to handle HTML content
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = generatedScript;
-                        
-                        // Remove all style tags and their content
-                        const styleTags = tempDiv.getElementsByTagName('style');
-                        while (styleTags.length > 0) {
-                          styleTags[0].parentNode.removeChild(styleTags[0]);
+                  <div style={{
+                    display: 'flex',
+                    gap: '12px'
+                  }}>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          // Create a temporary div to handle HTML content
+                          const tempDiv = document.createElement('div');
+                          tempDiv.innerHTML = generatedScript;
+                          
+                          // Remove all style tags and their content
+                          const styleTags = tempDiv.getElementsByTagName('style');
+                          while (styleTags.length > 0) {
+                            styleTags[0].parentNode.removeChild(styleTags[0]);
+                          }
+                          
+                          // Get text content and clean up
+                          let cleanText = tempDiv.textContent
+                            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+                            .replace(/\n\s*\n/g, '\n\n') // Replace multiple newlines with double newline
+                            .trim();
+                          
+                          // Format section headers
+                          cleanText = cleanText
+                            .replace(/(Viral Title Options|Hook|Intro|Body|Conclusion|CTA)/g, '\n\n$1\n')
+                            .replace(/(Title \d+:)/g, '\n$1\n');
+                          
+                          await navigator.clipboard.writeText(cleanText);
+                          
+                          // Show success message
+                          toast.success('Script copied to clipboard!');
+                        } catch (err) {
+                          console.error('Error copying script:', err);
+                          toast.error('Could not copy script. Please try again.');
                         }
-                        
-                        // Get text content and clean up
-                        let cleanText = tempDiv.textContent
-                          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-                          .replace(/\n\s*\n/g, '\n\n') // Replace multiple newlines with double newline
-                          .trim();
-                        
-                        // Format section headers
-                        cleanText = cleanText
-                          .replace(/(Viral Title Options|Hook|Intro|Body|Conclusion|CTA)/g, '\n\n$1\n')
-                          .replace(/(Title \d+:)/g, '\n$1\n');
-                        
-                        await navigator.clipboard.writeText(cleanText);
-                        
-                        // Show success message
-                        setError('Script copied to clipboard successfully!');
-                        setTimeout(() => setError(''), 2000);
-                      } catch (err) {
-                        console.error('Error copying script:', err);
-                        setError('Could not copy script. Please try again.');
-                      }
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: 'transparent',
-                      color: '#FF3366',
-                      border: '1px solid #FF3366',
-                      borderRadius: '20px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      ':hover': {
-                        backgroundColor: '#FFF2F2'
-                      }
-                    }}
-                  >
-                    <svg 
-                      viewBox="0 0 24 24" 
-                      width="16" 
-                      height="16" 
-                      fill="currentColor"
-                      style={{ marginRight: '4px' }}
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: 'transparent',
+                        color: '#FF3366',
+                        border: '1px solid #FF3366',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
                     >
-                      <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                    </svg>
-                    Copy script
-                  </button>
+                      <svg 
+                        viewBox="0 0 24 24" 
+                        width="16" 
+                        height="16" 
+                        fill="currentColor"
+                      >
+                        <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                      </svg>
+                      Copy script
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (userProfile?.subscription === 'free') {
+                          setShowSubscriptionModal(true);
+                          toast.error('This is a premium feature. Upgrade to Pro to export your scripts!');
+                        } else {
+                          const dropdown = document.getElementById('exportDropdown');
+                          dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#FF3366',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      Export
+                    </button>
+                  </div>
                 </div>
                 
                 <div 
