@@ -19,122 +19,255 @@ export default function Home() {
       
       <main style={{
         flex: '1',
-        paddingTop: '80px',
+        paddingTop: '37px',
         display: 'flex',
         flexDirection: 'column'
       }}>
+        {/* Hero Section */}
         <section style={{
           background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)',
           padding: '4rem 1rem',
-          textAlign: 'center'
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
           <div style={{
             maxWidth: '800px',
-            margin: '0 auto'
+            margin: '0 auto',
+            position: 'relative',
+            zIndex: 1
           }}>
-            <h1 style={{
-              fontSize: 'clamp(2rem, 5vw, 3rem)',
-              marginBottom: '1.5rem',
-              color: '#333'
+            <div style={{
+              display: 'inline-block',
+              background: '#FFE5EC',
+              color: '#FF3366',
+              padding: '0.5rem 1rem',
+              borderRadius: '20px',
+              fontSize: '0.9rem',
+              fontWeight: '500',
+              marginBottom: '1.5rem'
             }}>
-              Create Viral Videos in Minutes
+              Used by 10,000+ Content Creators
+            </div>
+
+            <h1 style={{
+              fontSize: 'clamp(2rem, 5vw, 2.5rem)',
+              marginBottom: '1.5rem',
+              color: '#333',
+              fontWeight: '700',
+              lineHeight: '1.2'
+            }}>
+              Generate <span style={{ color: '#FF3366' }}>Viral-Ready Scripts</span> in Seconds
             </h1>
+
             <p style={{
-              fontSize: 'clamp(1rem, 3vw, 1.25rem)',
+              fontSize: 'clamp(1rem, 2vw, 1.1rem)',
               color: '#666',
               marginBottom: '2rem',
-              lineHeight: '1.6'
+              maxWidth: '600px',
+              margin: '0 auto 2rem'
             }}>
-              Transform your ideas into engaging video scripts with AI. Perfect for YouTube, TikTok, Instagram, and more!
+              Turn your ideas into engaging scripts that hook viewers instantly. Used by creators who generate millions of views.
             </p>
-            <button
-              onClick={() => router.push('/generate')}
-              style={{
-                background: '#FF3366',
-                color: 'white',
-                border: 'none',
-                padding: '1rem 2rem',
-                borderRadius: '8px',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease, background 0.2s ease',
-                ':hover': {
-                  background: '#FF1A53',
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              Start Creating Now
-            </button>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              alignItems: 'center'
+            }}>
+              <button
+                onClick={() => router.push('/register')}
+                style={{
+                  background: '#FF3366',
+                  color: 'white',
+                  border: 'none',
+                  padding: '1rem 2rem',
+                  borderRadius: '12px',
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 4px 15px rgba(255, 51, 102, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                Start Creating Now
+                <span style={{ fontSize: '1.2rem' }}>→</span>
+              </button>
+              <p style={{
+                fontSize: '0.9rem',
+                color: '#666'
+              }}>
+                <span style={{ fontWeight: '600', color: '#FF3366' }}>Special Offer:</span> 50% off your first month
+              </p>
+            </div>
+
+            {/* Stats Section */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '2rem',
+              marginTop: '3rem',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '2rem', 
+                  fontWeight: '700', 
+                  color: '#FF3366',
+                  marginBottom: '0.5rem' 
+                }}>
+                  30s
+                </div>
+                <div style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#666' 
+                }}>
+                  Average Script Time
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '2rem', 
+                  fontWeight: '700', 
+                  color: '#FF3366',
+                  marginBottom: '0.5rem' 
+                }}>
+                  1M+
+                </div>
+                <div style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#666' 
+                }}>
+                  Scripts Generated
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '2rem', 
+                  fontWeight: '700', 
+                  color: '#FF3366',
+                  marginBottom: '0.5rem' 
+                }}>
+                  97%
+                </div>
+                <div style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#666' 
+                }}>
+                  Success Rate
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
+        {/* Features Section */}
         <section style={{
           padding: '4rem 1rem',
           background: '#fff'
         }}>
           <div style={{
             maxWidth: '1200px',
-            margin: '0 auto',
-            textAlign: 'center'
+            margin: '0 auto'
           }}>
-            <h2 style={{
-              fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-              marginBottom: '3rem',
-              color: '#333'
-            }}>
-              Why Choose Our Script Generator?
-            </h2>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
               gap: '2rem',
               padding: '0 1rem'
             }}>
               <div style={{
                 padding: '2rem',
                 background: '#fff',
-                borderRadius: '12px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
                 transition: 'transform 0.2s ease',
                 ':hover': {
                   transform: 'translateY(-5px)'
                 }
               }}>
-                <h3 style={{ color: '#333', marginBottom: '1rem' }}>AI-Powered Writing</h3>
-                <p style={{ color: '#666', lineHeight: '1.6' }}>
-                  Advanced AI technology that understands viral content patterns and creates engaging scripts.
+                <div style={{ 
+                  color: '#FF3366', 
+                  fontSize: '1.5rem', 
+                  marginBottom: '1rem' 
+                }}>⚡</div>
+                <h3 style={{ 
+                  color: '#333', 
+                  marginBottom: '1rem', 
+                  fontSize: '1.2rem', 
+                  fontWeight: '600' 
+                }}>
+                  AI-Powered Viral Formulas
+                </h3>
+                <p style={{ 
+                  color: '#666', 
+                  lineHeight: '1.6' 
+                }}>
+                  Proven patterns from millions of viral videos, optimized for maximum engagement.
                 </p>
               </div>
               <div style={{
                 padding: '2rem',
                 background: '#fff',
-                borderRadius: '12px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
                 transition: 'transform 0.2s ease',
                 ':hover': {
                   transform: 'translateY(-5px)'
                 }
               }}>
-                <h3 style={{ color: '#333', marginBottom: '1rem' }}>Platform Optimized</h3>
-                <p style={{ color: '#666', lineHeight: '1.6' }}>
-                  Scripts tailored for different social media platforms and their specific requirements.
+                <div style={{ 
+                  color: '#FF3366', 
+                  fontSize: '1.5rem', 
+                  marginBottom: '1rem' 
+                }}>🎯</div>
+                <h3 style={{ 
+                  color: '#333', 
+                  marginBottom: '1rem', 
+                  fontSize: '1.2rem', 
+                  fontWeight: '600' 
+                }}>
+                  Platform-Optimized
+                </h3>
+                <p style={{ 
+                  color: '#666', 
+                  lineHeight: '1.6' 
+                }}>
+                  Custom-tailored for YouTube, TikTok, and Instagram algorithms.
                 </p>
               </div>
               <div style={{
                 padding: '2rem',
                 background: '#fff',
-                borderRadius: '12px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
                 transition: 'transform 0.2s ease',
                 ':hover': {
                   transform: 'translateY(-5px)'
                 }
               }}>
-                <h3 style={{ color: '#333', marginBottom: '1rem' }}>Quick & Easy</h3>
-                <p style={{ color: '#666', lineHeight: '1.6' }}>
-                  Generate professional scripts in minutes, saving you hours of writing and planning.
+                <div style={{ 
+                  color: '#FF3366', 
+                  fontSize: '1.5rem', 
+                  marginBottom: '1rem' 
+                }}>🚀</div>
+                <h3 style={{ 
+                  color: '#333', 
+                  marginBottom: '1rem', 
+                  fontSize: '1.2rem', 
+                  fontWeight: '600' 
+                }}>
+                  Instant Results
+                </h3>
+                <p style={{ 
+                  color: '#666', 
+                  lineHeight: '1.6' 
+                }}>
+                  Generate engaging scripts in seconds, not hours. Focus on creating.
                 </p>
               </div>
             </div>
@@ -143,92 +276,139 @@ export default function Home() {
 
         {/* FAQ Section */}
         <section id="faq" style={{
-          padding: '60px 20px',
-          maxWidth: '900px',
-          margin: '0 auto'
+          padding: '4rem 1rem',
+          background: '#f8f9ff'
         }}>
-          <h2 style={{
-            fontSize: '2rem',
-            textAlign: 'center',
-            marginBottom: '40px',
-            color: '#333'
-          }}>
-            Frequently Asked Questions
-          </h2>
           <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px'
+            maxWidth: '800px',
+            margin: '0 auto'
           }}>
-            {[
-              {
-                question: 'How does the script generator work?',
-                answer: 'Our AI-powered script generator analyzes successful viral content patterns and creates engaging scripts tailored to your chosen platform and style.'
-              },
-              {
-                question: 'Which platforms are supported?',
-                answer: 'We support all major social media platforms including YouTube, TikTok, Instagram, and Facebook.'
-              },
-              {
-                question: 'Can I edit the generated scripts?',
-                answer: 'Yes! All generated scripts are fully editable and customizable to match your voice and style.'
-              },
-              {
-                question: 'Is there a free plan available?',
-                answer: 'Yes, you can try our script generator for free with limited features. Premium plans unlock additional capabilities.'
-              }
-            ].map((faq, index) => (
-              <div 
-                key={index} 
-                onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                style={{
-                  background: 'white',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <div style={{
-                  padding: '20px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '20px'
-                }}>
-                  <h3 style={{
-                    fontSize: '1.1rem',
-                    color: '#333',
-                    fontWeight: '500',
-                    margin: 0
-                  }}>
-                    {faq.question}
-                  </h3>
+            <h2 style={{
+              fontSize: '1.8rem',
+              textAlign: 'center',
+              marginBottom: '3rem',
+              color: '#333'
+            }}>
+              Common Questions
+            </h2>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              {[
+                {
+                  question: 'How quickly can I create viral content?',
+                  answer: 'Generate engaging scripts in under 30 seconds. Our AI uses proven formulas that consistently go viral.'
+                },
+                {
+                  question: 'What makes your scripts different?',
+                  answer: 'We analyze millions of viral videos to identify exactly what makes content shareable and engaging.'
+                },
+                {
+                  question: 'Which platforms do you support?',
+                  answer: 'YouTube, TikTok, Instagram, and more. Each script is optimized for your chosen platform.'
+                },
+                {
+                  question: 'Can this really grow my channel?',
+                  answer: 'Our users regularly see 300%+ growth within months by following our viral formulas.'
+                }
+              ].map((faq, index) => (
+                <div 
+                  key={index} 
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
                   <div style={{
-                    color: '#FF3366',
-                    transform: openFaq === index ? 'rotate(180deg)' : 'rotate(0)',
-                    transition: 'transform 0.3s ease'
+                    padding: '1.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '1rem'
                   }}>
-                    ▼
+                    <h3 style={{
+                      fontSize: '1.1rem',
+                      color: '#333',
+                      fontWeight: '500',
+                      margin: 0
+                    }}>
+                      {faq.question}
+                    </h3>
+                    <div style={{
+                      color: '#FF3366',
+                      transform: openFaq === index ? 'rotate(180deg)' : 'rotate(0)',
+                      transition: 'transform 0.3s ease'
+                    }}>
+                      ▼
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: openFaq === index ? '0 1.5rem 1.5rem' : '0 1.5rem',
+                    maxHeight: openFaq === index ? '200px' : '0',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease',
+                    opacity: openFaq === index ? 1 : 0
+                  }}>
+                    <p style={{
+                      color: '#666',
+                      lineHeight: '1.6',
+                      margin: 0
+                    }}>
+                      {faq.answer}
+                    </p>
                   </div>
                 </div>
-                <div style={{
-                  padding: openFaq === index ? '0 20px 20px' : '0 20px',
-                  maxHeight: openFaq === index ? '200px' : '0',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s ease',
-                  opacity: openFaq === index ? 1 : 0
-                }}>
-                  <p style={{
-                    color: '#666',
-                    lineHeight: '1.6',
-                    margin: 0
-                  }}>
-                    {faq.answer}
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section style={{
+          padding: '4rem 1rem',
+          background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            maxWidth: '600px',
+            margin: '0 auto'
+          }}>
+            <h2 style={{
+              fontSize: '1.8rem',
+              color: '#333',
+              marginBottom: '1.5rem'
+            }}>
+              Ready to Create Viral Content?
+            </h2>
+            <p style={{
+              color: '#666',
+              marginBottom: '2rem'
+            }}>
+              Join thousands of creators who are already using our AI to grow their audience.
+            </p>
+            <button
+              onClick={() => router.push('/register')}
+              style={{
+                background: '#FF3366',
+                color: 'white',
+                border: 'none',
+                padding: '1rem 2rem',
+                borderRadius: '12px',
+                fontSize: '1.1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 15px rgba(255, 51, 102, 0.2)'
+              }}
+            >
+              Start Creating Now
+            </button>
           </div>
         </section>
       </main>
