@@ -77,15 +77,30 @@ const GeneratePageNav = () => {
                 fontSize: '0.9rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
+                boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)',
+                '@media (max-width: 480px)': {
+                  padding: '6px 12px',
+                  fontSize: '0.8rem',
+                  gap: '4px'
+                }
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{
+                '@media (max-width: 480px)': {
+                  width: '14px',
+                  height: '14px'
+                }
+              }}>
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" />
                 <path d="M2 17L12 22L22 17" />
                 <path d="M2 12L12 17L22 12" />
               </svg>
-              Upgrade to Pro
+              <span style={{
+                '@media (max-width: 480px)': {
+                  display: 'none'
+                }
+              }}>Upgrade to</span>
+              <span>Pro</span>
             </button>
 
             {/* Contact Button */}
