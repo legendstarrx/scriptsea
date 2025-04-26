@@ -18,7 +18,133 @@ const TEMP_EMAIL_DOMAINS = [
   '10minutemail.com',
   'throwawaymail.com',
   'tempmail.net',
-  'disposablemail.com'
+  'disposablemail.com',
+  'fakeinbox.com',
+  'tempinbox.com',
+  'trashmail.com',
+  'getairmail.com',
+  'tempmailaddress.com',
+  'maildrop.cc',
+  'getnada.com',
+  'mailnesia.com',
+  'mintemail.com',
+  'spamgourmet.com',
+  'tempail.com',
+  'tempemail.net',
+  'tempmailo.com',
+  'tempomail.fr',
+  'temporarymail.net',
+  'throwawaymail.com',
+  'tmpmail.org',
+  'trashmail.com',
+  'trashmail.io',
+  'trashmail.net',
+  'trashmailer.com',
+  'trashymail.com',
+  'wegwerfmail.de',
+  'wegwerfmail.net',
+  'wegwerfmail.org'
+];
+
+// List of allowed email domains
+const ALLOWED_EMAIL_DOMAINS = [
+  'gmail.com',
+  'yahoo.com',
+  'outlook.com',
+  'hotmail.com',
+  'aol.com',
+  'icloud.com',
+  'protonmail.com',
+  'zoho.com',
+  'mail.com',
+  'yandex.com',
+  'gmx.com',
+  'live.com',
+  'msn.com',
+  'me.com',
+  'mac.com',
+  'inbox.com',
+  'fastmail.com',
+  'tutanota.com',
+  'mail.ru',
+  'qq.com',
+  '163.com',
+  '126.com',
+  'yeah.net',
+  'sina.com',
+  'sohu.com',
+  'aliyun.com',
+  'naver.com',
+  'daum.net',
+  'kakao.com',
+  'hanmail.net',
+  'nate.com',
+  'web.de',
+  'gmx.de',
+  't-online.de',
+  'freenet.de',
+  'arcor.de',
+  '1und1.de',
+  'virgilio.it',
+  'libero.it',
+  'alice.it',
+  'tin.it',
+  'wanadoo.fr',
+  'orange.fr',
+  'sfr.fr',
+  'free.fr',
+  'laposte.net',
+  'neuf.fr',
+  'numericable.fr',
+  'bbox.fr',
+  'club-internet.fr',
+  'voila.fr',
+  'noos.fr',
+  'tele2.fr',
+  'tiscali.fr',
+  'aol.fr',
+  'gmx.fr',
+  'yahoo.fr',
+  'hotmail.fr',
+  'outlook.fr',
+  'live.fr',
+  'msn.fr',
+  'me.com',
+  'mac.com',
+  'icloud.com',
+  'protonmail.com',
+  'tutanota.com',
+  'mail.com',
+  'gmx.com',
+  'web.de',
+  't-online.de',
+  'freenet.de',
+  'arcor.de',
+  '1und1.de',
+  'virgilio.it',
+  'libero.it',
+  'alice.it',
+  'tin.it',
+  'wanadoo.fr',
+  'orange.fr',
+  'sfr.fr',
+  'free.fr',
+  'laposte.net',
+  'neuf.fr',
+  'numericable.fr',
+  'bbox.fr',
+  'club-internet.fr',
+  'voila.fr',
+  'noos.fr',
+  'tele2.fr',
+  'tiscali.fr',
+  'aol.fr',
+  'gmx.fr',
+  'yahoo.fr',
+  'hotmail.fr',
+  'outlook.fr',
+  'live.fr',
+  'msn.fr'
 ];
 
 // Password strength requirements
@@ -61,7 +187,18 @@ export default function Register() {
     // Check for temporary email domains
     const domain = email.split('@')[1].toLowerCase();
     if (TEMP_EMAIL_DOMAINS.some(tempDomain => domain.includes(tempDomain))) {
-      return { valid: false, message: 'Temporary email addresses are not allowed' };
+      return { 
+        valid: false, 
+        message: 'Temporary email addresses are not allowed. Please use a personal email from providers like Gmail, Yahoo, Outlook, etc.' 
+      };
+    }
+
+    // Check if domain is in allowed list
+    if (!ALLOWED_EMAIL_DOMAINS.some(allowedDomain => domain === allowedDomain)) {
+      return { 
+        valid: false, 
+        message: 'Please use a personal email from major providers like Gmail, Yahoo, Outlook, etc. Temporary or disposable emails are not allowed.' 
+      };
     }
 
     return { valid: true };
@@ -113,6 +250,12 @@ export default function Register() {
         throw new Error('Please fill in all fields');
       }
 
+      // Email validation
+      const emailValidation = validateEmail(formData.email);
+      if (!emailValidation.valid) {
+        throw new Error(emailValidation.message);
+      }
+
       // Password validation
       const validation = validatePassword(formData.password);
       if (!Object.values(validation).every(Boolean)) {
@@ -141,6 +284,8 @@ export default function Register() {
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Password is too weak. Please use a stronger password.';
       } else if (error.message.includes('banned')) {
+        errorMessage = error.message;
+      } else {
         errorMessage = error.message;
       }
       
