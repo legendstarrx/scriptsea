@@ -354,7 +354,7 @@ export default function Register() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1rem',
-        paddingTop: 'calc(80px + 2rem)',
+        paddingTop: 'calc(50px + 1rem)',
         background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
       }}>
         <div style={{
@@ -364,7 +364,7 @@ export default function Register() {
           background: 'white',
           borderRadius: '16px',
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-          marginTop: '2rem'
+          marginTop: '1rem'
         }}>
           <h1 style={{
             fontSize: 'clamp(1.5rem, 4vw, 2rem)',

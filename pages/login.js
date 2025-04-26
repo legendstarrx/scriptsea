@@ -160,6 +160,7 @@ export default function Login() {
           width: '100%',
           maxWidth: '400px',
           padding: '2.5rem',
+          paddingTop: 'calc(50px + 1rem)',
           background: 'white',
           borderRadius: '16px',
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
