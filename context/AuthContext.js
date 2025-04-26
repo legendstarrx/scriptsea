@@ -205,7 +205,8 @@ export function AuthProvider({ children }) {
         isBanned: false,
         emailVerified: result.user.emailVerified,
         subscriptionStatus: 'free',
-        lastPaymentDate: userDoc.exists() ? userDoc.data().lastPaymentDate : new Date().toISOString(),
+        lastPaymentDate: userDoc.exists() && userDoc.data().lastPaymentDate ? 
+          userDoc.data().lastPaymentDate : new Date().toISOString(),
         ipAddress: null
       };
 
