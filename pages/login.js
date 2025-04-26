@@ -211,11 +211,11 @@ export default function Login() {
           width: '100%',
           maxWidth: '400px',
           padding: '2rem',
-          paddingTop: 'calc(50px + 1rem)',
+          paddingTop: '2rem',
           background: 'white',
           borderRadius: '16px',
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-          marginTop: '2rem'
+          marginTop: '80px'
         }}>
           <h1 style={{
             fontSize: 'clamp(1.5rem, 4vw, 2rem)',

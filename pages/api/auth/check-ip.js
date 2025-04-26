@@ -14,6 +14,23 @@ export default async function handler(req, res) {
         message: 'This IP address has been banned. Please contact support.' 
       });
     }
+
+    // Check if IP is a VPN/proxy using IPQualityScore
+    const API_KEY = process.env.IPQUALITYSCORE_API_KEY;
+    if (!API_KEY) {
+      console.error('IPQUALITYSCORE_API_KEY not configured');
+      return res.status(200).json({ ip });
+    }
+
+    const response = await fetch(`https://ipqualityscore.com/api/json/ip/${API_KEY}/${ip}?strictness=1&allow_public_access_points=true`);
+    const data = await response.json();
+
+    if (data.success && (data.proxy || data.vpn)) {
+      return res.status(403).json({
+        error: 'VPN detected',
+        message: 'VPN/proxy usage is not allowed. Please disable your VPN and try again.'
+      });
+    }
     
     return res.status(200).json({ ip });
   } catch (error) {
