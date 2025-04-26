@@ -90,7 +90,7 @@ export default function Login() {
       }
 
       const ipData = await ipCheck.json();
-      if (ipData.error === 'IP banned') {
+      if (ipData.error === 'IP banned' || ipData.error === 'VPN detected') {
         throw new Error(ipData.message);
       }
 
@@ -116,7 +116,7 @@ export default function Login() {
         errorMessage = 'Too many failed attempts. Please try again later or reset your password.';
       } else if (error.code === 'auth/network-request-failed') {
         errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message.includes('banned')) {
+      } else if (error.message.includes('banned') || error.message.includes('VPN detected')) {
         errorMessage = error.message;
       }
       
@@ -389,19 +389,19 @@ export default function Login() {
               disabled={isLoadingAuth || isBanned}
               style={{
                 width: '100%',
-                padding: '0.75rem',
-                background: '#FF3366',
+                padding: '12px',
+                backgroundColor: '#FF3366',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
                 cursor: isBanned ? 'not-allowed' : 'pointer',
-                marginBottom: '1rem',
-                opacity: isBanned ? 0.6 : 1
+                opacity: isBanned ? 0.7 : 1,
+                transition: 'all 0.2s'
               }}
             >
-              {isLoadingAuth ? 'Signing in...' : 'Sign In'}
+              {isLoadingAuth ? 'Signing in...' : 'Sign in'}
             </button>
 
             <div style={{
@@ -421,26 +421,23 @@ export default function Login() {
               disabled={isBanned}
               style={{
                 width: '100%',
-                padding: '0.75rem',
-                background: 'white',
-                color: '#666',
+                padding: '12px',
+                backgroundColor: 'white',
+                color: '#333',
                 border: '1px solid #ddd',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '500',
                 cursor: isBanned ? 'not-allowed' : 'pointer',
+                opacity: isBanned ? 0.7 : 1,
+                transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem',
-                opacity: isBanned ? 0.6 : 1
+                gap: '8px'
               }}
             >
-              <img
-                src="/google.svg"
-                alt="Google"
-                style={{ width: '20px', height: '20px' }}
-              />
+              <img src="/google.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
               Sign in with Google
             </button>
 

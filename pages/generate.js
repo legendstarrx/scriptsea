@@ -68,19 +68,19 @@ const GeneratePageNav = () => {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
+                gap: '6px',
+                padding: '6px 12px',
                 backgroundColor: '#FF3366',
                 color: 'white',
                 border: 'none',
-                borderRadius: '20px',
-                fontSize: '0.9rem',
+                borderRadius: '16px',
+                fontSize: '0.85rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: '0 2px 8px rgba(255, 51, 102, 0.2)'
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" />
                 <path d="M2 17L12 22L22 17" />
                 <path d="M2 12L12 17L22 12" />

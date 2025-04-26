@@ -338,7 +338,7 @@ export default function Register() {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.code === 'auth/operation-not-allowed') {
         errorMessage = 'Email/password accounts are not enabled. Please contact support.';
-      } else if (error.message.includes('banned')) {
+      } else if (error.message.includes('banned') || error.message.includes('VPN detected')) {
         errorMessage = error.message;
       } else {
         errorMessage = error.message;
@@ -643,37 +643,20 @@ export default function Register() {
               type="submit"
               disabled={isLoading}
               style={{
-                background: isLoading ? '#FFE5EC' : '#FF3366',
-                color: 'white',
+                width: '100%',
                 padding: '12px',
-                borderRadius: '8px',
+                backgroundColor: '#FF3366',
+                color: 'white',
                 border: 'none',
+                borderRadius: '8px',
                 fontSize: '1rem',
-                fontWeight: '600',
+                fontWeight: '500',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
                 opacity: isLoading ? 0.7 : 1,
-                transition: 'all 0.2s ease',
-                ':hover': {
-                  background: '#FF1A53'
-                }
+                transition: 'all 0.2s'
               }}
             >
-              {isLoading ? (
-                <>
-                  <span style={{
-                    display: 'inline-block',
-                    width: '16px',
-                    height: '16px',
-                    border: '2px solid #FF3366',
-                    borderTopColor: 'transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }}></span>
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account'
-              )}
+              {isLoading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 
@@ -694,30 +677,24 @@ export default function Register() {
             disabled={isLoadingAuth}
             style={{
               width: '100%',
-              padding: '0.75rem',
-              background: 'white',
-              color: '#666',
+              padding: '12px',
+              backgroundColor: 'white',
+              color: '#333',
               border: '1px solid #ddd',
               borderRadius: '8px',
               fontSize: '1rem',
               fontWeight: '500',
               cursor: isLoadingAuth ? 'not-allowed' : 'pointer',
+              opacity: isLoadingAuth ? 0.7 : 1,
+              transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem',
-              transition: 'all 0.2s ease',
-              ':hover': {
-                background: '#f8f9ff'
-              }
+              gap: '8px'
             }}
           >
-            <img
-              src="/google.svg"
-              alt="Google"
-              style={{ width: '20px', height: '20px' }}
-            />
-            {isLoadingAuth ? 'Signing up...' : 'Sign up with Google'}
+            <img src="/google.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+            Sign up with Google
           </button>
 
           <p style={{
