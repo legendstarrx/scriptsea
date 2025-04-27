@@ -27,10 +27,20 @@ const toastConfig = {
     color: 'white',
     cursor: 'pointer'
   },
-  dismissible: true,
-  ariaProps: {
-    role: 'alert',
-    'aria-live': 'polite',
+  closeButton: true,
+  closeOnClick: true,
+  swipeDirection: 'right',
+  success: {
+    style: {
+      background: '#48BB78',
+    },
+    icon: '✓'
+  },
+  error: {
+    style: {
+      background: '#FF3366',
+    },
+    icon: '!'
   }
 };
 
@@ -1326,12 +1336,18 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               style: {
                 background: '#48BB78',
               },
+              icon: '✓'
             },
             error: {
               style: {
                 background: '#FF3366',
               },
-            }
+              icon: '!'
+            },
+            className: '',
+            closeButton: true,
+            closeOnClick: true,
+            swipeDirection: 'right'
           }}
         />
         <GeneratePageNav />
