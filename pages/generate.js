@@ -335,6 +335,7 @@ export default function Generate() {
   const [recognition, setRecognition] = useState(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [verificationChecked, setVerificationChecked] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   // Add ref for the response section
   const responseRef = useRef(null);
@@ -1293,6 +1294,47 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       }}>
         <GeneratePageNav />
         
+        {notification.show && (
+          <div style={{
+            position: 'fixed',
+            top: '100px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: notification.type === 'success' ? '#E8F5E9' : '#FFF2F2',
+            color: notification.type === 'success' ? '#2E7D32' : '#FF3366',
+            padding: '12px 16px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            maxWidth: '90%',
+            animation: 'slideIn 0.3s ease-out'
+          }}>
+            <span style={{ fontSize: '1.2rem' }}>
+              {notification.type === 'success' ? '✓' : '!'}
+            </span>
+            {notification.message}
+            <button
+              onClick={() => setNotification({ show: false, message: '', type: '' })}
+              style={{
+                marginLeft: '8px',
+                background: 'none',
+                border: 'none',
+                padding: '4px',
+                cursor: 'pointer',
+                color: notification.type === 'success' ? '#2E7D32' : '#FF3366',
+                fontSize: '1.2rem',
+                opacity: 0.7,
+                ':hover': { opacity: 1 }
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         <main style={{
           flex: 1,
           padding: '20px',
@@ -1622,8 +1664,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   }}
                   onClick={() => {
                     setShowSubscriptionModal(true);
-                    setError('This is a premium feature. Upgrade to Pro to access it!');
-                    setTimeout(() => setError(''), 2000);
+                    setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
+                    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                   }}>
                     <div style={{
                       textAlign: 'center',
@@ -1644,8 +1686,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowSubscriptionModal(true);
-                          setError('This is a premium feature. Upgrade to Pro to access it!');
-                          setTimeout(() => setError(''), 2000);
+                          setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
+                          setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                         }}
                         style={{
                           padding: '10px 20px',
@@ -2229,12 +2271,12 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           .replace(/(Title \d+:)/g, '\n$1\n');
                         
                         await navigator.clipboard.writeText(cleanText);
-                        setError('Script copied to clipboard successfully!');
-                        setTimeout(() => setError(''), 2000);
+                        setNotification({ show: true, message: 'Script copied to clipboard successfully!', type: 'success' });
+                        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                       } catch (err) {
                         console.error('Error copying script:', err);
-                        setError('Could not copy script. Please try again.');
-                        setTimeout(() => setError(''), 2000);
+                        setNotification({ show: true, message: 'Could not copy script. Please try again.', type: 'error' });
+                        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                       }
                     }}
                     style={{
@@ -2299,8 +2341,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            setError('This is a premium feature. Upgrade to Pro to access it!');
-                            setTimeout(() => setError(''), 2000);
+                            setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
+                            setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                           } else {
                             generateAdvancedContent();
                           }
@@ -2395,8 +2437,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            setError('This is a premium feature. Upgrade to Pro to access it!');
-                            setTimeout(() => setError(''), 2000);
+                            setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
+                            setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                           } else {
                             handleGenerateThumbnail();
                           }
@@ -2571,8 +2613,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     onClick={() => {
                       if (userProfile?.subscription === 'free') {
                         setShowSubscriptionModal(true);
-                        setError('This is a premium feature. Upgrade to Pro to save your scripts!');
-                        setTimeout(() => setError(''), 2000);
+                        setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to save your scripts!', type: 'error' });
+                        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                       } else {
                         saveScript();
                       }
@@ -2595,8 +2637,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       onClick={() => {
                         if (userProfile?.subscription === 'free') {
                           setShowSubscriptionModal(true);
-                          setError('This is a premium feature. Upgrade to Pro to export your scripts!');
-                          setTimeout(() => setError(''), 2000);
+                          setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to export your scripts!', type: 'error' });
+                          setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                         } else {
                           const dropdown = document.getElementById('exportDropdown');
                           dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
