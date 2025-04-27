@@ -1310,12 +1310,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
             alignItems: 'center',
             gap: '8px',
             maxWidth: '90%',
-            width: 'auto',
-            minWidth: '200px',
-            animation: 'fadeIn 0.2s ease-out',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            width: 'fit-content',
+            minWidth: '300px',
+            animation: 'fadeIn 0.2s ease-out'
           }}>
             <span style={{ 
               fontSize: '1.2rem',
@@ -1324,13 +1321,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               {notification.type === 'success' ? '✓' : '!'}
             </span>
             <span style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'normal',
-              display: '-webkit-box',
-              WebkitLineClamp: '2',
-              WebkitBoxOrient: 'vertical',
-              lineHeight: '1.3'
+              flex: 1,
+              fontSize: '0.95rem',
+              lineHeight: '1.4'
             }}>
               {notification.message}
             </span>
@@ -1358,7 +1351,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
           </div>
         )}
 
-        {/* Add this to your existing style jsx global section or create it if it doesn't exist */}
         <style jsx global>{`
           @keyframes fadeIn {
             from {
