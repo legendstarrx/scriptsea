@@ -192,18 +192,33 @@ export function AuthProvider({ children }) {
       }
 
       // Only proceed if not banned
-      const userData = {
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-        subscription: 'free',
-        scriptsRemaining: 3,
-        scriptsGenerated: 0,
-        isAdmin: result.user.email === ADMIN_EMAIL,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        isBanned: false
-      };
+      let userData;
+      
+      if (userDoc.exists()) {
+        // If user exists, keep their existing data but update login time
+        userData = {
+          ...userDoc.data(),
+          lastLogin: new Date().toISOString(),
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+          isAdmin: result.user.email === ADMIN_EMAIL
+        };
+      } else {
+        // If new user, create default profile
+        userData = {
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+          subscription: 'free',
+          scriptsRemaining: 3,
+          scriptsGenerated: 0,
+          isAdmin: result.user.email === ADMIN_EMAIL,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          isBanned: false
+        };
+      }
 
       await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
       
