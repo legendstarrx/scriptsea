@@ -1310,12 +1310,30 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
             alignItems: 'center',
             gap: '8px',
             maxWidth: '90%',
-            animation: 'slideIn 0.3s ease-out'
+            width: 'auto',
+            minWidth: '200px',
+            animation: 'fadeIn 0.2s ease-out',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}>
-            <span style={{ fontSize: '1.2rem' }}>
+            <span style={{ 
+              fontSize: '1.2rem',
+              flexShrink: 0 
+            }}>
               {notification.type === 'success' ? '✓' : '!'}
             </span>
-            {notification.message}
+            <span style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'normal',
+              display: '-webkit-box',
+              WebkitLineClamp: '2',
+              WebkitBoxOrient: 'vertical',
+              lineHeight: '1.3'
+            }}>
+              {notification.message}
+            </span>
             <button
               onClick={() => setNotification({ show: false, message: '', type: '' })}
               style={{
@@ -1327,13 +1345,32 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 color: notification.type === 'success' ? '#2E7D32' : '#FF3366',
                 fontSize: '1.2rem',
                 opacity: 0.7,
-                ':hover': { opacity: 1 }
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '20px',
+                height: '20px'
               }}
             >
               ×
             </button>
           </div>
         )}
+
+        {/* Add this to your existing style jsx global section or create it if it doesn't exist */}
+        <style jsx global>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translate(-50%, -10px);
+            }
+            to {
+              opacity: 1;
+              transform: translate(-50%, 0);
+            }
+          }
+        `}</style>
 
         <main style={{
           flex: 1,
