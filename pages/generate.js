@@ -18,8 +18,8 @@ const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
 // Configure toast position and style
 const toastConfig = {
-  position: 'bottom-center',
-  duration: 4000,
+  position: 'top-center',
+  duration: 3000,
   style: {
     padding: '16px',
     borderRadius: '8px',
@@ -27,7 +27,11 @@ const toastConfig = {
     color: 'white',
     cursor: 'pointer'
   },
-  onClick: () => toast.dismiss()
+  dismissible: true,
+  ariaProps: {
+    role: 'alert',
+    'aria-live': 'polite',
+  }
 };
 
 // GeneratePageNav Component
@@ -1306,9 +1310,11 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         paddingTop: '80px'
       }}>
         <Toaster 
-          position="bottom-center"
+          position="top-center"
+          reverseOrder={false}
+          gutter={8}
           toastOptions={{
-            duration: 4000,
+            duration: 3000,
             style: {
               padding: '16px',
               borderRadius: '8px',
@@ -1316,7 +1322,16 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               color: 'white',
               cursor: 'pointer'
             },
-            onClick: () => toast.dismiss()
+            success: {
+              style: {
+                background: '#48BB78',
+              },
+            },
+            error: {
+              style: {
+                background: '#FF3366',
+              },
+            }
           }}
         />
         <GeneratePageNav />
@@ -1652,7 +1667,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     setShowSubscriptionModal(true);
                     toast.error('This is a premium feature. Upgrade to Pro to access it!', {
                       ...toastConfig,
-                      onClick: () => toast.dismiss()
+                      id: 'premium-feature'
                     });
                   }}>
                     <div style={{
@@ -1676,7 +1691,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           setShowSubscriptionModal(true);
                           toast.error('This is a premium feature. Upgrade to Pro to access it!', {
                             ...toastConfig,
-                            onClick: () => toast.dismiss()
+                            id: 'premium-feature'
                           });
                         }}
                         style={{
@@ -2261,10 +2276,16 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           .replace(/(Title \d+:)/g, '\n$1\n');
                         
                         await navigator.clipboard.writeText(cleanText);
-                        toast.success('Script copied to clipboard!');
+                        toast.success('Script copied to clipboard!', {
+                          ...toastConfig,
+                          id: 'copy-success'
+                        });
                       } catch (err) {
                         console.error('Error copying script:', err);
-                        toast.error('Could not copy script. Please try again.');
+                        toast.error('Could not copy script. Please try again.', {
+                          ...toastConfig,
+                          id: 'copy-error'
+                        });
                       }
                     }}
                     style={{
@@ -2331,7 +2352,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             setShowSubscriptionModal(true);
                             toast.error('This is a premium feature. Upgrade to Pro to access it!', {
                               ...toastConfig,
-                              onClick: () => toast.dismiss()
+                              id: 'premium-feature'
                             });
                           } else {
                             generateAdvancedContent();
@@ -2429,7 +2450,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                             setShowSubscriptionModal(true);
                             toast.error('This is a premium feature. Upgrade to Pro to access it!', {
                               ...toastConfig,
-                              onClick: () => toast.dismiss()
+                              id: 'premium-feature'
                             });
                           } else {
                             handleGenerateThumbnail();
@@ -2607,7 +2628,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         setShowSubscriptionModal(true);
                         toast.error('This is a premium feature. Upgrade to Pro to save your scripts!', {
                           ...toastConfig,
-                          onClick: () => toast.dismiss()
+                          id: 'premium-feature'
                         });
                       } else {
                         saveScript();
@@ -2633,7 +2654,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           setShowSubscriptionModal(true);
                           toast.error('This is a premium feature. Upgrade to Pro to export your scripts!', {
                             ...toastConfig,
-                            onClick: () => toast.dismiss()
+                            id: 'premium-feature'
                           });
                         } else {
                           const dropdown = document.getElementById('exportDropdown');
