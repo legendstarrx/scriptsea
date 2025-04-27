@@ -9,12 +9,24 @@ import SubscriptionModal from '../components/SubscriptionModal';
 import ProfileModal from '../components/ProfileModal';
 import { db } from '../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { toast } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
+
+// Configure toast position and style
+const toastConfig = {
+  position: 'bottom-center',
+  duration: 4000,
+  style: {
+    padding: '16px',
+    borderRadius: '8px',
+    background: '#333',
+    color: 'white'
+  }
+};
 
 // GeneratePageNav Component
 const GeneratePageNav = () => {
@@ -1291,6 +1303,19 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         flexDirection: 'column',
         paddingTop: '80px'
       }}>
+        <Toaster 
+          position="bottom-center"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              padding: '16px',
+              borderRadius: '8px',
+              background: '#333',
+              color: 'white',
+              cursor: 'pointer'
+            },
+          }}
+        />
         <GeneratePageNav />
         
         <main style={{
@@ -1622,9 +1647,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   }}
                   onClick={() => {
                     setShowSubscriptionModal(true);
-                    setTimeout(() => {
-                      toast.error('This is a premium feature. Upgrade to Pro to access it!');
-                    }, 100);
+                    toast.error('This is a premium feature. Upgrade to Pro to access it!', {
+                      ...toastConfig,
+                      onClick: () => toast.dismiss()
+                    });
                   }}>
                     <div style={{
                       textAlign: 'center',
@@ -1645,9 +1671,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowSubscriptionModal(true);
-                          setTimeout(() => {
-                            toast.error('This is a premium feature. Upgrade to Pro to access it!');
-                          }, 100);
+                          toast.error('This is a premium feature. Upgrade to Pro to access it!', {
+                            ...toastConfig,
+                            onClick: () => toast.dismiss()
+                          });
                         }}
                         style={{
                           padding: '10px 20px',
@@ -2299,9 +2326,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            setTimeout(() => {
-                              toast.error('This is a premium feature. Upgrade to Pro to access it!');
-                            }, 100);
+                            toast.error('This is a premium feature. Upgrade to Pro to access it!', {
+                              ...toastConfig,
+                              onClick: () => toast.dismiss()
+                            });
                           } else {
                             generateAdvancedContent();
                           }
@@ -2396,9 +2424,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            setTimeout(() => {
-                              toast.error('This is a premium feature. Upgrade to Pro to access it!');
-                            }, 100);
+                            toast.error('This is a premium feature. Upgrade to Pro to access it!', {
+                              ...toastConfig,
+                              onClick: () => toast.dismiss()
+                            });
                           } else {
                             handleGenerateThumbnail();
                           }
@@ -2573,9 +2602,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     onClick={() => {
                       if (userProfile?.subscription === 'free') {
                         setShowSubscriptionModal(true);
-                        setTimeout(() => {
-                          toast.error('This is a premium feature. Upgrade to Pro to save your scripts!');
-                        }, 100);
+                        toast.error('This is a premium feature. Upgrade to Pro to save your scripts!', {
+                          ...toastConfig,
+                          onClick: () => toast.dismiss()
+                        });
                       } else {
                         saveScript();
                       }
@@ -2598,9 +2628,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       onClick={() => {
                         if (userProfile?.subscription === 'free') {
                           setShowSubscriptionModal(true);
-                          setTimeout(() => {
-                            toast.error('This is a premium feature. Upgrade to Pro to export your scripts!');
-                          }, 100);
+                          toast.error('This is a premium feature. Upgrade to Pro to export your scripts!', {
+                            ...toastConfig,
+                            onClick: () => toast.dismiss()
+                          });
                         } else {
                           const dropdown = document.getElementById('exportDropdown');
                           dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
