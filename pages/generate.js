@@ -16,35 +16,6 @@ import Link from 'next/link';
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
-// Configure toast position and style
-const toastConfig = {
-  position: 'top-center',
-  duration: 3000,
-  style: {
-    padding: '16px',
-    borderRadius: '8px',
-    background: '#333',
-    color: 'white',
-    cursor: 'pointer'
-  },
-  success: {
-    style: {
-      background: '#48BB78',
-    },
-    icon: '✓'
-  },
-  error: {
-    style: {
-      background: '#FF3366',
-    },
-    icon: '!'
-  },
-  onClick: () => {
-    toast.dismiss();
-    return false;
-  }
-};
-
 // GeneratePageNav Component
 const GeneratePageNav = () => {
   const router = useRouter();
@@ -1320,37 +1291,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         flexDirection: 'column',
         paddingTop: '80px'
       }}>
-        <Toaster 
-          position="top-center"
-          reverseOrder={false}
-          gutter={8}
-          toastOptions={{
-            duration: 3000,
-            style: {
-              padding: '16px',
-              borderRadius: '8px',
-              background: '#333',
-              color: 'white',
-              cursor: 'pointer'
-            },
-            success: {
-              style: {
-                background: '#48BB78',
-              },
-              icon: '✓'
-            },
-            error: {
-              style: {
-                background: '#FF3366',
-              },
-              icon: '!'
-            },
-            onClick: () => {
-              toast.dismiss();
-              return false;
-            }
-          }}
-        />
         <GeneratePageNav />
         
         <main style={{
@@ -1682,10 +1622,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   }}
                   onClick={() => {
                     setShowSubscriptionModal(true);
-                    toast.error('This is a premium feature. Upgrade to Pro to access it!', {
-                      ...toastConfig,
-                      id: 'premium-feature'
-                    });
+                    setError('This is a premium feature. Upgrade to Pro to access it!');
+                    setTimeout(() => setError(''), 2000);
                   }}>
                     <div style={{
                       textAlign: 'center',
@@ -1706,10 +1644,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowSubscriptionModal(true);
-                          toast.error('This is a premium feature. Upgrade to Pro to access it!', {
-                            ...toastConfig,
-                            id: 'premium-feature'
-                          });
+                          setError('This is a premium feature. Upgrade to Pro to access it!');
+                          setTimeout(() => setError(''), 2000);
                         }}
                         style={{
                           padding: '10px 20px',
@@ -2293,16 +2229,12 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           .replace(/(Title \d+:)/g, '\n$1\n');
                         
                         await navigator.clipboard.writeText(cleanText);
-                        toast.success('Script copied to clipboard!', {
-                          ...toastConfig,
-                          id: 'copy-success'
-                        });
+                        setError('Script copied to clipboard successfully!');
+                        setTimeout(() => setError(''), 2000);
                       } catch (err) {
                         console.error('Error copying script:', err);
-                        toast.error('Could not copy script. Please try again.', {
-                          ...toastConfig,
-                          id: 'copy-error'
-                        });
+                        setError('Could not copy script. Please try again.');
+                        setTimeout(() => setError(''), 2000);
                       }
                     }}
                     style={{
@@ -2367,10 +2299,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            toast.error('This is a premium feature. Upgrade to Pro to access it!', {
-                              ...toastConfig,
-                              id: 'premium-feature'
-                            });
+                            setError('This is a premium feature. Upgrade to Pro to access it!');
+                            setTimeout(() => setError(''), 2000);
                           } else {
                             generateAdvancedContent();
                           }
@@ -2465,10 +2395,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         onClick={() => {
                           if (userProfile?.subscription === 'free') {
                             setShowSubscriptionModal(true);
-                            toast.error('This is a premium feature. Upgrade to Pro to access it!', {
-                              ...toastConfig,
-                              id: 'premium-feature'
-                            });
+                            setError('This is a premium feature. Upgrade to Pro to access it!');
+                            setTimeout(() => setError(''), 2000);
                           } else {
                             handleGenerateThumbnail();
                           }
@@ -2643,10 +2571,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     onClick={() => {
                       if (userProfile?.subscription === 'free') {
                         setShowSubscriptionModal(true);
-                        toast.error('This is a premium feature. Upgrade to Pro to save your scripts!', {
-                          ...toastConfig,
-                          id: 'premium-feature'
-                        });
+                        setError('This is a premium feature. Upgrade to Pro to save your scripts!');
+                        setTimeout(() => setError(''), 2000);
                       } else {
                         saveScript();
                       }
@@ -2669,10 +2595,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       onClick={() => {
                         if (userProfile?.subscription === 'free') {
                           setShowSubscriptionModal(true);
-                          toast.error('This is a premium feature. Upgrade to Pro to export your scripts!', {
-                            ...toastConfig,
-                            id: 'premium-feature'
-                          });
+                          setError('This is a premium feature. Upgrade to Pro to export your scripts!');
+                          setTimeout(() => setError(''), 2000);
                         } else {
                           const dropdown = document.getElementById('exportDropdown');
                           dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
