@@ -24,8 +24,10 @@ const toastConfig = {
     padding: '16px',
     borderRadius: '8px',
     background: '#333',
-    color: 'white'
-  }
+    color: 'white',
+    cursor: 'pointer'
+  },
+  onClick: () => toast.dismiss()
 };
 
 // GeneratePageNav Component
@@ -1314,6 +1316,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               color: 'white',
               cursor: 'pointer'
             },
+            onClick: () => toast.dismiss()
           }}
         />
         <GeneratePageNav />
