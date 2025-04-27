@@ -27,9 +27,6 @@ const toastConfig = {
     color: 'white',
     cursor: 'pointer'
   },
-  closeButton: true,
-  closeOnClick: true,
-  swipeDirection: 'right',
   success: {
     style: {
       background: '#48BB78',
@@ -41,6 +38,10 @@ const toastConfig = {
       background: '#FF3366',
     },
     icon: '!'
+  },
+  onClick: () => {
+    toast.dismiss();
+    return false;
   }
 };
 
@@ -1344,10 +1345,10 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               },
               icon: '!'
             },
-            className: '',
-            closeButton: true,
-            closeOnClick: true,
-            swipeDirection: 'right'
+            onClick: () => {
+              toast.dismiss();
+              return false;
+            }
           }}
         />
         <GeneratePageNav />
