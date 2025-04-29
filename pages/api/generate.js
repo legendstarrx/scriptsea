@@ -10,6 +10,19 @@ export const config = {
 };
 
 export default async function handler(req) {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '86400'
+      }
+    });
+  }
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return new Response(
@@ -18,6 +31,7 @@ export default async function handler(req) {
         status: 405,
         headers: {
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
           'Allow': 'POST'
         }
       }
@@ -33,7 +47,10 @@ export default async function handler(req) {
         JSON.stringify({ error: 'Prompt is required' }),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
         }
       );
     }
@@ -68,7 +85,10 @@ export default async function handler(req) {
       }),
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
       }
     );
 
@@ -84,7 +104,11 @@ export default async function handler(req) {
         }),
         {
           status: 429,
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Retry-After': '60'
+          }
         }
       );
     }
@@ -98,7 +122,27 @@ export default async function handler(req) {
         }),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        }
+      );
+    }
+
+    // Handle timeout errors
+    if (error.name === 'AbortError' || error.code === 'ETIMEDOUT') {
+      return new Response(
+        JSON.stringify({
+          error: 'Request timeout',
+          message: 'The request took too long to complete. Please try again.'
+        }),
+        {
+          status: 504,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
         }
       );
     }
@@ -113,7 +157,10 @@ export default async function handler(req) {
       }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
       }
     );
   }
