@@ -18,24 +18,38 @@ function runMiddleware(req, res, fn) {
   });
 }
 
-// Initialize OpenAI client
+// Initialize OpenAI client with timeout
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000, // 60 second timeout
+  maxRetries: 2, // Retry failed requests twice
 });
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
+    responseLimit: '8mb',
+  },
+};
+
 export default async function handler(req, res) {
-  // Run the CORS middleware
-  await runMiddleware(req, res, cors);
-
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({
-      error: 'Method not allowed',
-      message: `HTTP method ${req.method} is not supported.`
-    });
-  }
-
   try {
+    // Run the CORS middleware
+    await runMiddleware(req, res, cors);
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/json');
+
+    if (req.method !== 'POST') {
+      res.setHeader('Allow', ['POST']);
+      return res.status(405).json({
+        error: 'Method not allowed',
+        message: `HTTP method ${req.method} is not supported.`
+      });
+    }
+
     const { prompt, maxTokens = 2000, temperature = 0.7 } = req.body;
 
     if (!prompt) {
@@ -45,7 +59,13 @@ export default async function handler(req, res) {
       });
     }
 
-    const completion = await openai.chat.completions.create({
+    // Set a timeout for the OpenAI request
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timeout')), 90000) // 90 second timeout
+    );
+
+    // Make the OpenAI request
+    const openaiPromise = openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
         {
@@ -61,7 +81,10 @@ export default async function handler(req, res) {
       temperature: temperature,
     });
 
-    if (!completion.choices?.[0]?.message?.content) {
+    // Race between timeout and OpenAI request
+    const completion = await Promise.race([openaiPromise, timeoutPromise]);
+
+    if (!completion?.choices?.[0]?.message?.content) {
       throw new Error('No content received from OpenAI');
     }
 
@@ -72,6 +95,14 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('OpenAI API error:', error);
+
+    // Handle timeout errors
+    if (error.message === 'Request timeout') {
+      return res.status(504).json({
+        error: 'Gateway Timeout',
+        message: 'Request took too long to process. Please try again.'
+      });
+    }
 
     // Handle rate limiting
     if (error.status === 429) {
