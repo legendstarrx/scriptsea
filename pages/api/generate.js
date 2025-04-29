@@ -30,19 +30,17 @@ export const config = {
     },
     responseLimit: '8mb',
   },
+  runtime: 'edge', // This enables Edge Runtime
 };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
     // Run the CORS middleware
     await runMiddleware(req, res, cors);
 
-    // Set response headers
-    res.setHeader('Content-Type', 'application/json');
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
 
     const { prompt, maxTokens = 2000, temperature = 0.7 } = req.body;
 
@@ -50,52 +48,55 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // Set a timeout using Promise.race
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timed out')), 60000);
-    });
+    // Create an AbortController for the OpenAI request
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
-    const generatePromise = openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: "You are a master scriptwriter and content creator, skilled in creating viral content and engaging scripts."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      max_tokens: maxTokens,
-      temperature: temperature,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.1,
-      top_p: 0.9
-    });
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: "You are a master scriptwriter and content creator, skilled in creating viral content and engaging scripts."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: maxTokens,
+        temperature: temperature,
+        presence_penalty: 0.1,
+        frequency_penalty: 0.1,
+        top_p: 0.9,
+        signal: controller.signal
+      });
 
-    // Race between the OpenAI request and the timeout
-    const completion = await Promise.race([generatePromise, timeoutPromise]);
+      clearTimeout(timeout);
 
-    if (!completion?.choices?.[0]?.message?.content) {
-      throw new Error('No content received from OpenAI');
+      if (!completion?.choices?.[0]?.message?.content) {
+        throw new Error('No content received from OpenAI');
+      }
+
+      return res.status(200).json({
+        success: true,
+        content: completion.choices[0].message.content
+      });
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return res.status(504).json({
+          error: 'Request timeout',
+          message: 'The request took too long to complete. Please try with a shorter prompt or try again later.'
+        });
+      }
+      throw error; // Re-throw other errors to be caught by the outer catch block
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return res.status(200).json({
-      success: true,
-      content: completion.choices[0].message.content
-    });
 
   } catch (error) {
     console.error('OpenAI API error:', error);
-
-    // Handle specific error cases
-    if (error.message === 'Request timed out') {
-      return res.status(504).json({
-        error: 'Request timed out',
-        message: 'The request took too long to complete. Please try again.'
-      });
-    }
 
     if (error.status === 429 || (error.error?.type === 'rate_limit_exceeded')) {
       return res.status(429).json({
