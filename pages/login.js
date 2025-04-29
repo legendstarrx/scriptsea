@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import { addSubscriberToMailerlite } from '../lib/mailerlite';
 
 export default function Login() {
   const isLoading = useAuthRedirect();
@@ -180,6 +181,11 @@ export default function Login() {
             await logout();
             setIsLoadingAuth(false);
             return; // Return early to prevent redirect
+          }
+
+          // Add user to MailerLite if this is their first sign in with Google
+          if (result.additionalUserInfo?.isNewUser) {
+            await addSubscriberToMailerlite(result.user.email, result.user.displayName);
           }
 
           // If not banned, proceed with success

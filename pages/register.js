@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import { addSubscriberToMailerlite } from '../lib/mailerlite';
 
 // List of temporary email domains to block
 const TEMP_EMAIL_DOMAINS = [
@@ -323,9 +324,12 @@ export default function Register() {
 
       setSuccess('Creating your account...');
       await signup(formData.email, formData.password, formData.fullName);
+      
+      // Add user to MailerLite
+      await addSubscriberToMailerlite(formData.email, formData.fullName);
+      
       setSuccess('Account created successfully! Redirecting...');
       
-      // Delay redirect slightly to show success message
       setTimeout(() => {
         router.push('/generate');
       }, 1500);
@@ -395,6 +399,9 @@ export default function Register() {
             setIsLoadingAuth(false);
             return; // Return early to prevent redirect
           }
+
+          // Add user to MailerLite
+          await addSubscriberToMailerlite(result.user.email, result.user.displayName);
 
           // If not banned, proceed with success
           setSuccess('Registration successful! Redirecting...');
