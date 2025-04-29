@@ -1,3 +1,5 @@
+import { db } from '../../lib/firebase-admin';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -6,58 +8,71 @@ export default async function handler(req, res) {
   try {
     const { plan, userId, email } = req.body;
 
-    // Define the correct amount and plan ID
-    const isYearly = plan === 'yearly';
-    const amount = isYearly ? 49.99 : 4.99;
-    const planId = isYearly ? 140698 : 140697;
-
-    // Prepare the payment payload
-    const paymentData = {
-      tx_ref: `tx-${Date.now()}`,
-      amount: amount,
-      currency: 'USD',
-      payment_options: 'card',
-      payment_plan: planId,
-      customer: {
-        email: email
+    // Define plan configurations
+    const plans = {
+      monthly: {
+        planId: '140947',
+        price: 999, // $9.99 in cents
+        name: 'Monthly Pro',
+        description: '100 scripts per month'
       },
-      meta: {
-        userId: userId,
-        plan_type: plan
-      },
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify-flutterwave`,
-      customizations: {
-        title: 'Pro Subscription',
-        description: `${plan} subscription payment`
+      yearly: {
+        planId: '140948',
+        price: 9999, // $99.99 in cents
+        name: 'Yearly Pro',
+        description: '1200 scripts per year'
       }
     };
 
-    // Make request to Flutterwave
-    const paymentResponse = await fetch('https://api.flutterwave.com/v3/payments', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(paymentData)
+    const selectedPlan = plans[plan];
+    if (!selectedPlan) {
+      return res.status(400).json({ error: 'Invalid plan selected' });
+    }
+
+    // Create payment session with your payment provider
+    const paymentSession = await createPaymentSession({
+      planId: selectedPlan.planId,
+      price: selectedPlan.price,
+      name: selectedPlan.name,
+      description: selectedPlan.description,
+      userId,
+      email
     });
 
-    const payment = await paymentResponse.json();
-
-    if (!payment.data?.link) {
-      throw new Error('Failed to create payment link');
-    }
+    // Store pending subscription in Firestore
+    await db.collection('pending_subscriptions').doc(userId).set({
+      userId,
+      email,
+      plan,
+      planId: selectedPlan.planId,
+      price: selectedPlan.price,
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    });
 
     return res.status(200).json({
       success: true,
-      paymentLink: payment.data.link
+      paymentLink: paymentSession.url
     });
-
   } catch (error) {
-    console.error('Create payment error:', error);
+    console.error('Payment creation error:', error);
     return res.status(500).json({
-      success: false,
-      message: 'Failed to create payment. Please try again.'
+      error: 'Failed to create payment session'
     });
   }
+}
+
+async function createPaymentSession({
+  planId,
+  price,
+  name,
+  description,
+  userId,
+  email
+}) {
+  // Implement your payment provider's session creation here
+  // Example with a generic payment provider:
+  return {
+    url: `/api/process-payment?plan=${planId}&price=${price}&userId=${userId}`
+  };
 }

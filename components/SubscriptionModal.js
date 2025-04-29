@@ -8,8 +8,9 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
 
   const plans = {
     monthly: {
-      price: '$4.99',
-      amount: 8000,
+      price: '$9.99',
+      planId: '140947',
+      amount: 9990,
       features: [
         '100 scripts per month',
         'Export scripts to PDF & Word',
@@ -19,12 +20,16 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
         'Thumbnail suggestions',
         'Creator style matching',
         'Priority email support',
-        'Early access to new features'
+        'Early access to new features',
+        'AI-powered script generation',
+        'Viral hook suggestions',
+        'Platform-specific optimization'
       ]
     },
     yearly: {
-      price: '$49.99',
-      amount: 80000,
+      price: '$99.99',
+      planId: '140948',
+      amount: 99990,
       features: [
         '1200 scripts per year',
         'Export scripts to PDF & Word',
@@ -35,7 +40,11 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
         'Creator style matching',
         'Priority email support',
         'Early access to new features',
-        '2 months free'
+        'AI-powered script generation',
+        'Viral hook suggestions',
+        'Platform-specific optimization',
+        '2 months free',
+        'Best value (Save 17%)'
       ]
     }
   };
@@ -53,6 +62,7 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
         },
         body: JSON.stringify({
           plan: plan === 'yearly' ? 'yearly' : 'monthly',
+          planId: plans[plan].planId,
           userId: user.uid,
           email: user.email
         })
@@ -128,6 +138,9 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
                 <div key={planType} className="plan-card">
                   <h3>{planType === 'monthly' ? 'Monthly Pro' : 'Yearly Pro'}</h3>
                   <div className="price">{plan.price}</div>
+                  {planType === 'yearly' && (
+                    <div className="savings-badge">Save 17%</div>
+                  )}
                   <div className="features">
                     {plan.features.map((feature, index) => (
                       <div key={index} className="feature">
@@ -312,6 +325,17 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
           font-size: 1.2rem;
           display: inline-block;
           margin-bottom: 20px;
+        }
+
+        .savings-badge {
+          background: #FF3366;
+          color: white;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          margin: 10px auto;
+          width: fit-content;
         }
 
         @media (max-width: 768px) {

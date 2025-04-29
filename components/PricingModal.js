@@ -54,14 +54,32 @@ export default function PricingModal({ isOpen, onClose }) {
             <p style={{ color: '#666' }}>Thumbnail suggestions</p>
             <p style={{ color: '#666' }}>Creator style matching</p>
             <p style={{ color: '#666' }}>Priority support</p>
+            <p style={{ color: '#666' }}>AI-powered script generation</p>
+            <p style={{ color: '#666' }}>Viral hook suggestions</p>
+            <p style={{ color: '#666' }}>Platform-specific optimization</p>
             <p style={{ color: '#666' }}>Cancel anytime</p>
-            <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$4.99/month</p>
+            <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$9.99/month</p>
           </div>
           <div style={{
             border: '1px solid #FF3366',
             padding: '1rem',
-            borderRadius: '8px'
+            borderRadius: '8px',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              right: '-30px',
+              background: '#FF3366',
+              color: 'white',
+              padding: '4px 40px',
+              transform: 'rotate(45deg)',
+              fontSize: '0.8rem',
+              fontWeight: 'bold'
+            }}>
+              BEST VALUE
+            </div>
             <h3 style={{ color: '#333' }}>Pro Yearly</h3>
             <p style={{ color: '#666' }}>1200 scripts per year</p>
             <p style={{ color: '#666' }}>Export to PDF & Word</p>
@@ -71,8 +89,12 @@ export default function PricingModal({ isOpen, onClose }) {
             <p style={{ color: '#666' }}>Thumbnail suggestions</p>
             <p style={{ color: '#666' }}>Creator style matching</p>
             <p style={{ color: '#666' }}>Priority support</p>
+            <p style={{ color: '#666' }}>AI-powered script generation</p>
+            <p style={{ color: '#666' }}>Viral hook suggestions</p>
+            <p style={{ color: '#666' }}>Platform-specific optimization</p>
             <p style={{ color: '#666' }}>2 months free</p>
-            <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$49.99/year</p>
+            <p style={{ color: '#666' }}>Save 17%</p>
+            <p style={{ color: '#FF3366', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '0.5rem' }}>$99.99/year</p>
           </div>
         </div>
         <button
