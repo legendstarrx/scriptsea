@@ -12,10 +12,9 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { toast, Toaster } from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { generateWithOpenAI } from '../lib/openai';
 
 // Initialize Gemini API
-// const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
 // GeneratePageNav Component
 const GeneratePageNav = () => {
@@ -646,6 +645,14 @@ export default function Generate() {
       setIsGeneratingAdvanced(true);
       setError('');
 
+      const model = genAI.getGenerativeModel({ 
+        model: "models/gemini-2.0-flash",
+        generationConfig: {
+          maxOutputTokens: 1024,
+          temperature: 0.9,
+        }
+      });
+
       const prompt = `Based on this video topic: "${videoTopic}", provide:
       1. 5 relevant keywords for SEO
       2. 10 trending hashtags for ${selectedPlatform}
@@ -653,10 +660,19 @@ export default function Generate() {
       
       Format the response in a clear, concise way without markdown symbols.`;
 
-      const response = await generateWithOpenAI(prompt, 1024, 0.9);
+      const result = await model.generateContent({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      });
+
+      const response = await result.response;
+      const content = response.text();
       
       // Parse the response into sections
-      const sections = response.split('\n\n');
+      const sections = content.split('\n\n');
       setKeywords(sections[0]);
       setHashtags(sections[1]);
       setSeoTips(sections[2]);
@@ -965,9 +981,25 @@ export default function Generate() {
       setIsGenerating(true);
       setError('');
 
+      const model = genAI.getGenerativeModel({ 
+        model: "models/gemini-2.0-flash",
+        generationConfig: {
+          maxOutputTokens: 2048,
+          temperature: 0.9,
+        }
+      });
+
       const prompt = await generatePrompt();
-      const response = await generateWithOpenAI(prompt);
-      const formattedScript = formatScript(response);
+      const result = await model.generateContent({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      });
+
+      const response = await result.response;
+      const formattedScript = formatScript(response.text());
       setGeneratedScript(formattedScript);
 
       // Update script count in Firebase
@@ -1018,9 +1050,25 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       setIsGeneratingThumbnail(true);
       setError('');
 
+      const model = genAI.getGenerativeModel({ 
+        model: "models/gemini-2.0-flash",
+        generationConfig: {
+          maxOutputTokens: 1024,
+          temperature: 0.9,
+        }
+      });
+
       const prompt = generateThumbnailPrompt(generatedScript.replace(/<[^>]+>/g, ''));
-      const response = await generateWithOpenAI(prompt, 1024, 0.9);
-      setThumbnailSuggestions(response);
+      const result = await model.generateContent({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      });
+
+      const response = await result.response;
+      setThumbnailSuggestions(response.text());
     } catch (err) {
       console.error('Thumbnail generation error:', err);
       setError('Error generating thumbnail suggestions. Please try again.');
