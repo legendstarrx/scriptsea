@@ -2,8 +2,9 @@
   "version": 2,
   "functions": {
     "api/generate.js": {
+      "runtime": "edge",
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 60
     }
   },
 
