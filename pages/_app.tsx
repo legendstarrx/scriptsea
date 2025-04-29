@@ -12,6 +12,8 @@ import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
 import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import ProtectedRoute from '../components/ProtectedRoute';
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 // Add this type definition
 type CustomPageProps = {
