@@ -1,4 +1,5 @@
 import { Html, Head, Main, NextScript } from 'next/document';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function Document() {
   return (
@@ -37,6 +38,11 @@ export default function Document() {
         <meta property="twitter:title" content="ScriptSea - AI Video Script Generator" />
         <meta property="twitter:description" content="Generate engaging video scripts for YouTube, TikTok, Instagram, and more with AI-powered technology." />
         <meta property="twitter:image" content="https://www.scriptsea.com/og-image.png" />
+
+        <script
+          defer
+          src="/_vercel/insights/script.js"
+        />
       </Head>
       <body>
         <Main />
