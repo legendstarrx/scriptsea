@@ -1,12 +1,13 @@
 import { AuthProvider } from '../context/AuthContext';
-import RootLayout from '../components/RootLayout';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
-      <RootLayout>
-        <Component {...pageProps} />
-      </RootLayout>
+      <Component {...pageProps} />
+      <Analytics debug={process.env.NODE_ENV === 'development'} />
+      <SpeedInsights />
     </AuthProvider>
   );
 }
