@@ -10,10 +10,23 @@ function MyApp({ Component, pageProps }) {
   useEffect(() => {
     // Track route changes
     const handleRouteChange = (url) => {
-      window?.va?.track('pageview');
+      try {
+        window?.va?.track('pageview', { 
+          url,
+          referrer: document.referrer,
+          user_agent: window.navigator.userAgent,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Analytics error:', error);
+      }
     };
 
     router.events.on('routeChangeComplete', handleRouteChange);
+    
+    // Track initial pageview
+    handleRouteChange(window.location.pathname + window.location.search);
+
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange);
     };
@@ -22,7 +35,16 @@ function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
       <Component {...pageProps} />
-      <Analytics mode={process.env.NODE_ENV === 'production' ? 'production' : 'development'} />
+      <Analytics 
+        beforeSend={(event) => {
+          // Add custom properties to all events
+          return {
+            ...event,
+            url: window.location.href,
+            timestamp: new Date().toISOString()
+          }
+        }}
+      />
       <SpeedInsights />
     </AuthProvider>
   );
