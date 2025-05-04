@@ -8,9 +8,6 @@ export default function Document() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#FF3366" />
         
-        {/* Vercel Analytics */}
-        <script defer src="/_vercel/insights/script.js" />
-        
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
         
