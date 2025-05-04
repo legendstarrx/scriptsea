@@ -35,16 +35,20 @@ export default async function handler(req, res) {
 
     // Check if IP is a VPN/proxy using IPQualityScore
     const API_KEY = process.env.IPQUALITYSCORE_API_KEY;
-    if (!API_KEY) {
-      console.error('IPQUALITYSCORE_API_KEY not configured');
-      return res.status(500).json({ 
-        error: 'Configuration error',
-        message: 'VPN detection service is not properly configured. Please contact support.'
+    
+    // If API key is missing or is the placeholder value, skip VPN check
+    if (!API_KEY || API_KEY === 'your_ipqualityscore_api_key_here') {
+      console.warn('IPQUALITYSCORE_API_KEY not properly configured - skipping VPN check');
+      return res.status(200).json({ 
+        success: true,
+        ip,
+        vpn_detected: false,
+        vpn_check_skipped: true
       });
     }
 
     try {
-      const vpnCheckUrl = `https://ipqualityscore.com/api/json/ip/${API_KEY}/${ip}`;
+      const vpnCheckUrl = `https://ipqualityscore.com/api/json/ip/${API_KEY}/${ip}?strictness=1&allow_public_access_points=true`;
       const response = await fetch(vpnCheckUrl, {
         method: 'GET',
         headers: {
@@ -53,7 +57,14 @@ export default async function handler(req, res) {
       });
 
       if (!response.ok) {
-        throw new Error(`IPQualityScore API responded with status: ${response.status}`);
+        console.error('IPQualityScore API error:', response.status);
+        // If API call fails, allow access but log the error
+        return res.status(200).json({ 
+          success: true,
+          ip,
+          vpn_detected: false,
+          vpn_check_failed: true
+        });
       }
 
       const data = await response.json();
@@ -61,7 +72,13 @@ export default async function handler(req, res) {
 
       if (!data.success) {
         console.error('IPQualityScore API error:', data.message);
-        throw new Error(data.message || 'VPN check service error');
+        // If API returns error, allow access but log the error
+        return res.status(200).json({ 
+          success: true,
+          ip,
+          vpn_detected: false,
+          vpn_check_failed: true
+        });
       }
 
       if (data.proxy || data.vpn) {
@@ -86,17 +103,22 @@ export default async function handler(req, res) {
 
     } catch (vpnError) {
       console.error('VPN check error:', vpnError);
-      // If VPN check fails, we should return an error
-      return res.status(500).json({
-        error: 'VPN check failed',
-        message: 'Unable to verify VPN status. Please try again later.'
+      // If VPN check fails, allow access but log the error
+      return res.status(200).json({ 
+        success: true,
+        ip,
+        vpn_detected: false,
+        vpn_check_failed: true
       });
     }
   } catch (error) {
     console.error('IP check error:', error);
-    return res.status(500).json({ 
-      error: 'Internal server error',
-      message: 'An unexpected error occurred. Please try again later.'
+    // For any other errors, still allow access but log the error
+    return res.status(200).json({ 
+      success: true,
+      ip: req.headers['x-forwarded-for'] || 'unknown',
+      vpn_detected: false,
+      check_failed: true
     });
   }
 } 
