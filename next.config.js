@@ -27,8 +27,8 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-analytics.com https://*.vercel-scripts.com https://*.vercel.com https://*.vercel.app *.firebaseapp.com *.google.com apis.google.com identitytoolkit.googleapis.com va.vercel-scripts.com",
-              "connect-src 'self' https://*.vercel-analytics.com https://*.vercel-scripts.com https://*.vercel.com vitals.vercel-insights.com *.firebaseapp.com *.googleapis.com identitytoolkit.googleapis.com wss://*.firebaseio.com connect.mailerlite.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.vercel.com https://*.vercel.app *.firebaseapp.com *.google.com apis.google.com identitytoolkit.googleapis.com va.vercel-scripts.com",
+              "connect-src 'self' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.vercel.com vitals.vercel-insights.com *.firebaseapp.com *.googleapis.com identitytoolkit.googleapis.com wss://*.firebaseio.com connect.mailerlite.com",
               "img-src 'self' data: *.googleusercontent.com firebasestorage.googleapis.com www.google.com",
               "frame-src 'self' *.firebaseapp.com *.google.com",
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
