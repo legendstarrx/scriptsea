@@ -36,32 +36,67 @@ export default async function handler(req, res) {
     // Check if IP is a VPN/proxy using IPQualityScore
     const API_KEY = process.env.IPQUALITYSCORE_API_KEY;
     if (!API_KEY) {
-      console.warn('IPQUALITYSCORE_API_KEY not configured');
-      return res.status(200).json({ ip });
+      console.error('IPQUALITYSCORE_API_KEY not configured');
+      return res.status(500).json({ 
+        error: 'Configuration error',
+        message: 'VPN detection service is not properly configured. Please contact support.'
+      });
     }
 
     try {
-      const response = await fetch(`https://ipqualityscore.com/api/json/ip/${API_KEY}/${ip}?strictness=1&allow_public_access_points=true`);
-      const data = await response.json();
-
-      if (data.success) {
-        if (data.proxy || data.vpn) {
-          return res.status(403).json({
-            error: 'VPN detected',
-            message: 'VPN/proxy usage is not allowed. Please disable your VPN and try again.'
-          });
+      const vpnCheckUrl = `https://ipqualityscore.com/api/json/ip/${API_KEY}/${ip}`;
+      const response = await fetch(vpnCheckUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
         }
-      } else {
-        console.warn('IPQualityScore API error:', data.message);
+      });
+
+      if (!response.ok) {
+        throw new Error(`IPQualityScore API responded with status: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log('IPQualityScore response:', data); // Debug log
+
+      if (!data.success) {
+        console.error('IPQualityScore API error:', data.message);
+        throw new Error(data.message || 'VPN check service error');
+      }
+
+      if (data.proxy || data.vpn) {
+        return res.status(403).json({
+          error: 'VPN detected',
+          message: 'VPN/proxy usage is not allowed. Please disable your VPN and try again.',
+          details: {
+            proxy: data.proxy,
+            vpn: data.vpn,
+            tor: data.tor,
+            fraud_score: data.fraud_score
+          }
+        });
+      }
+
+      // If everything is okay, return success with IP
+      return res.status(200).json({ 
+        success: true,
+        ip,
+        vpn_detected: false
+      });
+
     } catch (vpnError) {
       console.error('VPN check error:', vpnError);
-      // Continue without failing if VPN check fails
+      // If VPN check fails, we should return an error
+      return res.status(500).json({
+        error: 'VPN check failed',
+        message: 'Unable to verify VPN status. Please try again later.'
+      });
     }
-
-    return res.status(200).json({ ip });
   } catch (error) {
     console.error('IP check error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'An unexpected error occurred. Please try again later.'
+    });
   }
 } 

@@ -851,106 +851,95 @@ export default function Generate() {
   const generatePrompt = async () => {
     const videoReference = viralReference ? await processVideoLink(viralReference) : null;
     
-    let prompt = `As a master ${scriptType === 'viral' ? 'viral content creator' : 'advertising copywriter'} and storytelling expert, create an incredibly engaging ${scriptType} script for a ${duration} ${selectedPlatform} video about "${videoTopic}". Make it sound completely human, conversational, and naturally compelling.
+    let prompt = `You are a master viral content creator who has written scripts for MrBeast, Ryan Trahan, and other top creators. Write a ${duration} ${selectedPlatform} script that sounds completely natural and hooks viewers instantly.
 
-    ${!includeVisuals ? 'Important: Create a voiceover-only script. Do not include any visual directions, camera movements, or audio suggestions in the main content.' : ''}
+    Topic: "${videoTopic}"
+    Style: ${selectedTone} but highly engaging
+    Platform: ${selectedPlatform}
+    Duration: ${duration}
 
-    Tone: ${selectedTone} but always engaging and authentic
+    Key Requirements:
+    - Write in a natural, conversational tone exactly like a human creator would speak
+    - Use short, punchy sentences that create instant engagement
+    - Include pattern interrupts every 15-20 seconds to maintain attention
+    - Create "I need to keep watching" moments throughout
+    - Use modern slang and expressions naturally (not forced)
+    - Write like you're talking to a friend, not writing an essay
+    - Focus on storytelling that makes viewers emotionally invested
+    - Create multiple viral "hook" moments that make people want to share
+    - Make every second count - no filler content
+    ${!includeVisuals ? '- Create a voiceover-only script without any visual directions' : ''}
 
     ${scriptType === 'ad' ? `
-    Advertisement Script Requirements:
-    - Focus on clear value proposition and benefits
-    - Include specific product/service features
-    - Create urgency and FOMO (Fear of Missing Out)
-    - Use social proof and testimonials
-    - Include clear pricing and call-to-action
-    - Emphasize unique selling points
-    - Create emotional connection with target audience
-    - Use persuasive techniques (scarcity, reciprocity, authority)
-    - Include specific product demonstrations or use cases
-    - End with strong conversion-focused CTA
+    Advertisement Framework:
+    - Open with an attention-grabbing problem/solution hook
+    - Use real customer pain points and stories
+    - Show don't tell - demonstrate value through examples
+    - Build credibility with specific results/numbers
+    - Create FOMO through scarcity/urgency
+    - End with a clear, compelling call-to-action
     ` : `
-    Viral Script Requirements:
-    - Focus on entertainment and engagement
-    - Create shareable moments and "water cooler" moments
-    - Use pattern interrupts and unexpected twists
-    - Build emotional investment through storytelling
-    - Create multiple "share triggers"
-    - Use trending topics and cultural references
-    - Include audience participation elements
-    - Create suspense and curiosity gaps
-    - End with community-focused CTA
+    Viral Framework:
+    - Start with a shocking/intriguing hook that creates instant curiosity
+    - Build tension and anticipation throughout
+    - Include unexpected twists and revelations
+    - Create shareable moments and quotable lines
+    - End with a satisfying payoff that delivers on the hook
     `}
 
     ${selectedCreator ? `
-    Channel Style Reference: ${selectedCreator}
+    Match ${selectedCreator}'s Style:
     ${creatorStyles[selectedPlatform].find(c => c.name === selectedCreator)?.description}
     
-    Key style elements to incorporate:
-    - Match their unique energy and personality
-    - Use their signature transitions and hooks
-    - Mirror their storytelling techniques
-    - Adapt their emotional engagement style
-    - Maintain their authentic voice and delivery
+    Key style elements to copy:
+    - Use their exact energy level and pacing
+    - Copy their signature transitions and hooks
+    - Match their storytelling techniques
+    - Use their type of humor and delivery
+    - Incorporate their catchphrases naturally
     ` : ''}
     
     ${videoReference ? `
-    Viral Reference Analysis:
+    Reference Video Analysis:
     Platform: ${videoReference.platform}
     Video ID: ${videoReference.id}
     URL: ${videoReference.url}
     
-    Incorporate these viral elements:
-    - Similar emotional hooks and pattern interrupts
-    - Matching energy levels and pacing
-    - Comparable storytelling structure
+    Copy these viral elements:
+    - Similar hook style and energy
+    - Matching pacing and flow
+    - Equivalent storytelling structure
     - Related audience engagement techniques
-    - Equivalent tension and resolution patterns
+    - Comparable tension and resolution patterns
     ` : ''}
     
     Format the script with these sections:
 
     # ${scriptType === 'ad' ? 'Advertisement Title Options' : 'Viral Title Options'}
-
-    Title 1: [${scriptType === 'ad' ? 'Create a benefit-focused title that highlights value proposition' : 'Create a shocking/intriguing title that makes people stop scrolling'}]
-    
-    Title 2: [${scriptType === 'ad' ? 'Create a problem-solution title that addresses pain points' : 'Create a value-focused title that promises clear benefits'}]
-    
-    Title 3: [${scriptType === 'ad' ? 'Create a social proof title that builds credibility' : 'Create an emotionally compelling title that connects personally'}]
+    [Create 3 attention-grabbing titles that would work well as ${selectedPlatform} titles. Make them impossible to scroll past.]
 
     ## Hook
-    [${scriptType === 'ad' ? 'Attention-grabbing opening that highlights main benefit or solves key pain point' : 'Attention-grabbing opening that creates instant investment'}]
+    [Write an instantly engaging hook that creates immediate investment in the first 3 seconds]
 
     ## Intro
-    [${scriptType === 'ad' ? 'Problem statement and solution introduction' : 'Compelling setup that justifies the hook and builds curiosity'}]
+    [Build on the hook with context that makes viewers need to watch more]
 
     ## Body
-    [${scriptType === 'ad' ? 'Main content broken into key benefits, features, and social proof' : 'Main content broken into easily digestible chunks with mini-cliffhangers'}]
+    [Main content with constant engagement, mini-cliffhangers, and pattern interrupts]
 
-    ## Conclusion
-    [${scriptType === 'ad' ? 'Value proposition reinforcement and urgency creation' : 'Satisfying payoff that delivers on the hook\'s promise'}]
+    ## Conclusion 
+    [Satisfying payoff that delivers on the hook's promise]
 
     ## CTA
-    [${scriptType === 'ad' ? 'Strong conversion-focused call to action with clear next steps' : 'Natural, value-driven call to action that feels like a gift, not a demand'}]
+    [Natural call-to-action that feels like value, not a demand]
 
-    ${includeVisuals ? `## Visual Elements
-    [${scriptType === 'ad' ? 'Product demonstrations, before/after comparisons, and testimonial visuals' : 'Strategic camera angles, transitions, and effects that enhance the story'}]
+    ${includeVisuals ? `
+    ## Visual Elements
+    [Strategic camera angles, transitions, and effects that enhance the story]
 
     ## Audio Elements
-    [${scriptType === 'ad' ? 'Professional background music and sound effects that enhance product presentation' : 'Music and sound design suggestions that amplify emotional impact'}]
-    ` : ''}
-
-    Key Requirements:
-    - Make every word count - no filler content
-    - Keep the energy high but authentic
-    - Use ${selectedPlatform}-optimized pacing and structure
-    ${scriptType === 'ad' ? '- Focus on conversion and sales psychology' : '- Create multiple "share triggers"'}
-    - Make it feel like a human wrote it, not AI
-    - Focus on emotional connection and storytelling
-    ${!includeVisuals ? '- Create a compelling voiceover-only script that works without visual elements' : '- Include viral hooks every 15-20 seconds'}
-    - Use power words and emotional triggers naturally
-    - Create "quote-worthy" moments
-    - Make it impossible to stop watching`;
+    [Music and sound design suggestions that amplify emotional impact]
+    ` : ''}`;
 
     return prompt;
   };
