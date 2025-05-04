@@ -325,8 +325,22 @@ export default function Register() {
       setSuccess('Creating your account...');
       await signup(formData.email, formData.password, formData.fullName);
       
-      // Add user to MailerLite
-      await addSubscriberToMailerlite(formData.email, formData.fullName);
+      // Add to newsletter
+      try {
+        await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            name: formData.fullName
+          })
+        });
+      } catch (newsletterError) {
+        console.error('Newsletter subscription error:', newsletterError);
+        // Don't block registration if newsletter fails
+      }
       
       setSuccess('Account created successfully! Redirecting...');
       
@@ -365,7 +379,7 @@ export default function Register() {
     setErrorMessage('');
     setError('');
     setSuccess('');
-    
+
     try {
       const result = await signInWithGoogle();
       if (result?.user) {
@@ -400,8 +414,24 @@ export default function Register() {
             return; // Return early to prevent redirect
           }
 
-          // Add user to MailerLite
-          await addSubscriberToMailerlite(result.user.email, result.user.displayName);
+          // Add to newsletter if new user
+          if (result.additionalUserInfo?.isNewUser) {
+            try {
+              await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: result.user.email,
+                  name: result.user.displayName
+                })
+              });
+            } catch (newsletterError) {
+              console.error('Newsletter subscription error:', newsletterError);
+              // Don't block registration if newsletter fails
+            }
+          }
 
           // If not banned, proceed with success
           setSuccess('Registration successful! Redirecting...');

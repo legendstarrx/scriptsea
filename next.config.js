@@ -27,12 +27,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.google.com https://apis.google.com https://identitytoolkit.googleapis.com https://va.vercel-scripts.com https://*.vercel-scripts.com https://*.vercel-insights.com https://*.vercel.app https://*.vercel.com https://vercel.live https://vercel.com",
-              "connect-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com https://vitals.vercel-insights.com https://*.vercel-insights.com https://*.vercel-scripts.com https://*.vercel.app https://*.vercel.com https://vercel.live https://vercel.com https://connect.mailerlite.com",
-              "img-src 'self' data: https://*.googleusercontent.com https://firebasestorage.googleapis.com https://www.google.com",
-              "frame-src 'self' https://*.firebaseapp.com https://*.google.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-analytics.com https://*.vercel-scripts.com https://*.vercel.com https://*.vercel.app *.firebaseapp.com *.google.com apis.google.com identitytoolkit.googleapis.com va.vercel-scripts.com",
+              "connect-src 'self' https://*.vercel-analytics.com https://*.vercel-scripts.com https://*.vercel.com vitals.vercel-insights.com *.firebaseapp.com *.googleapis.com identitytoolkit.googleapis.com wss://*.firebaseio.com connect.mailerlite.com",
+              "img-src 'self' data: *.googleusercontent.com firebasestorage.googleapis.com www.google.com",
+              "frame-src 'self' *.firebaseapp.com *.google.com",
+              "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
+              "font-src 'self' fonts.gstatic.com",
               "media-src 'self'",
               "object-src 'none'"
             ].join('; ')
