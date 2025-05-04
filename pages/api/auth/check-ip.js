@@ -23,6 +23,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No IP address found' });
     }
 
+    // Debug log the IP
+    console.log('Checking IP:', ip);
+
     // Check if IP is banned
     const bannedIpDoc = await adminDb.collection('banned_ips').doc(ip).get();
     
@@ -34,21 +37,32 @@ export default async function handler(req, res) {
     }
 
     // Check if IP is a VPN/proxy using IPQualityScore
-    const API_KEY = process.env.IPQUALITYSCORE_API_KEY;
+    const API_KEY = process.env.PQUALITYSCORE_API_KEY;
     
-    // If API key is missing or is the placeholder value, skip VPN check
+    // Debug log API key status (don't log the actual key)
+    console.log('API Key status:', {
+      exists: !!API_KEY,
+      length: API_KEY?.length,
+      isPlaceholder: API_KEY === 'your_ipqualityscore_api_key_here'
+    });
+
     if (!API_KEY || API_KEY === 'your_ipqualityscore_api_key_here') {
-      console.warn('IPQUALITYSCORE_API_KEY not properly configured - skipping VPN check');
+      console.warn('PQUALITYSCORE_API_KEY not properly configured');
       return res.status(200).json({ 
         success: true,
         ip,
         vpn_detected: false,
-        vpn_check_skipped: true
+        vpn_check_skipped: true,
+        debug_info: {
+          reason: 'API_KEY_MISSING_OR_INVALID'
+        }
       });
     }
 
     try {
       const vpnCheckUrl = `https://ipqualityscore.com/api/json/ip/${API_KEY}/${ip}?strictness=1&allow_public_access_points=true`;
+      console.log('Making request to:', vpnCheckUrl.replace(API_KEY, 'HIDDEN'));
+
       const response = await fetch(vpnCheckUrl, {
         method: 'GET',
         headers: {
@@ -56,28 +70,41 @@ export default async function handler(req, res) {
         }
       });
 
+      console.log('API Response status:', response.status);
+
       if (!response.ok) {
-        console.error('IPQualityScore API error:', response.status);
-        // If API call fails, allow access but log the error
+        const errorText = await response.text();
+        console.error('IPQualityScore API error response:', errorText);
         return res.status(200).json({ 
           success: true,
           ip,
           vpn_detected: false,
-          vpn_check_failed: true
+          vpn_check_failed: true,
+          debug_info: {
+            status: response.status,
+            error: errorText
+          }
         });
       }
 
       const data = await response.json();
-      console.log('IPQualityScore response:', data); // Debug log
+      console.log('IPQualityScore API response:', {
+        success: data.success,
+        proxy: data.proxy,
+        vpn: data.vpn,
+        fraud_score: data.fraud_score
+      });
 
       if (!data.success) {
         console.error('IPQualityScore API error:', data.message);
-        // If API returns error, allow access but log the error
         return res.status(200).json({ 
           success: true,
           ip,
           vpn_detected: false,
-          vpn_check_failed: true
+          vpn_check_failed: true,
+          debug_info: {
+            api_error: data.message
+          }
         });
       }
 
@@ -94,31 +121,39 @@ export default async function handler(req, res) {
         });
       }
 
-      // If everything is okay, return success with IP
-      return res.status(200).json({ 
-        success: true,
-        ip,
-        vpn_detected: false
-      });
-
-    } catch (vpnError) {
-      console.error('VPN check error:', vpnError);
-      // If VPN check fails, allow access but log the error
       return res.status(200).json({ 
         success: true,
         ip,
         vpn_detected: false,
-        vpn_check_failed: true
+        debug_info: {
+          checked: true,
+          proxy: data.proxy,
+          vpn: data.vpn
+        }
+      });
+
+    } catch (vpnError) {
+      console.error('VPN check error:', vpnError);
+      return res.status(200).json({ 
+        success: true,
+        ip,
+        vpn_detected: false,
+        vpn_check_failed: true,
+        debug_info: {
+          error: vpnError.message
+        }
       });
     }
   } catch (error) {
     console.error('IP check error:', error);
-    // For any other errors, still allow access but log the error
     return res.status(200).json({ 
       success: true,
       ip: req.headers['x-forwarded-for'] || 'unknown',
       vpn_detected: false,
-      check_failed: true
+      check_failed: true,
+      debug_info: {
+        error: error.message
+      }
     });
   }
 } 
