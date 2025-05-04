@@ -861,19 +861,20 @@ export default function Generate() {
     Key Requirements:
     - Write in a natural, conversational tone exactly like a human creator would speak
     - Use short, punchy sentences that create instant engagement
-    - Include pattern interrupts every 15-20 seconds to maintain attention
-    - Create "I need to keep watching" moments throughout
+    - Start with an explosive hook that makes it impossible to scroll past
+    - Create multiple "wait, what?" moments that force people to keep watching
     - Use modern slang and expressions naturally (not forced)
     - Write like you're talking to a friend, not writing an essay
     - Focus on storytelling that makes viewers emotionally invested
     - Create multiple viral "hook" moments that make people want to share
     - Make every second count - no filler content
+    - Use modern content creator pacing (fast, dynamic, engaging)
     ${!includeVisuals ? '- Create a voiceover-only script without any visual directions' : ''}
 
     ${scriptType === 'ad' ? `
     Advertisement Framework:
-    - Open with an attention-grabbing problem/solution hook
-    - Use real customer pain points and stories
+    - Open with a shocking statement or demonstration that stops the scroll
+    - Hit the pain point immediately in a relatable way
     - Show don't tell - demonstrate value through examples
     - Build credibility with specific results/numbers
     - Create FOMO through scarcity/urgency
@@ -919,16 +920,13 @@ export default function Generate() {
     [Create 3 attention-grabbing titles that would work well as ${selectedPlatform} titles. Make them impossible to scroll past.]
 
     ## Hook
-    [Write an instantly engaging hook that creates immediate investment in the first 3 seconds]
-
-    ## Intro
-    [Build on the hook with context that makes viewers need to watch more]
+    [Write an instantly engaging hook that grabs attention in the first 3 seconds - make it impossible to scroll past]
 
     ## Body
-    [Main content with constant engagement, mini-cliffhangers, and pattern interrupts]
+    [Main content with constant engagement, mini-hooks, pattern interrupts, and unexpected moments. Keep energy high and pacing dynamic.]
 
     ## Conclusion 
-    [Satisfying payoff that delivers on the hook's promise]
+    [Quick, satisfying payoff that delivers on the hook's promise]
 
     ## CTA
     [Natural call-to-action that feels like value, not a demand]
