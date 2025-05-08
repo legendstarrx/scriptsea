@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import ContactModal from './ContactModal';
-import { Analytics } from "@vercel/analytics/react";
+
 import SubscriptionModal from './SubscriptionModal';
 import Image from 'next/image';
 

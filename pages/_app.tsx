@@ -25,8 +25,16 @@ type CustomAppProps = AppProps & {
   Component: AppProps['Component'] & CustomPageProps;
 };
 
+// Declare gtag as a global function
+declare global {
+  interface Window {
+    gtag: (type: string, value: any, params?: any) => void;
+  }
+}
+
 function MyApp({ Component, pageProps }: CustomAppProps) {
   const [isInitializing, setIsInitializing] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // Initialize error handling
@@ -38,6 +46,22 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
       setIsInitializing(false);
     });
   }, []);
+
+  // Track page views
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      if (typeof window.gtag !== 'undefined') {
+        window.gtag('config', 'G-9VTGLJ644Y', {
+          page_path: url,
+        });
+      }
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
 
   if (isInitializing) {
     return <LoadingSpinner />;
