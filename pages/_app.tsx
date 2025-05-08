@@ -51,7 +51,7 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
   // Track page views
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      if (typeof window !== 'undefined' && window.gtag) {
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
         window.gtag('event', 'page_view', {
           page_path: url,
           page_title: document.title,
@@ -61,7 +61,7 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
     };
 
     // Track initial page view
-    if (typeof window !== 'undefined' && window.gtag) {
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       handleRouteChange(window.location.pathname + window.location.search);
     }
 
