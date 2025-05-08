@@ -29,6 +29,7 @@ type CustomAppProps = AppProps & {
 declare global {
   interface Window {
     gtag: (type: string, value: any, params?: any) => void;
+    dataLayer: any[];
   }
 }
 
@@ -50,12 +51,19 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
   // Track page views
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      if (typeof window.gtag !== 'undefined') {
-        window.gtag('config', 'G-9VTGLJ644Y', {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'page_view', {
           page_path: url,
+          page_title: document.title,
+          page_location: window.location.href
         });
       }
     };
+
+    // Track initial page view
+    if (typeof window !== 'undefined' && window.gtag) {
+      handleRouteChange(window.location.pathname + window.location.search);
+    }
 
     router.events.on('routeChangeComplete', handleRouteChange);
     return () => {

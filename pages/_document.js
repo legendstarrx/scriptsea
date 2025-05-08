@@ -4,18 +4,25 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        {/* Google Analytics */}
+        {/* Google Analytics - Place this first in Head */}
         <script
+          strategy="afterInteractive"
           async
-          src="https://www.googletagmanager.com/gtag/js?id=G-9VTGLJ644Y"
+          src={`https://www.googletagmanager.com/gtag/js?id=G-9VTGLJ644Y`}
         />
         <script
+          id="google-analytics"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-9VTGLJ644Y');
+              gtag('config', 'G-9VTGLJ644Y', {
+                page_path: window.location.pathname,
+                transport_url: 'https://www.google-analytics.com/g/collect',
+                first_party_collection: true
+              });
             `
           }}
         />
