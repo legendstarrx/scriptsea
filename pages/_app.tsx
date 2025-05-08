@@ -14,6 +14,7 @@ import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from 'next/script';
 
 // Add this type definition
 type CustomPageProps = {
@@ -51,19 +52,12 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
   // Track page views
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-        window.gtag('event', 'page_view', {
-          page_path: url,
-          page_title: document.title,
-          page_location: window.location.href
-        });
-      }
+      window.gtag?.('event', 'page_view', {
+        page_path: url,
+        page_title: document.title,
+        page_location: window.location.href
+      });
     };
-
-    // Track initial page view
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      handleRouteChange(window.location.pathname + window.location.search);
-    }
 
     router.events.on('routeChangeComplete', handleRouteChange);
     return () => {
@@ -77,6 +71,18 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
 
   return (
     <>
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=G-9VTGLJ644Y`}
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-9VTGLJ644Y');
+        `}
+      </Script>
       <ErrorBoundary>
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
