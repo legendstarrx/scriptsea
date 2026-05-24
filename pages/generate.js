@@ -1245,8 +1245,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     checkVerification();
   }, [user, checkEmailVerification, router, verificationChecked]);
 
-  if (!user) return null;
-
   return (
     <ProtectedRoute>
       <div style={{

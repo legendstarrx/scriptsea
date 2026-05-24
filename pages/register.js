@@ -61,10 +61,10 @@ export default function Register() {
       }
 
       setSuccess('Creating your account...');
-      await signup(formData.email, formData.password, formData.fullName);
+      const signupResult = await signup(formData.email, formData.password, formData.fullName);
 
       try {
-        await fetch('/api/subscribe', {
+        fetch('/api/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: formData.email, name: formData.fullName })
@@ -73,8 +73,13 @@ export default function Register() {
         console.error('Newsletter subscription error:', newsletterError);
       }
 
-      setSuccess('Account created successfully! Redirecting...');
-      await router.replace('/generate');
+      if (signupResult?.hasSession) {
+        setSuccess('Account created successfully! Redirecting...');
+        await router.replace('/generate');
+      } else {
+        setSuccess('Account created! Please verify your email to continue.');
+        await router.replace('/verify-email');
+      }
     } catch (err) {
       setError(err?.message || 'Failed to create account. Please try again.');
     } finally {

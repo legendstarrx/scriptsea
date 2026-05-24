@@ -238,7 +238,11 @@ export function AuthProvider({ children }) {
         last_login_at: new Date().toISOString()
       });
     }
-    return mapSupabaseUser(data?.user || null);
+    return {
+      user: mapSupabaseUser(data?.user || null),
+      hasSession: Boolean(data?.session),
+      emailConfirmed: Boolean(data?.user?.email_confirmed_at)
+    };
   };
 
   const login = async (email, password) => {
