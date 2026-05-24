@@ -22,7 +22,17 @@ export default function ProtectedRoute({ children }) {
   }, [user, loading, router]);
 
   if (loading) {
-    return null;
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
+      }}>
+        <div style={{ color: '#444', fontSize: '1rem' }}>Loading your account...</div>
+      </div>
+    );
   }
 
   // Allow access to public pages without authentication

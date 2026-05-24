@@ -31,6 +31,7 @@ export default function AuthCallbackPage() {
         const authCode = queryParams.get('code');
 
         if (accessToken && refreshToken) {
+          setMessage('Finalizing your session...');
           const setSessionPromise = supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
@@ -41,6 +42,7 @@ export default function AuthCallbackPage() {
           const { error } = await Promise.race([setSessionPromise, timeoutPromise]);
           if (error) throw error;
         } else if (authCode) {
+          setMessage('Finalizing your session...');
           const exchangePromise = supabase.auth.exchangeCodeForSession(authCode);
           const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Sign-in timeout. Please try again.')), 2500)

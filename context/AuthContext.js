@@ -167,6 +167,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+    const loadingSafetyTimeout = setTimeout(() => {
+      if (mounted) {
+        setLoading(false);
+      }
+    }, 2500);
 
     const init = async () => {
       try {
@@ -192,6 +197,7 @@ export function AuthProvider({ children }) {
         if (mounted) setError(err);
       } finally {
         if (mounted) setLoading(false);
+        clearTimeout(loadingSafetyTimeout);
       }
     };
 
@@ -200,6 +206,7 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       return () => {
         mounted = false;
+        clearTimeout(loadingSafetyTimeout);
       };
     }
 
@@ -216,6 +223,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       mounted = false;
+      clearTimeout(loadingSafetyTimeout);
       listener.subscription.unsubscribe();
     };
   }, []);
