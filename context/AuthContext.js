@@ -36,6 +36,27 @@ async function fetchProfile(userId) {
   return data;
 }
 
+async function fetchProfileViaServer() {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) return null;
+
+  const response = await fetch('/api/account/profile', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Failed to sync profile.');
+  }
+
+  return payload?.profile || null;
+}
+
 async function upsertProfile(user, patch = {}) {
   const payload = {
     id: user.id,
@@ -88,6 +109,16 @@ export function AuthProvider({ children }) {
 
       setUserProfile(mapProfile(profileRow));
     } catch (err) {
+      try {
+        const fallbackProfile = await fetchProfileViaServer();
+        if (fallbackProfile) {
+          setUserProfile(mapProfile(fallbackProfile));
+          return;
+        }
+      } catch (_fallbackError) {
+        // Ignore fallback error and surface original error below.
+      }
+
       setError(err);
       throw err;
     }
@@ -95,7 +126,18 @@ export function AuthProvider({ children }) {
 
   const refreshUserProfile = async (userId = user?.uid) => {
     if (!userId || !supabase) return null;
-    const profileRow = await fetchProfile(userId);
+
+    let profileRow = null;
+    try {
+      profileRow = await fetchProfile(userId);
+    } catch (_error) {
+      profileRow = null;
+    }
+
+    if (!profileRow) {
+      profileRow = await fetchProfileViaServer();
+    }
+
     const mappedProfile = mapProfile(profileRow || {});
     setUserProfile(mappedProfile);
     return mappedProfile;
