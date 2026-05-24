@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/router';
 
-const SUPPORT_EMAIL = 'support@scriptsea.com';
 const SUPPORT_WHATSAPP_URL = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP_URL || 'https://wa.me/1234567890';
 
 export default function ProfileModal({ onClose, user }) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, deleteUserAccount } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -41,15 +41,25 @@ export default function ProfileModal({ onClose, user }) {
   };
 
   const handleDeleteAccount = () => {
-    const accountEmail = user?.email || '';
-    openSupport(`Hi ScriptSea support, I want to delete my account. My account email is: ${accountEmail}`);
-    setSuccess('Opening WhatsApp support for account deletion request.');
-  };
+    const confirmed = window.confirm('Are you sure you want to permanently delete your account? This action cannot be undone.');
+    if (!confirmed) return;
 
-  const handleEmailSupport = () => {
-    const accountEmail = user?.email || '';
-    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('ScriptSea Account Request')}&body=${encodeURIComponent(`Hello support,\n\nMy account email: ${accountEmail}\n\nRequest details:`)}`;
-    setSuccess('Opening email support.');
+    setError('');
+    setSuccess('');
+    setIsDeletingAccount(true);
+
+    deleteUserAccount()
+      .then(() => {
+        onClose?.();
+        router.replace('/register');
+      })
+      .catch((deleteError) => {
+        console.error('Delete account error:', deleteError);
+        setError(deleteError?.message || 'Failed to delete account. Please try again.');
+      })
+      .finally(() => {
+        setIsDeletingAccount(false);
+      });
   };
 
   if (!user) return null;
@@ -121,11 +131,8 @@ export default function ProfileModal({ onClose, user }) {
           <button type="button" onClick={handleCancelSubscription} style={secondaryActionStyle}>
             Cancel subscription (contact support)
           </button>
-          <button type="button" onClick={handleDeleteAccount} style={secondaryActionStyle}>
-            Delete account (contact support)
-          </button>
-          <button type="button" onClick={handleEmailSupport} style={secondaryActionStyle}>
-            Contact support by email
+          <button type="button" onClick={handleDeleteAccount} disabled={isDeletingAccount} style={deleteActionStyle}>
+            {isDeletingAccount ? 'Deleting account...' : 'Delete account'}
           </button>
         </div>
 
@@ -177,6 +184,13 @@ const secondaryActionStyle = {
   fontWeight: 500,
   width: '100%',
   textAlign: 'left'
+};
+
+const deleteActionStyle = {
+  ...secondaryActionStyle,
+  border: '1px solid #FF8BA7',
+  background: '#FFF2F6',
+  color: '#D3134A'
 };
 
 const signOutButtonStyle = {

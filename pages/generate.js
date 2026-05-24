@@ -317,7 +317,13 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 export default function Generate() {
   const router = useRouter();
   const { user, userProfile, checkEmailVerification } = useAuth();
-  const isProUser = userProfile?.subscription === 'pro' || userProfile?.subscription === 'premium';
+  const normalizedSubscription = (userProfile?.subscription || '').toLowerCase();
+  const isProUser = Boolean(userProfile?.paid) ||
+    normalizedSubscription === 'pro' ||
+    normalizedSubscription === 'premium' ||
+    Boolean(userProfile?.subscriptionType) ||
+    (userProfile?.scriptsLimit ?? 0) > 0 ||
+    (userProfile?.scriptsRemaining ?? 0) > 0;
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');
@@ -1356,7 +1362,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 Current Plan:
               </span>
               <span style={{ fontSize: '1.2rem', fontWeight: '600', color: isProUser ? '#FF3366' : '#666' }}>
-                {isProUser ? `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : 'Weekly'}` : 'Starter'}
+                {isProUser
+                  ? `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : userProfile?.subscriptionType === 'weekly' ? 'Weekly' : ''}`.trim()
+                  : 'Starter'}
               </span>
               {!isProUser && (
                 <>

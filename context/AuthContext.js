@@ -93,6 +93,14 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const refreshUserProfile = async (userId = user?.uid) => {
+    if (!userId || !supabase) return null;
+    const profileRow = await fetchProfile(userId);
+    const mappedProfile = mapProfile(profileRow || {});
+    setUserProfile(mappedProfile);
+    return mappedProfile;
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -103,17 +111,19 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        // Prevent a network/CSP stall from freezing the entire app render.
-        const getUserWithTimeout = Promise.race([
-          supabase.auth.getUser(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Auth initialization timeout')), 6000)
-          )
-        ]);
-
-        const { data } = await getUserWithTimeout;
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
         if (!mounted) return;
-        await syncProfile(data?.user || null);
+
+        const sessionUser = sessionData?.session?.user || null;
+        setUser(mapSupabaseUser(sessionUser));
+        setLoading(false);
+
+        if (sessionUser) {
+          await syncProfile(sessionUser);
+        } else {
+          setUserProfile(null);
+        }
       } catch (err) {
         if (mounted) setError(err);
       } finally {
@@ -255,7 +265,34 @@ export function AuthProvider({ children }) {
   };
 
   const deleteUserAccount = async () => {
-    throw new Error('Delete account from Supabase Dashboard for now.');
+    if (!supabase) throw new Error('Auth service is not configured.');
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) throw new Error('You are not signed in.');
+
+    const response = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload?.error || 'Failed to delete account.');
+    }
+
+    try {
+      await supabase.auth.signOut();
+    } catch (_signOutError) {
+      // Ignore local sign-out errors after server-side deletion.
+    }
+    setUser(null);
+    setUserProfile(null);
+    return true;
   };
 
   const getUsersByIP = async () => [];
@@ -298,6 +335,7 @@ export function AuthProvider({ children }) {
     updateSubscription,
     decrementScriptsRemaining,
     deleteUserAccount,
+    refreshUserProfile,
     getUsersByIP,
     getAllUsers,
     checkEmailVerification,
