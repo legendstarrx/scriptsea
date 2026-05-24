@@ -88,7 +88,7 @@ export default async function handler(req, res) {
       profileByEmail = pickBestEmailProfile(data || [], user.id);
     }
 
-    const canonicalProfile = pickCanonicalProfile(profileById, profileByEmail);
+    let canonicalProfile = pickCanonicalProfile(profileById, profileByEmail);
 
     // If a legacy paid row exists under same email with a different id, migrate paid state to current auth id row.
     if (
@@ -97,7 +97,7 @@ export default async function handler(req, res) {
       isProProfile(profileByEmail) &&
       (!profileById || !isProProfile(profileById))
     ) {
-      await supabaseAdmin.from('profiles').upsert({
+      const { error: mergeError } = await supabaseAdmin.from('profiles').upsert({
         id: user.id,
         email: user.email,
         display_name: profileById?.display_name || user.user_metadata?.display_name || user.user_metadata?.full_name || null,
@@ -112,8 +112,11 @@ export default async function handler(req, res) {
         last_login_at: new Date().toISOString()
       }, { onConflict: 'id' });
 
-      // avoid duplicate email row ambiguity
-      await supabaseAdmin.from('profiles').update({ email: null }).eq('id', profileByEmail.id);
+      // Never clear legacy rows here; this endpoint should be read-safe.
+      // If merge failed, keep using paid legacy profile for plan resolution.
+      if (mergeError) {
+        canonicalProfile = profileByEmail;
+      }
     }
 
     const { data: refreshedProfile } = await supabaseAdmin
@@ -122,7 +125,7 @@ export default async function handler(req, res) {
       .eq('id', user.id)
       .maybeSingle();
 
-    const finalProfile = refreshedProfile || canonicalProfile || null;
+    const finalProfile = pickCanonicalProfile(refreshedProfile || null, canonicalProfile || null);
     const isPro = isProProfile(finalProfile || {});
     return res.status(200).json({
       isPro,
