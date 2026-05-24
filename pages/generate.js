@@ -826,9 +826,10 @@ export default function Generate() {
     let cleanedText = text
       .replace(/\*\s*Title\s*(\d+):/g, (match, num) => `\nTitle ${num}:`) // Fix title numbering
       .replace(/\[Top 3 Viral Title Options\]/g, '# Viral Title Options\n')
-      // Split merged numbered titles into separate lines.
-      .replace(/(["”])\s*(\d+\.\s*["“])/g, '$1\n$2')
-      .replace(/(\d+\.\s*["“][^"”]*["”])\s*(?=\d+\.\s*["“])/g, '$1\n')
+      // Force each numbered quoted title onto a new line: 1. "..." 2. "..."
+      .replace(/\s+(?=\d+\.\s*["“])/g, '\n')
+      // Keep spacing clean if model already added line breaks.
+      .replace(/\n{2,}(?=\d+\.\s*["“])/g, '\n')
       .replace(/\*/g, '')
       .replace(/\n{3,}/g, '\n\n')
       // Remove any visual/audio directions if they're not in their dedicated sections
