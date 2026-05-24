@@ -316,7 +316,7 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 
 export default function Generate() {
   const router = useRouter();
-  const { user, userProfile, checkEmailVerification, refreshUserProfile } = useAuth();
+  const { user, userProfile, refreshUserProfile } = useAuth();
   const normalizedSubscription = (userProfile?.subscription || '').toLowerCase();
   const isProUser = Boolean(userProfile?.paid) ||
     normalizedSubscription === 'pro' ||
@@ -354,7 +354,6 @@ export default function Generate() {
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [verificationChecked, setVerificationChecked] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
@@ -1225,25 +1224,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       }
     }
   }, [router, router.query.payment]);
-
-  // Update email verification check to run only once after login
-  useEffect(() => {
-    const checkVerification = async () => {
-      if (user && !verificationChecked) {
-        try {
-          const isVerified = await checkEmailVerification();
-          if (!isVerified) {
-            router.push('/verify-email');
-          }
-          setVerificationChecked(true);
-        } catch (error) {
-          console.error('Error checking email verification:', error);
-        }
-      }
-    };
-
-    checkVerification();
-  }, [user, checkEmailVerification, router, verificationChecked]);
 
   return (
     <ProtectedRoute>

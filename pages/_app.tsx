@@ -43,6 +43,7 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
     const resolveOAuthHash = async () => {
       if (typeof window === 'undefined') return;
       if (!supabase) return;
+      if (window.location.pathname !== '/') return;
       if (!window.location.hash?.includes('access_token=')) return;
 
       try {

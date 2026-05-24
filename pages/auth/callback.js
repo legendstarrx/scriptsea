@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function AuthCallbackPage() {
-  const router = useRouter();
   const [message, setMessage] = useState('Completing sign-in...');
 
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
-      router.replace('/login');
-    }, 8000);
+      window.location.replace('/login');
+    }, 3000);
 
     const finishAuth = async () => {
       try {
@@ -33,22 +31,30 @@ export default function AuthCallbackPage() {
         const authCode = queryParams.get('code');
 
         if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
+          const setSessionPromise = supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Sign-in timeout. Please try again.')), 2500)
+          );
+          const { error } = await Promise.race([setSessionPromise, timeoutPromise]);
           if (error) throw error;
         } else if (authCode) {
-          const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+          const exchangePromise = supabase.auth.exchangeCodeForSession(authCode);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Sign-in timeout. Please try again.')), 2500)
+          );
+          const { error } = await Promise.race([exchangePromise, timeoutPromise]);
           if (error) throw error;
         }
 
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-        router.replace('/generate');
+        window.location.replace('/generate');
       } catch (error) {
         console.error('Auth callback error:', error);
         setMessage(error?.message || 'Sign-in failed. Redirecting...');
-        setTimeout(() => router.replace('/login'), 1800);
+        setTimeout(() => window.location.replace('/login'), 900);
       }
     };
 
