@@ -381,10 +381,28 @@ export default function Generate() {
     return payload;
   };
 
+  const syncServerPlan = async () => {
+    // Session hydration can lag briefly after refresh/login.
+    // Retry a few times so server truth wins consistently.
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      try {
+        const status = await fetchServerPlan();
+        if (status) {
+          setServerPlan(status);
+          return status;
+        }
+      } catch (_error) {
+        // retry below
+      }
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+    return null;
+  };
+
   const ensureProAccess = async () => {
     if (isProUser) return true;
     try {
-      const freshStatus = await fetchServerPlan();
+      const freshStatus = await syncServerPlan();
       if (freshStatus) {
         setServerPlan(freshStatus);
       }
@@ -403,13 +421,7 @@ export default function Generate() {
 
   useEffect(() => {
     if (!user?.uid) return;
-    fetchServerPlan()
-      .then((status) => {
-        if (status) {
-          setServerPlan(status);
-        }
-      })
-      .catch(() => {});
+    syncServerPlan().catch(() => {});
   }, [user?.uid]);
 
   // Add ref for the response section
