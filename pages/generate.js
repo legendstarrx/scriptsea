@@ -307,13 +307,24 @@ const generateWithOpenAI = async (prompt, options = {}) => {
     })
   });
 
-  const payload = await response.json();
+  const raw = await response.text();
+  let payload = null;
+  try {
+    payload = raw ? JSON.parse(raw) : null;
+  } catch (_parseError) {
+    payload = null;
+  }
+
   if (!response.ok) {
-    const reason = payload?.detail || payload?.error || 'Failed to generate content';
+    const reason =
+      payload?.detail ||
+      payload?.error ||
+      (raw && raw.trim()) ||
+      'Failed to generate content';
     throw new Error(reason);
   }
 
-  return payload.text || '';
+  return payload?.text || '';
 };
 
 export default function Generate() {
