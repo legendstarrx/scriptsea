@@ -1,19 +1,23 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { hasProAccess } from '../utils/subscription';
 
 const AuthContext = createContext();
 
 const mapProfile = (row = {}) => ({
+  id: row.id || null,
   email: row.email || null,
   displayName: row.display_name || null,
   photoURL: row.photo_url || null,
-  subscription: row.subscription || null,
+  subscriptionStatus: row.subscription_status || null,
+  subscription: row.subscription || (row.subscription_status === 'active' ? 'pro' : null),
   subscriptionType: row.subscription_type || null,
   scriptsRemaining: row.scripts_remaining ?? 0,
   scriptsGenerated: row.scripts_generated ?? 0,
   scriptsLimit: row.scripts_limit ?? 0,
   emailVerified: row.email_verified ?? false,
   paid: row.paid ?? false,
+  isPro: hasProAccess(row),
   createdAt: row.created_at || null,
   lastLogin: row.last_login_at || null
 });
@@ -30,15 +34,7 @@ const mapSupabaseUser = (u) => {
   };
 };
 
-const isPaidProfile = (profile = {}) => {
-  const subscription = String(profile.subscription || '').toLowerCase();
-  return Boolean(profile.paid) ||
-    subscription === 'pro' ||
-    subscription === 'premium' ||
-    Boolean(profile.subscription_type) ||
-    (profile.scripts_limit ?? 0) > 0 ||
-    (profile.scripts_remaining ?? 0) > 0;
-};
+const isPaidProfile = (profile = {}) => hasProAccess(profile);
 
 async function fetchProfile(userId) {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();

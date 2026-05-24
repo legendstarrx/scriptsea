@@ -77,7 +77,12 @@ const findUser = async ({ userId, email }) => {
   }
 
   if (email) {
-    const { data, error } = await supabaseAdmin.from('profiles').select('id').eq('email', email).maybeSingle();
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .ilike('email', email)
+      .limit(1)
+      .maybeSingle();
     if (error) throw error;
     return data ? data.id : null;
   }

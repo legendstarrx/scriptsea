@@ -1,14 +1,8 @@
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
+import { hasProAccess } from '../../../utils/subscription';
 
 function isPaidProfile(profile) {
-  if (!profile) return false;
-  const subscription = String(profile.subscription || '').toLowerCase();
-  return Boolean(profile.paid) ||
-    subscription === 'pro' ||
-    subscription === 'premium' ||
-    Boolean(profile.subscription_type) ||
-    (profile.scripts_limit ?? 0) > 0 ||
-    (profile.scripts_remaining ?? 0) > 0;
+  return hasProAccess(profile);
 }
 
 function pickBestEmailProfile(profiles = [], preferredId) {

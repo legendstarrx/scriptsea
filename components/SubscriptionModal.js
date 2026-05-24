@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getPlanLabel, hasProAccess, normalizeSubscriptionProfile } from '../utils/subscription';
 
 const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
   const { user } = useAuth();
@@ -41,8 +42,13 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
     }
   };
 
-  const currentSubscription = userProfile?.subscription || 'starter';
-  const isPro = currentSubscription === 'pro' || currentSubscription === 'premium';
+  const normalized = normalizeSubscriptionProfile(userProfile || {});
+  const isPro = hasProAccess(userProfile || {});
+  const currentPlanLabel = getPlanLabel(userProfile || {});
+  const currentPlanClass =
+    normalized.subscriptionStatus === 'active'
+      ? 'active'
+      : (normalized.subscription || (isPro ? 'pro' : 'starter'));
 
   const handleUpgrade = async (plan) => {
     try {
@@ -94,8 +100,8 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
             </p>
             <div className="current-plan">
               <span>Current Plan:</span>
-              <span className={`plan-badge ${currentSubscription}`}>
-                {currentSubscription.toUpperCase()}
+              <span className={`plan-badge ${currentPlanClass}`}>
+                {currentPlanLabel.toUpperCase()}
               </span>
             </div>
 
@@ -202,7 +208,7 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
           color: #666;
         }
 
-        .plan-badge.pro, .plan-badge.premium {
+        .plan-badge.pro, .plan-badge.premium, .plan-badge.active {
           background: #FF3366;
           color: white;
         }

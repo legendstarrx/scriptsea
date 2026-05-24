@@ -1,21 +1,8 @@
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
+import { getPlanLabel, hasProAccess } from '../../../utils/subscription';
 
-const isProProfile = (profile = {}) => {
-  const subscription = String(profile.subscription || '').toLowerCase();
-  return Boolean(profile.paid) ||
-    subscription === 'pro' ||
-    subscription === 'premium' ||
-    Boolean(profile.subscription_type) ||
-    (profile.scripts_limit ?? 0) > 0 ||
-    (profile.scripts_remaining ?? 0) > 0;
-};
-
-const toPlanLabel = (profile = {}) => {
-  if (!isProProfile(profile)) return 'Starter';
-  if (profile.subscription_type === 'monthly') return 'Pro Monthly';
-  if (profile.subscription_type === 'weekly') return 'Pro Weekly';
-  return 'Pro';
-};
+const isProProfile = (profile = {}) => hasProAccess(profile);
+const toPlanLabel = (profile = {}) => getPlanLabel(profile);
 
 const pickCanonicalProfile = (primaryProfile, secondaryProfile) => {
   if (!primaryProfile && !secondaryProfile) return null;

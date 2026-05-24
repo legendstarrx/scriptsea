@@ -32,6 +32,7 @@ export default async function handler(req, res) {
         subscription: plan,
         scripts_remaining: scriptsLimit,
         scripts_limit: scriptsLimit,
+        paid: plan === 'pro',
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);

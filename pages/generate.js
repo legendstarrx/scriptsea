@@ -10,6 +10,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
+import { getPlanLabel, hasProAccess } from '../utils/subscription';
 
 // GeneratePageNav Component
 const GeneratePageNav = () => {
@@ -330,16 +331,10 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 export default function Generate() {
   const router = useRouter();
   const { user, userProfile, refreshUserProfile } = useAuth();
-  const normalizedSubscription = (userProfile?.subscription || '').toLowerCase();
-  // This is derived from DB-backed profile fields (not localStorage).
-  const profileIsProUser = Boolean(userProfile?.paid) ||
-    normalizedSubscription === 'pro' ||
-    normalizedSubscription === 'premium' ||
-    Boolean(userProfile?.subscriptionType) ||
-    (userProfile?.scriptsLimit ?? 0) > 0 ||
-    (userProfile?.scriptsRemaining ?? 0) > 0;
   const [serverPlan, setServerPlan] = useState(null);
+  const profileIsProUser = hasProAccess(userProfile || {});
   const isProUser = profileIsProUser || Boolean(serverPlan?.isPro);
+  const currentPlanLabel = serverPlan?.planLabel || getPlanLabel(userProfile || {});
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');
@@ -427,14 +422,14 @@ export default function Generate() {
   useEffect(() => {
     if (!user?.uid) return;
     refreshUserProfile(user.uid).catch(() => {});
-    // Keep dependency narrow to avoid re-fetch loops from context value identity changes.
+    // refreshUserProfile comes from context and is not memoized; keep this stable by uid.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, syncServerPlan]);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!user?.uid) return;
     syncServerPlan().catch(() => {});
-  }, [user?.uid]);
+  }, [user?.uid, syncServerPlan]);
 
   // Add ref for the response section
   const responseRef = useRef(null);
@@ -821,15 +816,43 @@ export default function Generate() {
     }
   };
 
+  const normalizeTitleSection = (rawText = '') => {
+    const sectionRegex = /(#{1,2}\s*(?:Viral|Advertisement)\s+Title\s+Options[\s\S]*?)(?=\n#{1,2}\s*(?:Hook|Intro|Body|Conclusion|CTA|Visual Elements|Audio Elements)\b|$)/i;
+    const match = rawText.match(sectionRegex);
+    if (!match) return rawText;
+
+    const section = match[0];
+    const titleLines = [];
+
+    // Try strict "Title n:" format first.
+    const strictMatches = [...section.matchAll(/(?:^|\n)\s*Title\s*([1-3])\s*:\s*(.+?)(?=\n(?:Title\s*[1-3]\s*:|#{1,2}\s|$)|$)/gims)];
+    if (strictMatches.length > 0) {
+      strictMatches.forEach((m) => titleLines.push(`Title ${m[1]}: ${m[2].trim().replace(/^["'“”]+|["'“”]+$/g, '')}`));
+    } else {
+      // Fallback: handle 1. / 1) / merged one-line title options.
+      const merged = section
+        .replace(/\r/g, '')
+        .replace(/\s+(?=(?:Title\s*[1-3]\s*:|[1-3][\.\)]\s+))/g, '\n');
+      const numberedMatches = [...merged.matchAll(/(?:^|\n)\s*(?:Title\s*([1-3])\s*:|([1-3])[\.\)]\s+)\s*([^\n]+)/gim)];
+      numberedMatches.forEach((m, index) => {
+        const n = m[1] || m[2] || String(index + 1);
+        const clean = (m[3] || '').trim().replace(/^["'“”]+|["'“”]+$/g, '');
+        if (clean) titleLines.push(`Title ${n}: ${clean}`);
+      });
+    }
+
+    const uniqueLines = [...new Set(titleLines)].slice(0, 3);
+    if (uniqueLines.length === 0) return rawText;
+
+    const normalizedLines = [section.split('\n')[0], ...uniqueLines].join('\n');
+    return rawText.replace(sectionRegex, normalizedLines);
+  };
+
   const formatScript = (text) => {
     // First clean up the titles section and fix title numbering
-    let cleanedText = text
-      .replace(/\*\s*Title\s*(\d+):/g, (match, num) => `\nTitle ${num}:`) // Fix title numbering
+    let cleanedText = normalizeTitleSection(text)
+      .replace(/\*\s*Title\s*(\d+):/g, (_match, num) => `\nTitle ${num}:`) // Fix title numbering
       .replace(/\[Top 3 Viral Title Options\]/g, '# Viral Title Options\n')
-      // Force each numbered quoted title onto a new line: 1. "..." 2. "..."
-      .replace(/\s+(?=\d+\.\s*["“])/g, '\n')
-      // Keep spacing clean if model already added line breaks.
-      .replace(/\n{2,}(?=\d+\.\s*["“])/g, '\n')
       .replace(/\*/g, '')
       .replace(/\n{3,}/g, '\n\n')
       // Remove any visual/audio directions if they're not in their dedicated sections
@@ -842,10 +865,10 @@ export default function Generate() {
     const htmlContent = cleanedText
       .replace(/^# (.*$)/gm, '<h1 class="script-title">$1</h1>')
       .replace(/^## (.*$)/gm, '<h2 class="script-section">$1</h2>')
-      .replace(/Title (\d+):(.*?)(?=Title \d+:|$)/gs, (match, num, content) => {
+      .replace(/Title\s*(\d+)\s*:\s*([\s\S]*?)(?=\nTitle\s*\d+\s*:|\n##\s|\n#\s|$)/g, (_match, num, content) => {
         return `<div class="title-option">
           <span class="title-number">Title ${num}</span>
-          <div class="title-content">${content.trim()}</div>
+          <div class="title-content">${content.trim().replace(/^["'“”]+|["'“”]+$/g, '')}</div>
         </div>`;
       })
       // Add paragraph tags for better spacing
@@ -1006,7 +1029,15 @@ export default function Generate() {
     Format the script with these sections:
 
     # ${scriptType === 'ad' ? 'Advertisement Title Options' : 'Viral Title Options'}
-    [Create 3 attention-grabbing titles that would work well as ${selectedPlatform} titles. Make them impossible to scroll past.]
+    Output EXACTLY 3 titles in this exact format (no bullets, no markdown stars, no quotes):
+    Title 1: <title text>
+    Title 2: <title text>
+    Title 3: <title text>
+    Rules:
+    - Each title must be on its own line.
+    - Return exactly 3 titles only.
+    - Do not wrap titles in quotes.
+    - Do not use numbering styles like 1. or 1) in this section.
 
     ## Hook
     [Write an instantly engaging hook that grabs attention in the first 3 seconds - make it impossible to scroll past]
@@ -1284,24 +1315,35 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
   useEffect(() => {
     // Handle payment status
     const { payment } = router.query;
-    
-    if (payment) {
+
+    if (!payment) return;
+
+    const handlePaymentStatus = async () => {
       switch (payment) {
         case 'success':
+          // Force a fresh server-side subscription sync before updating the UI.
+          await syncServerPlan();
+          if (user?.uid) {
+            await refreshUserProfile(user.uid);
+          }
           toast.success('Payment successful! Your subscription is now active.');
-          router.replace('/generate', undefined, { shallow: true });
           break;
         case 'failed':
           toast.error('Payment failed. Please try again or contact support.');
-          router.replace('/generate', undefined, { shallow: true });
           break;
         case 'error':
           toast.error('An error occurred. Please contact support if payment was deducted.');
-          router.replace('/generate', undefined, { shallow: true });
           break;
       }
-    }
-  }, [router, router.query.payment]);
+
+      router.replace('/generate', undefined, { shallow: true });
+    };
+
+    handlePaymentStatus().catch((statusError) => {
+      console.error('Payment status refresh error:', statusError);
+      router.replace('/generate', undefined, { shallow: true });
+    });
+  }, [router, router.query.payment, refreshUserProfile, syncServerPlan, user?.uid]);
 
   return (
     <ProtectedRoute>
@@ -1422,11 +1464,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 Current Plan:
               </span>
               <span style={{ fontSize: '1.2rem', fontWeight: '600', color: isProUser ? '#FF3366' : '#666' }}>
-                {isProUser
-                  ? (serverPlan?.planLabel
-                    || `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : userProfile?.subscriptionType === 'weekly' ? 'Weekly' : ''}`.trim()
-                    || 'Pro')
-                  : 'Starter'}
+                {isProUser ? currentPlanLabel : 'Starter'}
               </span>
               {!isProUser && (
                 <>
