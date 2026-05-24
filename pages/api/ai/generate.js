@@ -1,7 +1,8 @@
 import OpenAI from 'openai';
 
-const client = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const resolvedApiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+const client = resolvedApiKey
+  ? new OpenAI({ apiKey: resolvedApiKey })
   : null;
 
 export default async function handler(req, res) {
@@ -10,7 +11,10 @@ export default async function handler(req, res) {
   }
 
   if (!client) {
-    return res.status(500).json({ error: 'OPENAI_API_KEY is not configured' });
+    return res.status(500).json({
+      error: 'OPENAI_API_KEY is not configured',
+      detail: 'Set OPENAI_API_KEY in your server environment (Vercel Project Settings -> Environment Variables).'
+    });
   }
 
   try {

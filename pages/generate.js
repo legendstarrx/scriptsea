@@ -326,7 +326,6 @@ export default function Generate() {
     (userProfile?.scriptsLimit ?? 0) > 0 ||
     (userProfile?.scriptsRemaining ?? 0) > 0;
   const [serverPlan, setServerPlan] = useState(null);
-  const [isCheckingServerPlan, setIsCheckingServerPlan] = useState(false);
   const isProUser = serverPlan?.isPro ?? localIsProUser;
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
@@ -359,6 +358,20 @@ export default function Generate() {
   const [recognition, setRecognition] = useState(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const cached = window.localStorage.getItem('accountStatus');
+      if (!cached) return;
+      const parsed = JSON.parse(cached);
+      if (parsed && typeof parsed.isPro === 'boolean') {
+        setServerPlan(parsed);
+      }
+    } catch (_error) {
+      // Ignore bad cache.
+    }
+  }, []);
 
   const fetchServerPlan = async () => {
     if (!supabase) return null;
@@ -403,13 +416,16 @@ export default function Generate() {
 
   useEffect(() => {
     if (!user?.uid) return;
-    setIsCheckingServerPlan(true);
     fetchServerPlan()
       .then((status) => {
-        if (status) setServerPlan(status);
+        if (status) {
+          setServerPlan(status);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('accountStatus', JSON.stringify(status));
+          }
+        }
       })
-      .catch(() => {})
-      .finally(() => setIsCheckingServerPlan(false));
+      .catch(() => {});
   }, [user?.uid]);
 
   // Add ref for the response section
@@ -1399,9 +1415,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     ? `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : userProfile?.subscriptionType === 'weekly' ? 'Weekly' : ''}`.trim()
                     : 'Starter')}
               </span>
-              {isCheckingServerPlan && (
-                <span style={{ fontSize: '0.8rem', color: '#999' }}>Syncing...</span>
-              )}
               {!isProUser && (
                 <>
                   <button

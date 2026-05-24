@@ -21,19 +21,9 @@ export default function ProtectedRoute({ children }) {
     }
   }, [user, loading, router]);
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
-      }}>
-        <div style={{ color: '#444', fontSize: '1rem' }}>Loading your account...</div>
-      </div>
-    );
-  }
+  // Do not block page render with a visible loading gate.
+  // We redirect in the effect once auth state is known.
+  if (loading) return children;
 
   // Allow access to public pages without authentication
   if (publicPages.includes(router.pathname)) {
@@ -42,11 +32,7 @@ export default function ProtectedRoute({ children }) {
 
   // For protected pages, check authentication
   if (!user) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        Redirecting...
-      </div>
-    );
+    return null;
   }
 
   return children;
