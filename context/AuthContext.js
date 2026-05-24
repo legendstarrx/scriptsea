@@ -158,7 +158,7 @@ export function AuthProvider({ children }) {
   };
 
   const signInWithGoogle = async () => {
-    const redirectTo = `${process.env.NEXT_PUBLIC_BASE_URL || window.location.origin}/generate`;
+    const redirectTo = `${window.location.origin}/auth/callback`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo }
