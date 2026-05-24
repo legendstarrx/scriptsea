@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import SubscriptionModal from '../components/SubscriptionModal';
 import ProfileModal from '../components/ProfileModal';
 import { toast, Toaster } from 'react-hot-toast';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 
@@ -372,7 +372,7 @@ export default function Generate() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
-  const fetchServerPlan = async () => {
+  const fetchServerPlan = useCallback(async () => {
     if (!supabase) return null;
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     if (sessionError) throw sessionError;
@@ -391,9 +391,9 @@ export default function Generate() {
       throw new Error(payload?.error || 'Failed to fetch account status.');
     }
     return payload;
-  };
+  }, []);
 
-  const syncServerPlan = async () => {
+  const syncServerPlan = useCallback(async () => {
     // Session hydration can lag briefly after refresh/login.
     // Retry a few times so server truth wins consistently.
     for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -409,7 +409,7 @@ export default function Generate() {
       await new Promise((resolve) => setTimeout(resolve, 400));
     }
     return null;
-  };
+  }, [fetchServerPlan]);
 
   const ensureProAccess = async () => {
     if (isProUser) return true;
@@ -429,7 +429,7 @@ export default function Generate() {
     refreshUserProfile(user.uid).catch(() => {});
     // Keep dependency narrow to avoid re-fetch loops from context value identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]);
+  }, [user?.uid, syncServerPlan]);
 
   useEffect(() => {
     if (!user?.uid) return;
