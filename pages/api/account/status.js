@@ -125,7 +125,61 @@ export default async function handler(req, res) {
       .eq('id', user.id)
       .maybeSingle();
 
-    const finalProfile = pickCanonicalProfile(refreshedProfile || null, canonicalProfile || null);
+    let finalProfile = pickCanonicalProfile(refreshedProfile || null, canonicalProfile || null);
+
+    // Hard fallback: if profile still looks starter, infer from successful payments and heal profile row.
+    if (!isProProfile(finalProfile || {})) {
+      const { data: paymentByUserId } = await supabaseAdmin
+        .from('payments')
+        .select('*')
+        .eq('provider', 'polar')
+        .eq('status', 'successful')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { data: paymentByEmail } = user.email
+        ? await supabaseAdmin
+            .from('payments')
+            .select('*')
+            .eq('provider', 'polar')
+            .eq('status', 'successful')
+            .ilike('user_email', user.email)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : { data: null };
+
+      const payment = paymentByUserId || paymentByEmail || null;
+      if (payment) {
+        const inferredPlan = payment.plan_type === 'monthly' ? 'monthly' : 'weekly';
+        const inferredLimit = inferredPlan === 'monthly' ? 500 : 100;
+
+        await supabaseAdmin.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          display_name: finalProfile?.display_name || user.user_metadata?.display_name || user.user_metadata?.full_name || null,
+          photo_url: finalProfile?.photo_url || user.user_metadata?.avatar_url || null,
+          subscription: 'pro',
+          subscription_type: inferredPlan,
+          scripts_remaining: Math.max(finalProfile?.scripts_remaining ?? 0, inferredLimit),
+          scripts_generated: finalProfile?.scripts_generated ?? 0,
+          scripts_limit: Math.max(finalProfile?.scripts_limit ?? 0, inferredLimit),
+          paid: true,
+          subscription_updated_at: new Date().toISOString(),
+          last_login_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+
+        const { data: healedProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+        finalProfile = healedProfile || finalProfile;
+      }
+    }
+
     const isPro = isProProfile(finalProfile || {});
     return res.status(200).json({
       isPro,
