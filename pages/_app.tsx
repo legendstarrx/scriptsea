@@ -46,6 +46,7 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
   useEffect(() => {
     const resolveOAuthHash = async () => {
       if (typeof window === 'undefined') return;
+      if (!supabase) return;
       if (!window.location.hash?.includes('access_token=')) return;
 
       try {
