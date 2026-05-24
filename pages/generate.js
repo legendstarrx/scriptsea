@@ -9,6 +9,7 @@ import ProfileModal from '../components/ProfileModal';
 import { toast, Toaster } from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { supabase } from '../lib/supabaseClient';
 
 // GeneratePageNav Component
 const GeneratePageNav = () => {
@@ -318,12 +319,15 @@ export default function Generate() {
   const router = useRouter();
   const { user, userProfile, refreshUserProfile } = useAuth();
   const normalizedSubscription = (userProfile?.subscription || '').toLowerCase();
-  const isProUser = Boolean(userProfile?.paid) ||
+  const localIsProUser = Boolean(userProfile?.paid) ||
     normalizedSubscription === 'pro' ||
     normalizedSubscription === 'premium' ||
     Boolean(userProfile?.subscriptionType) ||
     (userProfile?.scriptsLimit ?? 0) > 0 ||
     (userProfile?.scriptsRemaining ?? 0) > 0;
+  const [serverPlan, setServerPlan] = useState(null);
+  const [isCheckingServerPlan, setIsCheckingServerPlan] = useState(false);
+  const isProUser = serverPlan?.isPro ?? localIsProUser;
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');
@@ -356,11 +360,56 @@ export default function Generate() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
+  const fetchServerPlan = async () => {
+    if (!supabase) return null;
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) return null;
+
+    const response = await fetch('/api/account/status', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload?.error || 'Failed to fetch account status.');
+    }
+    return payload;
+  };
+
+  const ensureProAccess = async () => {
+    if (isProUser) return true;
+    try {
+      const freshStatus = await fetchServerPlan();
+      if (freshStatus) {
+        setServerPlan(freshStatus);
+      }
+      return Boolean(freshStatus?.isPro);
+    } catch (_error) {
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (!user?.uid) return;
     refreshUserProfile(user.uid).catch(() => {});
     // Keep dependency narrow to avoid re-fetch loops from context value identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    setIsCheckingServerPlan(true);
+    fetchServerPlan()
+      .then((status) => {
+        if (status) setServerPlan(status);
+      })
+      .catch(() => {})
+      .finally(() => setIsCheckingServerPlan(false));
   }, [user?.uid]);
 
   // Add ref for the response section
@@ -965,7 +1014,8 @@ export default function Generate() {
       return;
     }
 
-    if (!isProUser) {
+    const hasProAccess = await ensureProAccess();
+    if (!hasProAccess) {
       setShowSubscriptionModal(true);
       setNotification({
         show: true,
@@ -1344,10 +1394,14 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 Current Plan:
               </span>
               <span style={{ fontSize: '1.2rem', fontWeight: '600', color: isProUser ? '#FF3366' : '#666' }}>
-                {isProUser
-                  ? `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : userProfile?.subscriptionType === 'weekly' ? 'Weekly' : ''}`.trim()
-                  : 'Starter'}
+                {serverPlan?.planLabel
+                  || (isProUser
+                    ? `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : userProfile?.subscriptionType === 'weekly' ? 'Weekly' : ''}`.trim()
+                    : 'Starter')}
               </span>
+              {isCheckingServerPlan && (
+                <span style={{ fontSize: '0.8rem', color: '#999' }}>Syncing...</span>
+              )}
               {!isProUser && (
                 <>
                   <button
