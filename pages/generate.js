@@ -309,7 +309,8 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error(payload?.error || 'Failed to generate content');
+    const reason = payload?.detail || payload?.error || 'Failed to generate content';
+    throw new Error(reason);
   }
 
   return payload.text || '';

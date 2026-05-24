@@ -24,12 +24,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'A valid prompt is required' });
     }
 
-    const response = await client.responses.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
-      input: prompt,
-      temperature,
-      max_output_tokens: maxTokens
-    });
+    const preferredModel = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+    const fallbackModel = 'gpt-4o-mini';
+
+    let response;
+    try {
+      response = await client.responses.create({
+        model: preferredModel,
+        input: prompt,
+        temperature,
+        max_output_tokens: maxTokens
+      });
+    } catch (modelError) {
+      const message = String(modelError?.message || '');
+      const shouldFallback =
+        preferredModel !== fallbackModel &&
+        (message.toLowerCase().includes('model') || message.toLowerCase().includes('not found'));
+
+      if (!shouldFallback) throw modelError;
+
+      response = await client.responses.create({
+        model: fallbackModel,
+        input: prompt,
+        temperature,
+        max_output_tokens: maxTokens
+      });
+    }
 
     const text = response.output_text?.trim();
     if (!text) {
