@@ -7,8 +7,16 @@ export default function AuthCallbackPage() {
   const [message, setMessage] = useState('Completing sign-in...');
 
   useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      router.replace('/login');
+    }, 8000);
+
     const finishAuth = async () => {
       try {
+        if (!supabase) {
+          throw new Error('Auth service is not configured.');
+        }
+
         const hash = window.location.hash.startsWith('#')
           ? window.location.hash.slice(1)
           : window.location.hash;
@@ -35,6 +43,7 @@ export default function AuthCallbackPage() {
           if (error) throw error;
         }
 
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
         router.replace('/generate');
       } catch (error) {
         console.error('Auth callback error:', error);
@@ -44,6 +53,7 @@ export default function AuthCallbackPage() {
     };
 
     finishAuth();
+    return () => clearTimeout(fallbackTimer);
   }, [router]);
 
   return (
