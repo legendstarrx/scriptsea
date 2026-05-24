@@ -815,6 +815,9 @@ export default function Generate() {
     let cleanedText = text
       .replace(/\*\s*Title\s*(\d+):/g, (match, num) => `\nTitle ${num}:`) // Fix title numbering
       .replace(/\[Top 3 Viral Title Options\]/g, '# Viral Title Options\n')
+      // Split merged numbered titles into separate lines.
+      .replace(/(["”])\s*(\d+\.\s*["“])/g, '$1\n$2')
+      .replace(/(\d+\.\s*["“][^"”]*["”])\s*(?=\d+\.\s*["“])/g, '$1\n')
       .replace(/\*/g, '')
       .replace(/\n{3,}/g, '\n\n')
       // Remove any visual/audio directions if they're not in their dedicated sections
@@ -842,7 +845,7 @@ export default function Generate() {
             paragraph.startsWith('<div class="title-option"')) {
           return paragraph;
         }
-        return `<p class="script-paragraph">${paragraph}</p>`;
+        return `<p class="script-paragraph">${paragraph.replace(/\n/g, '<br />')}</p>`;
       })
       .join('\n');
 
