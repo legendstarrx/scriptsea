@@ -17,6 +17,14 @@ const toPlanLabel = (profile = {}) => {
   return 'Pro';
 };
 
+const pickCanonicalProfile = (primaryProfile, secondaryProfile) => {
+  if (!primaryProfile && !secondaryProfile) return null;
+  if (!primaryProfile) return secondaryProfile;
+  if (!secondaryProfile) return primaryProfile;
+  if (isProProfile(secondaryProfile) && !isProProfile(primaryProfile)) return secondaryProfile;
+  return primaryProfile;
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -42,7 +50,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid session.' });
     }
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profileById, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('id', user.id)
@@ -52,11 +60,56 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: profileError.message || 'Failed to fetch profile.' });
     }
 
-    const isPro = isProProfile(profile || {});
+    let profileByEmail = null;
+    if (user.email) {
+      const { data } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('email', user.email)
+        .maybeSingle();
+      profileByEmail = data || null;
+    }
+
+    const canonicalProfile = pickCanonicalProfile(profileById, profileByEmail);
+
+    // If a legacy paid row exists under same email with a different id, migrate paid state to current auth id row.
+    if (
+      profileByEmail &&
+      profileByEmail.id !== user.id &&
+      isProProfile(profileByEmail) &&
+      (!profileById || !isProProfile(profileById))
+    ) {
+      await supabaseAdmin.from('profiles').upsert({
+        id: user.id,
+        email: user.email,
+        display_name: profileById?.display_name || user.user_metadata?.display_name || user.user_metadata?.full_name || null,
+        photo_url: profileById?.photo_url || user.user_metadata?.avatar_url || null,
+        subscription: profileByEmail.subscription || 'pro',
+        subscription_type: profileByEmail.subscription_type || null,
+        scripts_remaining: profileByEmail.scripts_remaining ?? 0,
+        scripts_generated: profileByEmail.scripts_generated ?? 0,
+        scripts_limit: profileByEmail.scripts_limit ?? 0,
+        paid: profileByEmail.paid ?? true,
+        subscription_updated_at: profileByEmail.subscription_updated_at || new Date().toISOString(),
+        last_login_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+      // avoid duplicate email row ambiguity
+      await supabaseAdmin.from('profiles').update({ email: null }).eq('id', profileByEmail.id);
+    }
+
+    const { data: refreshedProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const finalProfile = refreshedProfile || canonicalProfile || null;
+    const isPro = isProProfile(finalProfile || {});
     return res.status(200).json({
       isPro,
-      planLabel: toPlanLabel(profile || {}),
-      profile: profile || null
+      planLabel: toPlanLabel(finalProfile || {}),
+      profile: finalProfile
     });
   } catch (error) {
     return res.status(500).json({ error: error?.message || 'Internal server error.' });
