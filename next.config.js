@@ -18,9 +18,9 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.vercel.com https://*.vercel.app *.google.com apis.google.com va.vercel-scripts.com www.googletagmanager.com *.google-analytics.com",
-              "connect-src 'self' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.vercel.com vitals.vercel-insights.com *.googleapis.com connect.mailerlite.com *.google-analytics.com",
-              "img-src 'self' data: *.googleusercontent.com www.google.com www.googletagmanager.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.vercel.com https://*.vercel.app *.google.com apis.google.com va.vercel-scripts.com www.googletagmanager.com *.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com",
+              "connect-src 'self' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.vercel.com vitals.vercel-insights.com *.googleapis.com connect.mailerlite.com *.google-analytics.com https://*.supabase.co https://*.supabase.com https://www.google.com https://googleads.g.doubleclick.net",
+              "img-src 'self' data: *.googleusercontent.com www.google.com www.googletagmanager.com https://googleads.g.doubleclick.net https://www.googleadservices.com",
               "frame-src 'self' *.google.com",
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
               "font-src 'self' fonts.gstatic.com",
