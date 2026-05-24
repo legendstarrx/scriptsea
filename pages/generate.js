@@ -319,14 +319,15 @@ export default function Generate() {
   const router = useRouter();
   const { user, userProfile, refreshUserProfile } = useAuth();
   const normalizedSubscription = (userProfile?.subscription || '').toLowerCase();
-  const localIsProUser = Boolean(userProfile?.paid) ||
+  // This is derived from DB-backed profile fields (not localStorage).
+  const profileIsProUser = Boolean(userProfile?.paid) ||
     normalizedSubscription === 'pro' ||
     normalizedSubscription === 'premium' ||
     Boolean(userProfile?.subscriptionType) ||
     (userProfile?.scriptsLimit ?? 0) > 0 ||
     (userProfile?.scriptsRemaining ?? 0) > 0;
   const [serverPlan, setServerPlan] = useState(null);
-  const isProUser = serverPlan?.isPro ?? localIsProUser;
+  const isProUser = profileIsProUser || Boolean(serverPlan?.isPro);
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');
@@ -358,20 +359,6 @@ export default function Generate() {
   const [recognition, setRecognition] = useState(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const cached = window.localStorage.getItem('accountStatus');
-      if (!cached) return;
-      const parsed = JSON.parse(cached);
-      if (parsed && typeof parsed.isPro === 'boolean') {
-        setServerPlan(parsed);
-      }
-    } catch (_error) {
-      // Ignore bad cache.
-    }
-  }, []);
 
   const fetchServerPlan = async () => {
     if (!supabase) return null;
@@ -420,9 +407,6 @@ export default function Generate() {
       .then((status) => {
         if (status) {
           setServerPlan(status);
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem('accountStatus', JSON.stringify(status));
-          }
         }
       })
       .catch(() => {});
@@ -1410,10 +1394,11 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 Current Plan:
               </span>
               <span style={{ fontSize: '1.2rem', fontWeight: '600', color: isProUser ? '#FF3366' : '#666' }}>
-                {serverPlan?.planLabel
-                  || (isProUser
-                    ? `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : userProfile?.subscriptionType === 'weekly' ? 'Weekly' : ''}`.trim()
-                    : 'Starter')}
+                {isProUser
+                  ? (serverPlan?.planLabel
+                    || `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : userProfile?.subscriptionType === 'weekly' ? 'Weekly' : ''}`.trim()
+                    || 'Pro')
+                  : 'Starter'}
               </span>
               {!isProUser && (
                 <>
