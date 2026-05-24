@@ -1,5 +1,16 @@
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
+function isPaidProfile(profile) {
+  if (!profile) return false;
+  const subscription = String(profile.subscription || '').toLowerCase();
+  return Boolean(profile.paid) ||
+    subscription === 'pro' ||
+    subscription === 'premium' ||
+    Boolean(profile.subscription_type) ||
+    (profile.scripts_limit ?? 0) > 0 ||
+    (profile.scripts_remaining ?? 0) > 0;
+}
+
 function buildDefaultProfile(user) {
   return {
     id: user.id,
@@ -54,6 +65,36 @@ export default async function handler(req, res) {
     }
 
     if (byId) {
+      let merged = byId;
+
+      // If a legacy row exists under same email and has paid/pro data, migrate it into the real user id row.
+      if (user.email) {
+        const { data: byEmail } = await supabaseAdmin
+          .from('profiles')
+          .select('*')
+          .eq('email', user.email)
+          .maybeSingle();
+
+        if (byEmail && byEmail.id !== user.id && isPaidProfile(byEmail) && !isPaidProfile(byId)) {
+          const { error: mergeError } = await supabaseAdmin
+            .from('profiles')
+            .update({
+              subscription: byEmail.subscription || byId.subscription,
+              subscription_type: byEmail.subscription_type || byId.subscription_type,
+              scripts_remaining: byEmail.scripts_remaining ?? byId.scripts_remaining,
+              scripts_generated: byEmail.scripts_generated ?? byId.scripts_generated,
+              scripts_limit: byEmail.scripts_limit ?? byId.scripts_limit,
+              paid: byEmail.paid ?? byId.paid,
+              subscription_updated_at: byEmail.subscription_updated_at || byId.subscription_updated_at || new Date().toISOString()
+            })
+            .eq('id', user.id);
+
+          if (!mergeError) {
+            await supabaseAdmin.from('profiles').update({ email: null }).eq('id', byEmail.id);
+          }
+        }
+      }
+
       await supabaseAdmin
         .from('profiles')
         .update({
@@ -71,7 +112,8 @@ export default async function handler(req, res) {
         .eq('id', user.id)
         .maybeSingle();
 
-      return res.status(200).json({ profile: refreshed || byId });
+      merged = refreshed || byId;
+      return res.status(200).json({ profile: merged });
     }
 
     // Handle legacy row keyed to same email but different id.

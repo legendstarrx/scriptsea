@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { AppProps } from 'next/app';
-import { initErrorHandling, initFirebaseErrorMonitoring } from '../lib/errorHandling';
+import { initErrorHandling } from '../lib/errorHandling';
 import { AuthProvider } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
-import LoadingSpinner from '../components/LoadingSpinner';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Toaster } from 'react-hot-toast';
@@ -32,14 +31,11 @@ declare global {
 }
 
 function MyApp({ Component, pageProps }: CustomAppProps) {
-  const [isInitializing, setIsInitializing] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Initialize error handling
+    // Lightweight global error handlers only.
     initErrorHandling();
-    initFirebaseErrorMonitoring();
-    setIsInitializing(false);
   }, []);
 
   // Fallback OAuth hash handler: if provider returns tokens on "/", complete session and redirect.
@@ -90,10 +86,6 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
       router.events.off('routeChangeComplete', handleRouteChange);
     };
   }, [router.events]);
-
-  if (isInitializing) {
-    return <LoadingSpinner />;
-  }
 
   return (
     <>

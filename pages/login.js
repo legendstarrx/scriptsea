@@ -24,7 +24,7 @@ export default function Login() {
     try {
       await login(formData.email, formData.password);
       setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
-      router.push('/generate');
+      await router.replace('/generate');
     } catch (error) {
       const text = error?.message?.toLowerCase().includes('invalid')
         ? 'Invalid login details. Please try again.'

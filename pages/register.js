@@ -74,7 +74,7 @@ export default function Register() {
       }
 
       setSuccess('Account created successfully! Redirecting...');
-      setTimeout(() => router.push('/generate'), 1200);
+      await router.replace('/generate');
     } catch (err) {
       setError(err?.message || 'Failed to create account. Please try again.');
     } finally {

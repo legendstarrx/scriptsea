@@ -30,6 +30,16 @@ const mapSupabaseUser = (u) => {
   };
 };
 
+const isPaidProfile = (profile = {}) => {
+  const subscription = String(profile.subscription || '').toLowerCase();
+  return Boolean(profile.paid) ||
+    subscription === 'pro' ||
+    subscription === 'premium' ||
+    Boolean(profile.subscription_type) ||
+    (profile.scripts_limit ?? 0) > 0 ||
+    (profile.scripts_remaining ?? 0) > 0;
+};
+
 async function fetchProfile(userId) {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
   if (error) throw error;
@@ -105,6 +115,18 @@ export function AuthProvider({ children }) {
           email_verified: Boolean(supabaseUser.email_confirmed_at)
         });
         profileRow = await fetchProfile(supabaseUser.id);
+      }
+
+      // Normalize with server-side profile resolver to absorb legacy/duplicate rows.
+      try {
+        const serverProfile = await fetchProfileViaServer();
+        if (serverProfile) {
+          profileRow = !profileRow || isPaidProfile(serverProfile) || !isPaidProfile(profileRow)
+            ? serverProfile
+            : profileRow;
+        }
+      } catch (_serverSyncError) {
+        // Non-fatal; keep local profile row.
       }
 
       setUserProfile(mapProfile(profileRow));
