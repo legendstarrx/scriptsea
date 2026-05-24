@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'next/router';
 
 const SUPPORT_WHATSAPP_URL = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP_URL || 'https://wa.me/1234567890';
 
 export default function ProfileModal({ onClose, user }) {
-  const router = useRouter();
   const { logout, deleteUserAccount } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -18,7 +16,7 @@ export default function ProfileModal({ onClose, user }) {
       setError('');
       await logout();
       onClose?.();
-      await router.replace('/login');
+      window.location.assign('/login');
     } catch (signOutError) {
       console.error('Error signing out:', signOutError);
       setError(signOutError?.message || 'Sign out failed. Please try again.');
@@ -51,7 +49,7 @@ export default function ProfileModal({ onClose, user }) {
     deleteUserAccount()
       .then(() => {
         onClose?.();
-        router.replace('/register');
+        window.location.assign('/register');
       })
       .catch((deleteError) => {
         console.error('Delete account error:', deleteError);

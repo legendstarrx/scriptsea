@@ -316,7 +316,7 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 
 export default function Generate() {
   const router = useRouter();
-  const { user, userProfile, checkEmailVerification } = useAuth();
+  const { user, userProfile, checkEmailVerification, refreshUserProfile } = useAuth();
   const normalizedSubscription = (userProfile?.subscription || '').toLowerCase();
   const isProUser = Boolean(userProfile?.paid) ||
     normalizedSubscription === 'pro' ||
@@ -356,6 +356,13 @@ export default function Generate() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [verificationChecked, setVerificationChecked] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    refreshUserProfile(user.uid).catch(() => {});
+    // Keep dependency narrow to avoid re-fetch loops from context value identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
   // Add ref for the response section
   const responseRef = useRef(null);
