@@ -11,6 +11,22 @@ function isPaidProfile(profile) {
     (profile.scripts_remaining ?? 0) > 0;
 }
 
+function pickBestEmailProfile(profiles = [], preferredId) {
+  if (!Array.isArray(profiles) || profiles.length === 0) return null;
+
+  const sorted = [...profiles].sort((a, b) => {
+    const paidDiff = Number(isPaidProfile(b)) - Number(isPaidProfile(a));
+    if (paidDiff !== 0) return paidDiff;
+    const timeA = new Date(a?.subscription_updated_at || a?.updated_at || a?.created_at || 0).getTime();
+    const timeB = new Date(b?.subscription_updated_at || b?.updated_at || b?.created_at || 0).getTime();
+    return timeB - timeA;
+  });
+
+  const preferred = sorted.find((row) => row.id === preferredId);
+  if (preferred && isPaidProfile(preferred)) return preferred;
+  return sorted[0];
+}
+
 function buildDefaultProfile(user) {
   return {
     id: user.id,
@@ -69,11 +85,12 @@ export default async function handler(req, res) {
 
       // If a legacy row exists under same email and has paid/pro data, migrate it into the real user id row.
       if (user.email) {
-        const { data: byEmail } = await supabaseAdmin
+        const { data: byEmailRows } = await supabaseAdmin
           .from('profiles')
           .select('*')
-          .eq('email', user.email)
-          .maybeSingle();
+          .ilike('email', user.email)
+          .limit(20);
+        const byEmail = pickBestEmailProfile(byEmailRows || [], user.id);
 
         if (byEmail && byEmail.id !== user.id && isPaidProfile(byEmail) && !isPaidProfile(byId)) {
           const { error: mergeError } = await supabaseAdmin
@@ -119,12 +136,12 @@ export default async function handler(req, res) {
     // Handle legacy row keyed to same email but different id.
     let legacyProfile = null;
     if (user.email) {
-      const { data: byEmail } = await supabaseAdmin
+      const { data: byEmailRows } = await supabaseAdmin
         .from('profiles')
         .select('*')
-        .eq('email', user.email)
-        .maybeSingle();
-      legacyProfile = byEmail || null;
+        .ilike('email', user.email)
+        .limit(20);
+      legacyProfile = pickBestEmailProfile(byEmailRows || [], user.id);
     }
 
     const nextProfile = {

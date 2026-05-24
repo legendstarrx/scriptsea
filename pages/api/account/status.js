@@ -25,6 +25,24 @@ const pickCanonicalProfile = (primaryProfile, secondaryProfile) => {
   return primaryProfile;
 };
 
+const pickBestEmailProfile = (profiles = [], preferredId) => {
+  if (!Array.isArray(profiles) || profiles.length === 0) return null;
+
+  const sorted = [...profiles].sort((a, b) => {
+    const proDiff = Number(isProProfile(b)) - Number(isProProfile(a));
+    if (proDiff !== 0) return proDiff;
+    const paidDiff = Number(Boolean(b?.paid)) - Number(Boolean(a?.paid));
+    if (paidDiff !== 0) return paidDiff;
+    const timeA = new Date(a?.subscription_updated_at || a?.updated_at || a?.created_at || 0).getTime();
+    const timeB = new Date(b?.subscription_updated_at || b?.updated_at || b?.created_at || 0).getTime();
+    return timeB - timeA;
+  });
+
+  const preferred = sorted.find((row) => row.id === preferredId);
+  if (preferred && isProProfile(preferred)) return preferred;
+  return sorted[0];
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -65,9 +83,9 @@ export default async function handler(req, res) {
       const { data } = await supabaseAdmin
         .from('profiles')
         .select('*')
-        .eq('email', user.email)
-        .maybeSingle();
-      profileByEmail = data || null;
+        .ilike('email', user.email)
+        .limit(20);
+      profileByEmail = pickBestEmailProfile(data || [], user.id);
     }
 
     const canonicalProfile = pickCanonicalProfile(profileById, profileByEmail);
