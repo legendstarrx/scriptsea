@@ -62,7 +62,7 @@ export default function AuthCallbackPage() {
 
     finishAuth();
     return () => clearTimeout(fallbackTimer);
-  }, [router]);
+  }, []);
 
   return (
     <div

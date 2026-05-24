@@ -97,39 +97,33 @@ export function AuthProvider({ children }) {
     setUser(normalizedUser);
 
     try {
-      let profileRow = await fetchProfile(supabaseUser.id);
+      // Server-backed resolver is canonical (handles legacy/duplicate rows).
+      let profileRow = await fetchProfileViaServer();
+
+      // Fallback path for local/dev misconfiguration.
       if (!profileRow) {
-        await upsertProfile(supabaseUser, {
-          subscription: 'starter',
-          scripts_remaining: 0,
-          scripts_generated: 0,
-          scripts_limit: 0,
-          paid: false,
-          email_verified: Boolean(supabaseUser.email_confirmed_at),
-          last_login_at: new Date().toISOString()
-        });
         profileRow = await fetchProfile(supabaseUser.id);
-      } else {
-        await upsertProfile(supabaseUser, {
-          last_login_at: new Date().toISOString(),
-          email_verified: Boolean(supabaseUser.email_confirmed_at)
-        });
-        profileRow = await fetchProfile(supabaseUser.id);
-      }
-
-      // Normalize with server-side profile resolver to absorb legacy/duplicate rows.
-      try {
-        const serverProfile = await fetchProfileViaServer();
-        if (serverProfile) {
-          profileRow = !profileRow || isPaidProfile(serverProfile) || !isPaidProfile(profileRow)
-            ? serverProfile
-            : profileRow;
+        if (!profileRow) {
+          await upsertProfile(supabaseUser, {
+            subscription: 'starter',
+            scripts_remaining: 0,
+            scripts_generated: 0,
+            scripts_limit: 0,
+            paid: false,
+            email_verified: Boolean(supabaseUser.email_confirmed_at),
+            last_login_at: new Date().toISOString()
+          });
+          profileRow = await fetchProfile(supabaseUser.id);
+        } else {
+          await upsertProfile(supabaseUser, {
+            last_login_at: new Date().toISOString(),
+            email_verified: Boolean(supabaseUser.email_confirmed_at)
+          });
+          profileRow = await fetchProfile(supabaseUser.id);
         }
-      } catch (_serverSyncError) {
-        // Non-fatal; keep local profile row.
       }
 
-      const mapped = mapProfile(profileRow);
+      const mapped = mapProfile(profileRow || {});
       setUserProfile((prev) => {
         if (prev && isPaidProfile(prev) && !isPaidProfile(mapped)) {
           return prev;
@@ -157,13 +151,17 @@ export function AuthProvider({ children }) {
 
     let profileRow = null;
     try {
-      profileRow = await fetchProfile(userId);
-    } catch (_error) {
+      profileRow = await fetchProfileViaServer();
+    } catch (_serverError) {
       profileRow = null;
     }
 
     if (!profileRow) {
-      profileRow = await fetchProfileViaServer();
+      try {
+        profileRow = await fetchProfile(userId);
+      } catch (_error) {
+        profileRow = null;
+      }
     }
 
     // Never downgrade UI state to a blank/default profile on fetch failure.
