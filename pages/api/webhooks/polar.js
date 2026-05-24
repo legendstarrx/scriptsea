@@ -15,6 +15,12 @@ const readRawBody = async (req) => {
   return Buffer.concat(chunks).toString('utf8');
 };
 
+const readHeader = (req, key) => {
+  const value = req.headers[key];
+  if (Array.isArray(value)) return value[0];
+  return value || null;
+};
+
 const getPlanTypeFromPayload = (payloadData) => {
   const monthlyId = process.env.POLAR_PRODUCT_MONTHLY_ID;
   const weeklyId = process.env.POLAR_PRODUCT_WEEKLY_ID;
@@ -43,16 +49,20 @@ const getPlanTypeFromPayload = (payloadData) => {
 
 const getUserIdentifiers = (payloadData) => {
   const metadata = payloadData?.metadata || {};
+  const customer = payloadData?.customer || payloadData?.order?.customer || null;
+
   return {
     userId:
       metadata.userId ||
       metadata.user_id ||
       payloadData?.external_customer_id ||
-      payloadData?.customer?.external_id ||
+      payloadData?.external_id ||
+      customer?.external_id ||
       payloadData?.customer_external_id ||
       null,
     email:
-      payloadData?.customer?.email ||
+      customer?.email ||
+      payloadData?.email ||
       payloadData?.customer_email ||
       metadata.email ||
       null
@@ -86,10 +96,14 @@ export default async function handler(req, res) {
 
     if (process.env.POLAR_WEBHOOK_SECRET) {
       const webhook = new Webhook(process.env.POLAR_WEBHOOK_SECRET);
+      const svixId = readHeader(req, 'svix-id') || readHeader(req, 'webhook-id');
+      const svixSignature = readHeader(req, 'svix-signature') || readHeader(req, 'webhook-signature');
+      const svixTimestamp = readHeader(req, 'svix-timestamp') || readHeader(req, 'webhook-timestamp');
+
       event = webhook.verify(rawBody, {
-        'webhook-id': req.headers['webhook-id'],
-        'webhook-signature': req.headers['webhook-signature'],
-        'webhook-timestamp': req.headers['webhook-timestamp']
+        'svix-id': svixId,
+        'svix-signature': svixSignature,
+        'svix-timestamp': svixTimestamp
       });
     } else {
       event = JSON.parse(rawBody);
@@ -97,6 +111,18 @@ export default async function handler(req, res) {
 
     const eventType = event?.type;
     const payloadData = event?.data || {};
+    const processableTypes = new Set([
+      'order.paid',
+      'subscription.active',
+      'subscription.created',
+      'subscription.canceled',
+      'subscription.revoked'
+    ]);
+
+    if (!processableTypes.has(eventType)) {
+      return res.status(200).json({ received: true, skipped: 'event_not_handled' });
+    }
+
     const planType = getPlanTypeFromPayload(payloadData);
     const scriptsLimit = planType === 'monthly' ? 500 : 100;
     const { userId, email } = getUserIdentifiers(payloadData);

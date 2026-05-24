@@ -7,7 +7,7 @@ const mapProfile = (row = {}) => ({
   email: row.email || null,
   displayName: row.display_name || null,
   photoURL: row.photo_url || null,
-  subscription: row.subscription || 'starter',
+  subscription: row.subscription || null,
   subscriptionType: row.subscription_type || null,
   scriptsRemaining: row.scripts_remaining ?? 0,
   scriptsGenerated: row.scripts_generated ?? 0,
@@ -129,7 +129,13 @@ export function AuthProvider({ children }) {
         // Non-fatal; keep local profile row.
       }
 
-      setUserProfile(mapProfile(profileRow));
+      const mapped = mapProfile(profileRow);
+      setUserProfile((prev) => {
+        if (prev && isPaidProfile(prev) && !isPaidProfile(mapped)) {
+          return prev;
+        }
+        return mapped;
+      });
     } catch (err) {
       try {
         const fallbackProfile = await fetchProfileViaServer();
@@ -160,8 +166,18 @@ export function AuthProvider({ children }) {
       profileRow = await fetchProfileViaServer();
     }
 
-    const mappedProfile = mapProfile(profileRow || {});
-    setUserProfile(mappedProfile);
+    // Never downgrade UI state to a blank/default profile on fetch failure.
+    if (!profileRow) {
+      return userProfile;
+    }
+
+    const mappedProfile = mapProfile(profileRow);
+    setUserProfile((prev) => {
+      if (prev && isPaidProfile(prev) && !isPaidProfile(mappedProfile)) {
+        return prev;
+      }
+      return mappedProfile;
+    });
     return mappedProfile;
   };
 
