@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import Footer from '../components/Footer';
@@ -7,14 +6,9 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import SubscriptionModal from '../components/SubscriptionModal';
 import ProfileModal from '../components/ProfileModal';
-import { db } from '../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 import { toast, Toaster } from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-
-// Initialize Gemini API
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
 // GeneratePageNav Component
 const GeneratePageNav = () => {
@@ -301,9 +295,29 @@ const creatorStyles = {
 // Add this to force dynamic behavior
 export const dynamic = 'force-dynamic';
 
+const generateWithOpenAI = async (prompt, options = {}) => {
+  const response = await fetch('/api/ai/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt,
+      temperature: options.temperature ?? 0.9,
+      maxTokens: options.maxTokens ?? 2048
+    })
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Failed to generate content');
+  }
+
+  return payload.text || '';
+};
+
 export default function Generate() {
   const router = useRouter();
-  const { user, userProfile, updateUserProfile, checkEmailVerification } = useAuth();
+  const { user, userProfile, checkEmailVerification } = useAuth();
+  const isProUser = userProfile?.subscription === 'pro' || userProfile?.subscription === 'premium';
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');
@@ -645,14 +659,6 @@ export default function Generate() {
       setIsGeneratingAdvanced(true);
       setError('');
 
-      const model = genAI.getGenerativeModel({ 
-        model: "models/gemini-2.0-flash",
-        generationConfig: {
-          maxOutputTokens: 1024,
-          temperature: 0.9,
-        }
-      });
-
       const prompt = `Based on this video topic: "${videoTopic}", provide:
       1. 5 relevant keywords for SEO
       2. 10 trending hashtags for ${selectedPlatform}
@@ -660,16 +666,10 @@ export default function Generate() {
       
       Format the response in a clear, concise way without markdown symbols.`;
 
-      const result = await model.generateContent({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }]
+      const content = await generateWithOpenAI(prompt, {
+        maxTokens: 1024,
+        temperature: 0.9
       });
-
-      const response = await result.response;
-      const content = response.text();
       
       // Parse the response into sections
       const sections = content.split('\n\n');
@@ -953,9 +953,14 @@ export default function Generate() {
       return;
     }
 
-    // Check if user has scripts remaining
-    if (userProfile?.scriptsRemaining <= 0) {
-      setError('You have reached your script limit. Please upgrade to Pro to generate more scripts.');
+    if (!isProUser) {
+      setShowSubscriptionModal(true);
+      setNotification({
+        show: true,
+        message: 'Your next viral script is one upgrade away. Go Pro to keep generating instantly.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
       // Scroll to error message
       window.scrollTo({
         top: 0,
@@ -968,40 +973,14 @@ export default function Generate() {
       setIsGenerating(true);
       setError('');
 
-      const model = genAI.getGenerativeModel({ 
-        model: "models/gemini-2.0-flash",
-        generationConfig: {
-          maxOutputTokens: 2048,
-          temperature: 0.9,
-        }
-      });
-
       const prompt = await generatePrompt();
-      const result = await model.generateContent({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }]
+      const generatedText = await generateWithOpenAI(prompt, {
+        maxTokens: 2048,
+        temperature: 0.9
       });
-
-      const response = await result.response;
-      const formattedScript = formatScript(response.text());
+      const formattedScript = formatScript(generatedText);
       setGeneratedScript(formattedScript);
 
-      // Update script count in Firebase
-      if (userProfile) {
-        const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, {
-          scriptsRemaining: userProfile.scriptsRemaining - 1
-        });
-        
-        // Update local user profile state
-        await updateUserProfile({
-          ...userProfile,
-          scriptsRemaining: userProfile.scriptsRemaining - 1
-        });
-      }
     } catch (err) {
       console.error('Generation error:', err);
       setError('Error generating script. Please try again.');
@@ -1037,25 +1016,12 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       setIsGeneratingThumbnail(true);
       setError('');
 
-      const model = genAI.getGenerativeModel({ 
-        model: "models/gemini-2.0-flash",
-        generationConfig: {
-          maxOutputTokens: 1024,
-          temperature: 0.9,
-        }
-      });
-
       const prompt = generateThumbnailPrompt(generatedScript.replace(/<[^>]+>/g, ''));
-      const result = await model.generateContent({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }]
+      const generatedText = await generateWithOpenAI(prompt, {
+        maxTokens: 1024,
+        temperature: 0.9
       });
-
-      const response = await result.response;
-      setThumbnailSuggestions(response.text());
+      setThumbnailSuggestions(generatedText);
     } catch (err) {
       console.error('Thumbnail generation error:', err);
       setError('Error generating thumbnail suggestions. Please try again.');
@@ -1245,7 +1211,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
           break;
       }
     }
-  }, [router.query]);
+  }, [router, router.query.payment]);
 
   // Update email verification check to run only once after login
   useEffect(() => {
@@ -1386,20 +1352,13 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               alignItems: 'center',
               gap: '10px'
             }}>
-              <span style={{
-                fontSize: '1rem',
-                color: '#666'
-              }}>
-                Scripts Generated:
+              <span style={{ fontSize: '1rem', color: '#666' }}>
+                Current Plan:
               </span>
-              <span style={{
-                fontSize: '1.2rem',
-                fontWeight: '600',
-                color: userProfile?.subscription === 'pro' ? '#FF3366' : '#666'
-              }}>
-                {userProfile?.scriptsRemaining || 0} scripts out of {userProfile?.subscription === 'pro' ? (userProfile?.subscriptionType === 'yearly' ? 1200 : 100) : 3}
+              <span style={{ fontSize: '1.2rem', fontWeight: '600', color: isProUser ? '#FF3366' : '#666' }}>
+                {isProUser ? `Pro ${userProfile?.subscriptionType === 'monthly' ? 'Monthly' : 'Weekly'}` : 'Starter'}
               </span>
-              {userProfile?.subscription === 'free' && userProfile?.scriptsRemaining === 0 && (
+              {!isProUser && (
                 <>
                   <button
                     onClick={() => setShowSubscriptionModal(true)}
@@ -1662,7 +1621,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 }}>
                   Viral video reference (optional)
                 </label>
-                {userProfile?.subscription === 'free' && (
+                {!isProUser && (
                   <div style={{
                     position: 'absolute',
                     top: '30px',
@@ -2355,7 +2314,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       </h3>
                       <button
                         onClick={() => {
-                          if (userProfile?.subscription === 'free') {
+                          if (!isProUser) {
                             setShowSubscriptionModal(true);
                             setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
                             setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
@@ -2451,7 +2410,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       </h3>
                       <button
                         onClick={() => {
-                          if (userProfile?.subscription === 'free') {
+                          if (!isProUser) {
                             setShowSubscriptionModal(true);
                             setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
                             setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
@@ -2627,7 +2586,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 }}>
                   <button 
                     onClick={() => {
-                      if (userProfile?.subscription === 'free') {
+                      if (!isProUser) {
                         setShowSubscriptionModal(true);
                         setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to save your scripts!', type: 'error' });
                         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
@@ -2651,7 +2610,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   <div style={{ position: 'relative' }}>
                     <button
                       onClick={() => {
-                        if (userProfile?.subscription === 'free') {
+                        if (!isProUser) {
                           setShowSubscriptionModal(true);
                           setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to export your scripts!', type: 'error' });
                           setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);

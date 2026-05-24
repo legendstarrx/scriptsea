@@ -1,31 +1,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
-import { useState, useEffect } from 'react';
-import ContactModal from './ContactModal';
-
+import { useState } from 'react';
 import SubscriptionModal from './SubscriptionModal';
-import Image from 'next/image';
-
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function Navigation() {
   const router = useRouter();
-  const { user, userProfile, loading, logout } = useAuth();
-  const [showContactModal, setShowContactModal] = useState(false);
+  const { user, userProfile, logout } = useAuth();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (!loading && user?.email) {
-      setIsAdmin(user.email === ADMIN_EMAIL);
-    } else {
-      setIsAdmin(false);
-    }
-  }, [user, loading]);
-
-  // Add null check for subscription status
-  const isFreePlan = !userProfile?.subscription || userProfile.subscription === 'free';
 
   const handleSignOut = async () => {
     try {
@@ -45,9 +27,9 @@ export default function Navigation() {
         right: 0,
         zIndex: 50,
         background: 'white',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        padding: '0.5rem 1rem',
-        height: '60px',
+        boxShadow: '0 1px 12px rgba(0, 0, 0, 0.06)',
+        padding: '0.65rem 1rem',
+        minHeight: '64px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -93,6 +75,20 @@ export default function Navigation() {
                 Generate
               </Link>
               <button
+                onClick={() => setShowSubscriptionModal(true)}
+                style={{
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: '#FF3366',
+                  color: 'white',
+                  padding: '0.45rem 0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Upgrade
+              </button>
+              <button
                 onClick={handleSignOut}
                 style={{
                   background: 'none',
@@ -112,19 +108,6 @@ export default function Navigation() {
             </>
           ) : (
             <>
-              <Link href="/login" style={{
-                textDecoration: 'none',
-                color: '#333',
-                fontWeight: '500',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                transition: 'all 0.2s ease',
-                ':hover': {
-                  background: '#f3f4f6'
-                }
-              }}>
-                Login
-              </Link>
               <Link href="/register" style={{
                 textDecoration: 'none',
                 background: '#FF3366',
@@ -142,41 +125,8 @@ export default function Navigation() {
               </Link>
             </>
           )}
-          <button
-            onClick={() => setShowContactModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '0.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Contact Us"
-          >
-            <svg 
-              width="20" 
-              height="20" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="#FF3366"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-            </svg>
-          </button>
         </div>
       </nav>
-
-      {showContactModal && (
-        <ContactModal 
-          isOpen={showContactModal}
-          onClose={() => setShowContactModal(false)}
-        />
-      )}
 
       {showSubscriptionModal && (
         <SubscriptionModal 

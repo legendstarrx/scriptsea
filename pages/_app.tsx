@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { AppProps } from 'next/app';
 import { initErrorHandling, initFirebaseErrorMonitoring } from '../lib/errorHandling';
-import { db } from '../lib/firebase';
-import { enableNetwork } from 'firebase/firestore';
 import { AuthProvider } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -10,7 +8,6 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
-import AdminProtectedRoute from '../components/AdminProtectedRoute';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -18,7 +15,6 @@ import Script from 'next/script';
 
 // Add this type definition
 type CustomPageProps = {
-  adminOnly?: boolean;
   protected?: boolean;
 };
 
@@ -42,11 +38,7 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
     // Initialize error handling
     initErrorHandling();
     initFirebaseErrorMonitoring();
-
-    // Enable Firestore network
-    enableNetwork(db).then(() => {
-      setIsInitializing(false);
-    });
+    setIsInitializing(false);
   }, []);
 
   // Track page views
@@ -101,11 +93,7 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
         </Head>
         <AuthProvider>
           <div id="app-root" className="min-h-screen">
-            {Component.adminOnly ? (
-              <AdminProtectedRoute>
-                <Component {...pageProps} />
-              </AdminProtectedRoute>
-            ) : Component.protected ? (
+            {Component.protected ? (
               <ProtectedRoute>
                 <Component {...pageProps} />
               </ProtectedRoute>

@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { auth } from '../lib/firebase';
 import { useRouter } from 'next/router';
 
 export default function ProfileModal({ onClose, user }) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, updateUserPassword } = useAuth();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -44,13 +42,7 @@ export default function ProfileModal({ onClose, user }) {
     }
 
     try {
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        currentPassword
-      );
-
-      await reauthenticateWithCredential(auth.currentUser, credential);
-      await updatePassword(auth.currentUser, newPassword);
+      await updateUserPassword(currentPassword, newPassword);
       
       setSuccess('Password updated successfully');
       setShowPasswordForm(false);

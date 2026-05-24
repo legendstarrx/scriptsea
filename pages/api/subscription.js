@@ -1,4 +1,4 @@
-import { adminDb } from '../../lib/firebaseAdmin';
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,26 +12,30 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const userRef = adminDb.collection('users').doc(userId);
-    const userDoc = await userRef.get();
+    const { data: userRow, error: fetchError } = await supabaseAdmin
+      .from('profiles')
+      .select('subscription_type')
+      .eq('id', userId)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
 
-    if (!userDoc.exists) {
+    if (!userRow) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const userData = userDoc.data();
-    const subscriptionType = userData?.subscriptionType || 'monthly';
+    const subscriptionType = userRow?.subscription_type || 'monthly';
 
-    await userRef.update({
-      subscription: plan,
-      scriptsRemaining: plan === 'pro' 
-        ? (subscriptionType === 'yearly' ? 1200 : 100) 
-        : 3,
-      scriptsLimit: plan === 'pro'
-        ? (subscriptionType === 'yearly' ? 1200 : 100)
-        : 3,
-      lastUpdated: new Date().toISOString()
-    });
+    const scriptsLimit = plan === 'pro' ? (subscriptionType === 'yearly' ? 1200 : 100) : 0;
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({
+        subscription: plan,
+        scripts_remaining: scriptsLimit,
+        scripts_limit: scriptsLimit,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+    if (updateError) throw updateError;
 
     return res.status(200).json({ success: true });
   } catch (error) {

@@ -1,432 +1,267 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { auth, db } from '../lib/firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { 
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  sendPasswordResetEmail,
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  signInWithPopup,
-  GoogleAuthProvider,
-  updateProfile,
-  onAuthStateChanged,
-  deleteUser,
-  signInWithRedirect,
-  getRedirectResult,
-  sendEmailVerification
-} from 'firebase/auth';
-import { useRouter } from 'next/router';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext();
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+const mapProfile = (row = {}) => ({
+  email: row.email || null,
+  displayName: row.display_name || null,
+  photoURL: row.photo_url || null,
+  subscription: row.subscription || 'starter',
+  subscriptionType: row.subscription_type || null,
+  scriptsRemaining: row.scripts_remaining ?? 0,
+  scriptsGenerated: row.scripts_generated ?? 0,
+  scriptsLimit: row.scripts_limit ?? 0,
+  emailVerified: row.email_verified ?? false,
+  paid: row.paid ?? false,
+  createdAt: row.created_at || null,
+  lastLogin: row.last_login_at || null
+});
+
+const mapSupabaseUser = (u) => {
+  if (!u) return null;
+  return {
+    uid: u.id,
+    id: u.id,
+    email: u.email,
+    displayName: u.user_metadata?.display_name || u.user_metadata?.full_name || null,
+    photoURL: u.user_metadata?.avatar_url || null,
+    emailVerified: Boolean(u.email_confirmed_at)
+  };
+};
+
+async function fetchProfile(userId) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function upsertProfile(user, patch = {}) {
+  const payload = {
+    id: user.id,
+    email: user.email,
+    display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || null,
+    photo_url: user.user_metadata?.avatar_url || null,
+    ...patch
+  };
+
+  const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+  if (error) throw error;
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const router = useRouter();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          // Set the user state immediately
-          setUser(user);
-          
-          const userRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(userRef);
-          
-          // Check if user is banned
-          if (docSnap.exists() && docSnap.data().isBanned) {
-            await signOut(auth);
-            setUser(null);
-            setUserProfile(null);
-            return;
-          }
-          
-          const isAdminUser = user.email === ADMIN_EMAIL;
-          
-          if (docSnap.exists()) {
-            const userData = docSnap.data();
-            userData.isAdmin = isAdminUser;
-            setUserProfile({
-              ...userData,
-              isAdmin: isAdminUser,
-              email: user.email // Ensure email is always current
-            });
-          } else {
-            const defaultProfile = {
-              email: user.email,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              subscription: 'free',
-              scriptsRemaining: 3,
-              scriptsGenerated: 0,
-              isAdmin: isAdminUser,
-              createdAt: new Date().toISOString(),
-              lastLogin: new Date().toISOString()
-            };
-            await setDoc(userRef, defaultProfile);
-            setUserProfile(defaultProfile);
-          }
-        } catch (error) {
-          console.error('Profile fetch error:', error);
-          setError(error);
-        }
-      } else {
-        setUser(null);
-        setUserProfile(null);
-      }
-      
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const signup = async (email, password, displayName) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      if (displayName) {
-        await updateProfile(user, { displayName });
-      }
-      
-      // Send verification email
-      await sendEmailVerification(user);
-      
-      // Create user document in Firestore
-      const userData = {
-        email: user.email,
-        displayName: displayName || user.displayName,
-        photoURL: user.photoURL,
-        subscription: 'free',
-        scriptsRemaining: 3,
-        scriptsGenerated: 0,
-        isAdmin: user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        ipAddress: null,
-        isBanned: false,
-        subscriptionStatus: 'free',
-        lastPaymentDate: new Date().toISOString(),
-        emailVerified: false
-      };
-      
-      await setDoc(doc(db, 'users', user.uid), userData);
-      
-      // Update IP address
-      await fetch('/api/user/ip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.uid })
-      });
-      
-      setUserProfile(userData);
-      return user;
-    } catch (error) {
-      console.error('Signup error:', error);
-      throw error;
-    }
-  };
-
-  const login = async (email, password) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Set the user state immediately
-      setUser(user);
-      
-      // Update IP address after successful login
-      await fetch('/api/user/ip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.uid })
-      });
-      
-      // Get user profile
-      const userRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(userRef);
-      
-      if (docSnap.exists()) {
-        const userData = docSnap.data();
-        userData.isAdmin = user.email === ADMIN_EMAIL;
-        setUserProfile({
-          ...userData,
-          email: user.email // Ensure email is always current
-        });
-      }
-      
-      return user;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      
-      // Set the user state immediately
-      setUser(result.user);
-      
-      // Check if user is banned BEFORE creating/updating profile
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-      if (userDoc.exists() && userDoc.data().isBanned) {
-        await signOut(auth);
-        setUser(null);
-        setUserProfile(null);
-        throw new Error('Your account has been banned. Please contact support.');
-      }
-
-      // Only proceed if not banned
-      let userData;
-      
-      if (userDoc.exists()) {
-        // If user exists, keep their existing data but update login time
-        userData = {
-          ...userDoc.data(),
-          lastLogin: new Date().toISOString(),
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL,
-          isAdmin: result.user.email === ADMIN_EMAIL
-        };
-      } else {
-        // If new user, create default profile
-        userData = {
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL,
-          subscription: 'free',
-          scriptsRemaining: 3,
-          scriptsGenerated: 0,
-          isAdmin: result.user.email === ADMIN_EMAIL,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-          isBanned: false
-        };
-      }
-
-      await setDoc(doc(db, 'users', result.user.uid), userData, { merge: true });
-      
-      // Update IP address after successful sign-in
-      await fetch('/api/user/ip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: result.user.uid })
-      });
-      
-      setUserProfile(userData);
-      return result;
-    } catch (error) {
-      console.error('Google Sign-in error:', error);
-      await signOut(auth);
+  const syncProfile = async (supabaseUser) => {
+    if (!supabaseUser) {
       setUser(null);
       setUserProfile(null);
-      throw error;
+      return;
+    }
+
+    const normalizedUser = mapSupabaseUser(supabaseUser);
+    setUser(normalizedUser);
+
+    try {
+      let profileRow = await fetchProfile(supabaseUser.id);
+      if (!profileRow) {
+        await upsertProfile(supabaseUser, {
+          subscription: 'starter',
+          scripts_remaining: 0,
+          scripts_generated: 0,
+          scripts_limit: 0,
+          paid: false,
+          email_verified: Boolean(supabaseUser.email_confirmed_at),
+          last_login_at: new Date().toISOString()
+        });
+        profileRow = await fetchProfile(supabaseUser.id);
+      } else {
+        await upsertProfile(supabaseUser, {
+          last_login_at: new Date().toISOString(),
+          email_verified: Boolean(supabaseUser.email_confirmed_at)
+        });
+        profileRow = await fetchProfile(supabaseUser.id);
+      }
+
+      setUserProfile(mapProfile(profileRow));
+    } catch (err) {
+      setError(err);
+      throw err;
     }
   };
 
   useEffect(() => {
-    const handleRedirectResult = async () => {
+    let mounted = true;
+
+    const init = async () => {
       try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-          if (!userDoc.exists()) {
-            const userData = {
-              email: result.user.email,
-              displayName: result.user.displayName,
-              photoURL: result.user.photoURL,
-              subscription: 'free',
-              scriptsRemaining: 3,
-              scriptsGenerated: 0,
-              isAdmin: result.user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL,
-              createdAt: new Date().toISOString(),
-              lastLogin: new Date().toISOString()
-            };
-            await setDoc(doc(db, 'users', result.user.uid), userData);
-            setUserProfile(userData);
-          }
-        }
-      } catch (error) {
-        console.error('Redirect result error:', error);
+        const { data } = await supabase.auth.getUser();
+        if (!mounted) return;
+        await syncProfile(data?.user || null);
+      } catch (err) {
+        if (mounted) setError(err);
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
 
-    handleRedirectResult();
+    init();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+      try {
+        await syncProfile(session?.user || null);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      throw error;
+  const signup = async (email, password, displayName) => {
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: displayName } }
+    });
+    if (signUpError) throw signUpError;
+    if (data?.user) {
+      await upsertProfile(data.user, {
+        subscription: 'starter',
+        scripts_remaining: 0,
+        scripts_generated: 0,
+        scripts_limit: 0,
+        paid: false,
+        email_verified: Boolean(data.user.email_confirmed_at),
+        last_login_at: new Date().toISOString()
+      });
     }
+    return mapSupabaseUser(data?.user || null);
+  };
+
+  const login = async (email, password) => {
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) throw signInError;
+    if (data?.user) {
+      await syncProfile(data.user);
+    }
+    return mapSupabaseUser(data?.user || null);
+  };
+
+  const signInWithGoogle = async () => {
+    const redirectTo = `${process.env.NEXT_PUBLIC_BASE_URL || window.location.origin}/generate`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo }
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
   const resetPassword = async (email) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (error) {
-      throw error;
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/login`
+    });
+    if (error) throw error;
   };
 
-  const updateUserPassword = async (currentPassword, newPassword) => {
-    try {
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
-    } catch (error) {
-      throw error;
-    }
+  const updateUserPassword = async (_currentPassword, newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
   };
 
   const updateUserProfile = async (data) => {
-    try {
-      await updateProfile(auth.currentUser, data);
-      if (userProfile) {
-        setUserProfile({ ...userProfile, ...data });
-      }
-    } catch (error) {
-      throw error;
+    const payload = {};
+    if (data.displayName) payload.display_name = data.displayName;
+    if (data.photoURL) payload.photo_url = data.photoURL;
+
+    if (user?.uid) {
+      const { error } = await supabase.from('profiles').update(payload).eq('id', user.uid);
+      if (error) throw error;
+      const profileRow = await fetchProfile(user.uid);
+      setUserProfile(mapProfile(profileRow));
     }
   };
 
   const updateSubscription = async (userId, plan) => {
-    try {
-      const userRef = doc(db, 'users', userId);
-      const scriptsRemaining = plan === 'pro' ? 100 : 3;
-      await updateDoc(userRef, {
+    const scriptsRemaining = plan === 'pro' ? 100 : 0;
+    const { error } = await supabase
+      .from('profiles')
+      .update({
         subscription: plan,
-        scriptsRemaining: scriptsRemaining
-      });
-      
-      // Update local state if it's the current user
-      if (user && user.uid === userId) {
-        setUserProfile(prev => ({
-          ...prev,
-          subscription: plan,
-          scriptsRemaining: scriptsRemaining
-        }));
-      }
-    } catch (error) {
-      console.error('Error updating subscription:', error);
-      throw error;
+        scripts_remaining: scriptsRemaining,
+        scripts_limit: scriptsRemaining
+      })
+      .eq('id', userId);
+    if (error) throw error;
+    if (user?.uid === userId) {
+      const profileRow = await fetchProfile(userId);
+      setUserProfile(mapProfile(profileRow));
     }
   };
 
-  const deleteUserAccount = async (userId) => {
-    try {
-      // Delete user document from Firestore
-      await deleteDoc(doc(db, 'users', userId));
-      
-      // Delete user from Firebase Auth if it's not the current user
-      if (user && user.uid !== userId) {
-        const userToDelete = await auth.getUser(userId);
-        await deleteUser(userToDelete);
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      throw error;
+  const decrementScriptsRemaining = async (userId) => {
+    const profileRow = await fetchProfile(userId);
+    const nextValue = Math.max((profileRow?.scripts_remaining ?? 0) - 1, 0);
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        scripts_remaining: nextValue,
+        last_login_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+    if (error) throw error;
+
+    if (user?.uid === userId) {
+      const updated = await fetchProfile(userId);
+      setUserProfile(mapProfile(updated));
     }
+
+    return nextValue;
   };
 
-  const getUsersByIP = async (ipAddress) => {
-    try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('ipAddress', '==', ipAddress));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error getting users by IP:', error);
-      throw error;
-    }
+  const deleteUserAccount = async () => {
+    throw new Error('Delete account from Supabase Dashboard for now.');
   };
 
-  const getAllUsers = async () => {
-    try {
-      if (!user || user.email !== 'legendstarr2024@gmail.com') {
-        throw new Error('Unauthorized');
-      }
-      const usersRef = collection(db, 'users');
-      const querySnapshot = await getDocs(usersRef);
-      const users = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      console.log('Fetched users:', users);
-      return users;
-    } catch (error) {
-      console.error('Error getting all users:', error);
-      throw error;
-    }
-  };
+  const getUsersByIP = async () => [];
+  const getAllUsers = async () => [];
 
   const checkEmailVerification = async () => {
-    if (!user) return false;
-    
-    try {
-      // Reload the user to get the latest email verification status
-      await user.reload();
-      
-      // Check if email is verified
-      const isVerified = user.emailVerified;
-      
-      // If verified, update the user profile in Firestore
-      if (isVerified) {
-        const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, {
-          emailVerified: true,
-          lastLogin: new Date().toISOString()
-        });
-        
-        // Update local user profile state
-        if (userProfile) {
-          setUserProfile(prev => ({
-            ...prev,
-            emailVerified: true
-          }));
-        }
-      }
-      
-      return isVerified;
-    } catch (error) {
-      console.error('Error checking email verification:', error);
-      return false;
+    const { data, error } = await supabase.auth.getUser();
+    if (error) return false;
+    const verified = Boolean(data?.user?.email_confirmed_at);
+    if (verified && user?.uid) {
+      await supabase.from('profiles').update({ email_verified: true }).eq('id', user.uid);
+      const profileRow = await fetchProfile(user.uid);
+      setUserProfile(mapProfile(profileRow));
     }
+    return verified;
   };
 
   const resendVerificationEmail = async () => {
-    try {
-      if (!auth.currentUser) {
-        throw new Error('No user logged in');
-      }
-      await sendEmailVerification(auth.currentUser);
-      return true;
-    } catch (error) {
-      console.error('Resend verification email error:', error);
-      throw error;
-    }
+    if (!user?.email) throw new Error('No user logged in');
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email
+    });
+    if (error) throw error;
+    return true;
   };
 
   const value = {
@@ -442,6 +277,7 @@ export function AuthProvider({ children }) {
     updateUserPassword,
     updateUserProfile,
     updateSubscription,
+    decrementScriptsRemaining,
     deleteUserAccount,
     getUsersByIP,
     getAllUsers,
@@ -449,11 +285,7 @@ export function AuthProvider({ children }) {
     resendVerificationEmail
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
@@ -462,4 +294,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}

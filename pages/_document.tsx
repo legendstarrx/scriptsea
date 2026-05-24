@@ -12,8 +12,7 @@ class MyDocument extends Document {
           />
           
           {/* Add DNS prefetch */}
-          <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
-          <link rel="dns-prefetch" href="https://www.scriptsea.com" />
+          <link rel="dns-prefetch" href="https://scriptsee.com" />
         </Head>
         <body>
           <Main />

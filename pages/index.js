@@ -101,7 +101,7 @@ export default function Home() {
                 fontSize: '0.9rem',
                 color: '#666'
               }}>
-                <span style={{ fontWeight: '600', color: '#FF3366' }}>Special Offer:</span> start now for FREE
+                Level up your content workflow with Pro and publish faster every week.
               </p>
             </div>
 

@@ -7,11 +7,12 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
   const [error, setError] = useState('');
 
   const plans = {
-    monthly: {
+    weekly: {
       price: '$4.99',
-      amount: 8000,
+      amount: 4.99,
       features: [
-        '100 scripts per month',
+        '100 scripts every week',
+        'Faster script output for daily posting',
         'Export scripts to PDF & Word',
         'Save unlimited scripts',
         'Viral video reference analysis',
@@ -22,11 +23,12 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
         'Early access to new features'
       ]
     },
-    yearly: {
-      price: '$49.99',
-      amount: 80000,
+    monthly: {
+      price: '$19.99',
+      amount: 19.99,
       features: [
-        '1200 scripts per year',
+        '500 scripts every month',
+        'Best value for serious creators',
         'Export scripts to PDF & Word',
         'Save unlimited scripts',
         'Viral video reference analysis',
@@ -34,13 +36,12 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
         'Thumbnail suggestions',
         'Creator style matching',
         'Priority email support',
-        'Early access to new features',
-        '2 months free'
+        'Early access to new features'
       ]
     }
   };
 
-  const currentSubscription = userProfile?.subscription || 'free';
+  const currentSubscription = userProfile?.subscription || 'starter';
   const isPro = currentSubscription === 'pro' || currentSubscription === 'premium';
 
   const handleUpgrade = async (plan) => {
@@ -52,7 +53,7 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          plan: plan === 'yearly' ? 'yearly' : 'monthly',
+          plan: plan === 'monthly' ? 'monthly' : 'weekly',
           userId: user.uid,
           email: user.email
         })
@@ -67,34 +68,6 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
     } catch (error) {
       console.error('Error initiating payment:', error);
       setError('Failed to process payment. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancelSubscription = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/cancel-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: user.email,
-          subscriptionId: userProfile?.subscriptionId
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setError('Subscription cancelled successfully');
-        setTimeout(() => onClose(), 2000);
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (error) {
-      setError('Failed to cancel subscription. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -115,7 +88,10 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
           </div>
         ) : (
           <>
-            <h2>Upgrade Your Experience</h2>
+            <h2>Go Pro and Publish Faster</h2>
+            <p style={{ textAlign: 'center', color: '#666', marginTop: '-8px' }}>
+              Unlock premium script workflows built for creators who want consistent growth.
+            </p>
             <div className="current-plan">
               <span>Current Plan:</span>
               <span className={`plan-badge ${currentSubscription}`}>
@@ -126,7 +102,7 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
             <div className="plans-container">
               {Object.entries(plans).map(([planType, plan]) => (
                 <div key={planType} className="plan-card">
-                  <h3>{planType === 'monthly' ? 'Monthly Pro' : 'Yearly Pro'}</h3>
+                  <h3>{planType === 'weekly' ? 'Pro Weekly' : 'Pro Monthly'}</h3>
                   <div className="price">{plan.price}</div>
                   <div className="features">
                     {plan.features.map((feature, index) => (
@@ -217,6 +193,11 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
         }
 
         .plan-badge.free {
+          background: #f0f0f0;
+          color: #666;
+        }
+
+        .plan-badge.starter {
           background: #f0f0f0;
           color: #666;
         }
