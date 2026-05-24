@@ -2,85 +2,91 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/router';
 
+const SUPPORT_EMAIL = 'support@scriptsea.com';
+const SUPPORT_WHATSAPP_URL = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP_URL || 'https://wa.me/1234567890';
+
 export default function ProfileModal({ onClose, user }) {
   const router = useRouter();
-  const { logout, updateUserPassword } = useAuth();
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-    const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { logout } = useAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const handleSignOut = async () => {
     try {
+      setIsSigningOut(true);
+      setError('');
       await logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
+      onClose?.();
+      await router.replace('/login');
+    } catch (signOutError) {
+      console.error('Error signing out:', signOutError);
+      setError(signOutError?.message || 'Sign out failed. Please try again.');
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(newPassword)) {
-      setError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
-      return;
-    }
-
-    try {
-      await updateUserPassword(currentPassword, newPassword);
-      
-      setSuccess('Password updated successfully');
-      setShowPasswordForm(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (error) {
-      setError(error.message);
-    }
+  const openSupport = (message) => {
+    const encodedMessage = encodeURIComponent(message);
+    const separator = SUPPORT_WHATSAPP_URL.includes('?') ? '&' : '?';
+    const whatsappLink = `${SUPPORT_WHATSAPP_URL}${separator}text=${encodedMessage}`;
+    window.open(whatsappLink, '_blank', 'noopener,noreferrer');
   };
+
+  const handleCancelSubscription = () => {
+    const accountEmail = user?.email || '';
+    openSupport(`Hi ScriptSea support, I want to cancel my subscription. My account email is: ${accountEmail}`);
+    setSuccess('Opening WhatsApp support for subscription cancellation.');
+  };
+
+  const handleDeleteAccount = () => {
+    const accountEmail = user?.email || '';
+    openSupport(`Hi ScriptSea support, I want to delete my account. My account email is: ${accountEmail}`);
+    setSuccess('Opening WhatsApp support for account deletion request.');
+  };
+
+  const handleEmailSupport = () => {
+    const accountEmail = user?.email || '';
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('ScriptSea Account Request')}&body=${encodeURIComponent(`Hello support,\n\nMy account email: ${accountEmail}\n\nRequest details:`)}`;
+    setSuccess('Opening email support.');
+  };
+
+  if (!user) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1001
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '16px',
-        padding: '2rem',
-        maxWidth: '500px',
-        width: '90%',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1.5rem'
-        }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1001
+      }}
+    >
+      <div
+        style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '2rem',
+          maxWidth: '500px',
+          width: '90%',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.25rem'
+          }}
+        >
           <h2 style={{ margin: 0, color: '#333' }}>Profile</h2>
           <button
             onClick={onClose}
@@ -96,170 +102,90 @@ export default function ProfileModal({ onClose, user }) {
           </button>
         </div>
 
-        {/* Account Information */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1rem', color: '#333' }}>Account Information</h3>
-          <div style={{
-            padding: '1rem',
-            background: '#f8f9ff',
-            borderRadius: '12px'
-          }}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ marginBottom: '0.8rem', color: '#333' }}>Account Information</h3>
+          <div
+            style={{
+              padding: '1rem',
+              background: '#f8f9ff',
+              borderRadius: '12px'
+            }}
+          >
             <p style={{ margin: 0, color: '#666' }}>
               <strong>Email:</strong> {user.email}
             </p>
           </div>
         </div>
 
-        {/* Change Password Section */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1rem', color: '#333' }}>Change Password</h3>
-          {!showPasswordForm ? (
-            <button
-              onClick={() => setShowPasswordForm(true)}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: '#FF3366',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              Change Password
-            </button>
-          ) : (
-            <form onSubmit={handlePasswordChange} style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem'
-            }}>
-              <input
-                type="password"
-                placeholder="Current Password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                style={{
-                  padding: '0.75rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '1rem'
-                }}
-              />
-              <input
-                type="password"
-                placeholder="New Password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                style={{
-                  padding: '0.75rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '1rem'
-                }}
-              />
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                style={{
-                  padding: '0.75rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '1rem'
-                }}
-              />
-              {error && (
-                <div style={{
-                  padding: '0.75rem',
-                  background: '#FFE5EC',
-                  color: '#FF3366',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div style={{
-                  padding: '0.75rem',
-                  background: '#D1FAE5',
-                  color: '#065F46',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  {success}
-                </div>
-              )}
-              <div style={{
-                display: 'flex',
-                gap: '1rem'
-              }}>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: '#FF3366',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    flex: 1
-                  }}
-                >
-                  Update Password
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordForm(false);
-                    setError('');
-                    setSuccess('');
-                    setCurrentPassword('');
-                    setNewPassword('');
-                    setConfirmPassword('');
-                  }}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: 'none',
-                    border: '1px solid #FF3366',
-                    color: '#FF3366',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    flex: 1
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
+        <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
+          <button type="button" onClick={handleCancelSubscription} style={secondaryActionStyle}>
+            Cancel subscription (contact support)
+          </button>
+          <button type="button" onClick={handleDeleteAccount} style={secondaryActionStyle}>
+            Delete account (contact support)
+          </button>
+          <button type="button" onClick={handleEmailSupport} style={secondaryActionStyle}>
+            Contact support by email
+          </button>
         </div>
 
-        {/* Sign Out Button */}
-        <button
-          onClick={handleSignOut}
-          style={{
-            padding: '0.75rem 1.5rem',
-            background: 'none',
-            border: '1px solid #FF3366',
-            color: '#FF3366',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: '500',
-            width: '100%',
-            transition: 'all 0.2s',
-            ':hover': {
-              background: '#FFF2F2'
-            }
-          }}
-        >
-          Sign Out
+        {error && (
+          <div
+            style={{
+              padding: '0.75rem',
+              background: '#FFE5EC',
+              color: '#FF3366',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              marginBottom: '0.8rem'
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div
+            style={{
+              padding: '0.75rem',
+              background: '#D1FAE5',
+              color: '#065F46',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              marginBottom: '0.8rem'
+            }}
+          >
+            {success}
+          </div>
+        )}
+
+        <button type="button" onClick={handleSignOut} disabled={isSigningOut} style={signOutButtonStyle}>
+          {isSigningOut ? 'Signing out...' : 'Sign Out'}
         </button>
       </div>
     </div>
   );
-} 
+}
+
+const secondaryActionStyle = {
+  padding: '0.75rem 1rem',
+  border: '1px solid #FFD2DD',
+  borderRadius: '10px',
+  background: '#FFF7FA',
+  color: '#333',
+  cursor: 'pointer',
+  fontWeight: 500,
+  width: '100%',
+  textAlign: 'left'
+};
+
+const signOutButtonStyle = {
+  padding: '0.85rem 1rem',
+  border: 'none',
+  borderRadius: '10px',
+  background: '#FF3366',
+  color: '#fff',
+  cursor: 'pointer',
+  fontWeight: 600,
+  width: '100%'
+};

@@ -1621,66 +1621,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 }}>
                   Viral video reference (optional)
                 </label>
-                {!isProUser && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '30px',
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backdropFilter: 'blur(2px)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1,
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    setShowSubscriptionModal(true);
-                    setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
-                    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
-                  }}>
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '20px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
-                    }}>
-                      <div style={{
-                        fontSize: '1.2rem',
-                        color: '#FF3366',
-                        marginBottom: '10px',
-                        fontWeight: '600'
-                      }}>
-                        Premium Feature
-                      </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowSubscriptionModal(true);
-                          setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
-                          setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
-                        }}
-                        style={{
-                          padding: '10px 20px',
-                          backgroundColor: '#FF3366',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '20px',
-                          fontSize: '0.9rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          boxShadow: '0 4px 15px rgba(255, 51, 102, 0.2)'
-                        }}
-                      >
-                        Upgrade to Pro
-                      </button>
-                    </div>
-                  </div>
-                )}
                 <div style={{
                   border: '2px dashed #e0e0e0',
                   borderRadius: '16px',
