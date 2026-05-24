@@ -98,7 +98,20 @@ export function AuthProvider({ children }) {
 
     const init = async () => {
       try {
-        const { data } = await supabase.auth.getUser();
+        if (!supabase) {
+          if (mounted) setError(new Error('Supabase client is not configured'));
+          return;
+        }
+
+        // Prevent a network/CSP stall from freezing the entire app render.
+        const getUserWithTimeout = Promise.race([
+          supabase.auth.getUser(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Auth initialization timeout')), 6000)
+          )
+        ]);
+
+        const { data } = await getUserWithTimeout;
         if (!mounted) return;
         await syncProfile(data?.user || null);
       } catch (err) {
@@ -109,6 +122,12 @@ export function AuthProvider({ children }) {
     };
 
     init();
+
+    if (!supabase) {
+      return () => {
+        mounted = false;
+      };
+    }
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
@@ -285,7 +304,7 @@ export function AuthProvider({ children }) {
     resendVerificationEmail
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
