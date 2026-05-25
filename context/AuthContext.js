@@ -215,20 +215,53 @@ export function AuthProvider({ children }) {
           // Set user immediately so nothing waits
           setUser(mapUser(session.user));
 
-          // Fast DB fetch — profile set here, loading cleared after
+          let profileResolved = false;
+
+          // ── Attempt 1: direct client DB query (~50-200ms) ──────────────
           try {
             const row = await fetchProfileFromDB(session.user.id);
-            if (mounted.current) {
-              if (row) {
-                applyProfile(mapProfile(row));
-              }
-              // If row is null, localStorage cache keeps the UI populated
+            if (row && mounted.current) {
+              applyProfile(mapProfile(row));
+              profileResolved = true;
             }
-          } catch (_e) {
-            // Keep localStorage value — don't wipe profile on network error
+          } catch (_e) { /* keep going */ }
+
+          // ── Attempt 2: server sync if DB returned nothing ───────────────
+          // (server uses admin client — bypasses RLS, handles legacy rows)
+          if (!profileResolved) {
+            try {
+              const serverRow = await Promise.race([
+                fetchProfileFromServer(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500)),
+              ]);
+              if (serverRow && mounted.current) {
+                applyProfile(mapProfile(serverRow));
+                profileResolved = true;
+              }
+            } catch (_e) { /* keep going */ }
           }
 
-          // Background server sync after loading is cleared
+          // ── Fallback: set a minimal logged-in profile ───────────────────
+          // This guarantees userProfile is NEVER null for a signed-in user.
+          // The background sync will correct it to Pro if appropriate.
+          if (!profileResolved && mounted.current) {
+            const placeholder = mapProfile({
+              id: session.user.id,
+              email: session.user.email,
+              display_name: session.user.user_metadata?.display_name || session.user.user_metadata?.full_name || null,
+              subscription: 'starter',
+              subscription_status: 'inactive',
+              paid: false,
+              scripts_remaining: 0,
+              scripts_limit: 0,
+              email_verified: Boolean(session.user.email_confirmed_at),
+            });
+            // Only write placeholder to state, NOT to cache
+            // (cache should only hold real data from DB)
+            setUserProfile(placeholder);
+          }
+
+          // Background: authoritative server-side resolver (always runs)
           runServerSync(session.user);
         } else {
           clearSession();

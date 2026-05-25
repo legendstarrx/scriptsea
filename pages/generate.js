@@ -330,11 +330,11 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 
 export default function Generate() {
   const router = useRouter();
-  const { user, userProfile, refreshUserProfile } = useAuth();
+  const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
   const [serverPlan, setServerPlan] = useState(null);
-  // userProfile starts null then hydrates quickly (~50-200 ms with fast path).
-  // Show a neutral skeleton while it loads to avoid a "Starter" flash.
-  const profileReady = userProfile !== null;
+  // profileReady = true once auth has resolved (loading=false) OR userProfile arrives.
+  // This guarantees the shimmer NEVER persists once the page is visible.
+  const profileReady = !authLoading || userProfile !== null;
   const profileIsProUser = hasProAccess(userProfile || {});
   const isProUser = profileIsProUser || Boolean(serverPlan?.isPro);
   const currentPlanLabel = serverPlan?.planLabel || getPlanLabel(userProfile || {});
