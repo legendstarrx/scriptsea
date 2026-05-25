@@ -1,79 +1,40 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getPlanLabel, hasProAccess, normalizeSubscriptionProfile } from '../utils/subscription';
+import { getPlanLabel, hasProAccess } from '../utils/subscription';
+
+const WHATSAPP_NUMBER = '+447474762495';
 
 const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const plans = {
-    weekly: {
-      price: '$4.99',
-      amount: 4.99,
-      features: [
-        '100 scripts every week',
-        'Faster script output for daily posting',
-        'Export scripts to PDF & Word',
-        'Save unlimited scripts',
-        'Viral video reference analysis',
-        'Advanced SEO optimization',
-        'Thumbnail suggestions',
-        'Creator style matching',
-        'Priority email support',
-        'Early access to new features'
-      ]
-    },
-    monthly: {
-      price: '$19.99',
-      amount: 19.99,
-      features: [
-        '500 scripts every month',
-        'Best value for serious creators',
-        'Export scripts to PDF & Word',
-        'Save unlimited scripts',
-        'Viral video reference analysis',
-        'Advanced SEO optimization',
-        'Thumbnail suggestions',
-        'Creator style matching',
-        'Priority email support',
-        'Early access to new features'
-      ]
-    }
-  };
-
-  const normalized = normalizeSubscriptionProfile(userProfile || {});
   const isPro = hasProAccess(userProfile || {});
-  const currentPlanLabel = getPlanLabel(userProfile || {});
-  const currentPlanClass =
-    normalized.subscriptionStatus === 'active'
-      ? 'active'
-      : (normalized.subscription || (isPro ? 'pro' : 'starter'));
+  const isWeekly = (userProfile?.subscriptionType || userProfile?.subscription_type) === 'weekly';
+  const isMonthly = (userProfile?.subscriptionType || userProfile?.subscription_type) === 'monthly';
+  const currentLabel = getPlanLabel(userProfile || {});
 
   const handleUpgrade = async (plan) => {
     try {
       setLoading(true);
+      setError('');
       const response = await fetch('/api/create-payment', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan: plan === 'monthly' ? 'monthly' : 'weekly',
-          userId: user.uid,
-          email: user.email
-        })
+          plan,
+          userId: user?.uid,
+          email: user?.email,
+        }),
       });
-
       const data = await response.json();
       if (data.success && data.paymentLink) {
         window.location.href = data.paymentLink;
       } else {
-        console.error('Failed to create payment link');
+        setError('Could not create payment link. Please try again.');
       }
-    } catch (error) {
-      console.error('Error initiating payment:', error);
-      setError('Failed to process payment. Please try again.');
+    } catch (_err) {
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -81,247 +42,258 @@ const SubscriptionModal = ({ isOpen, onClose, userProfile }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button className="close-button" onClick={onClose}>×</button>
-        
-        {isPro ? (
-          <div className="pro-status">
-            <div className="pro-badge">PRO</div>
-            <h2>You're Already a Pro Member!</h2>
-            <p>Enjoy unlimited access to all premium features.</p>
-          </div>
-        ) : (
-          <>
-            <h2>Go Pro and Publish Faster</h2>
-            <p style={{ textAlign: 'center', color: '#666', marginTop: '-8px' }}>
-              Unlock premium script workflows built for creators who want consistent growth.
+  // ── Already on monthly (best plan) ──────────────────────────────────────
+  if (isPro && isMonthly) {
+    return (
+      <Overlay onClose={onClose}>
+        <ModalBox onClose={onClose}>
+          <div style={{ textAlign: 'center', padding: '10px 0 20px' }}>
+            <div style={badgeStyle}>PRO MONTHLY</div>
+            <h2 style={headingStyle}>You're on our best plan 🎉</h2>
+            <p style={subStyle}>
+              Enjoy 60 scripts every month — everything ScriptSea has to offer, at the best rate.
             </p>
-            <div className="current-plan">
-              <span>Current Plan:</span>
-              <span className={`plan-badge ${currentPlanClass}`}>
-                {currentPlanLabel.toUpperCase()}
-              </span>
-            </div>
+            <button onClick={onClose} style={primaryButtonStyle}>
+              Back to creating
+            </button>
+          </div>
+        </ModalBox>
+      </Overlay>
+    );
+  }
 
-            <div className="plans-container">
-              {Object.entries(plans).map(([planType, plan]) => (
-                <div key={planType} className="plan-card">
-                  <h3>{planType === 'weekly' ? 'Pro Weekly' : 'Pro Monthly'}</h3>
-                  <div className="price">{plan.price}</div>
-                  <div className="features">
-                    {plan.features.map((feature, index) => (
-                      <div key={index} className="feature">
-                        <span className="checkmark">✓</span>
-                        {feature}
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => handleUpgrade(planType)}
-                    disabled={loading}
-                    className="upgrade-button"
-                  >
-                    {loading ? 'Processing...' : 'Upgrade Now'}
-                  </button>
-                </div>
+  // ── Already weekly → upsell to monthly ──────────────────────────────────
+  if (isPro && isWeekly) {
+    return (
+      <Overlay onClose={onClose}>
+        <ModalBox onClose={onClose}>
+          <div style={{ textAlign: 'center', padding: '4px 0 8px', marginBottom: '16px' }}>
+            <span style={{ ...badgeStyle, background: '#f0f0f0', color: '#555' }}>
+              Current: Pro Weekly
+            </span>
+          </div>
+
+          <h2 style={{ ...headingStyle, marginBottom: '8px' }}>Level up to Monthly</h2>
+          <p style={subStyle}>
+            You're already a Pro creator. Monthly gives you 4× more scripts and better value —
+            one simple upgrade, no interruption to your workflow.
+          </p>
+
+          {/* Comparison */}
+          <div style={comparisonGrid}>
+            <div style={{ ...planCompareCard, opacity: 0.6 }}>
+              <p style={compLabel}>Weekly</p>
+              <p style={compPrice}>$4.99</p>
+              <p style={compSub}>15 scripts / week</p>
+              <p style={compSub}>~$20 / month</p>
+            </div>
+            <div style={{ ...planCompareCard, border: '2px solid #FF3366', background: '#fff5f7' }}>
+              <div style={bestValuePill}>Best value</div>
+              <p style={compLabel}>Monthly</p>
+              <p style={{ ...compPrice, color: '#FF3366' }}>$19.99</p>
+              <p style={{ ...compSub, fontWeight: 600, color: '#333' }}>60 scripts / month</p>
+              <p style={compSub}>Save time &amp; money</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => handleUpgrade('monthly')}
+            disabled={loading}
+            style={{ ...primaryButtonStyle, marginTop: '20px' }}
+          >
+            {loading ? 'Processing…' : 'Upgrade to Monthly — $19.99'}
+          </button>
+          <button onClick={onClose} style={ghostButtonStyle}>
+            Stay on Weekly
+          </button>
+          {error && <p style={errorStyle}>{error}</p>}
+        </ModalBox>
+      </Overlay>
+    );
+  }
+
+  // ── Not pro at all → show both plans ────────────────────────────────────
+  return (
+    <Overlay onClose={onClose}>
+      <ModalBox onClose={onClose}>
+        <h2 style={{ ...headingStyle, marginBottom: '6px' }}>Go Pro and publish faster</h2>
+        <p style={{ ...subStyle, marginBottom: '24px' }}>
+          Unlock AI-powered script workflows built for creators who want consistent growth.
+        </p>
+
+        <div style={{ textAlign: 'center', marginBottom: '20px', fontSize: '0.85rem', color: '#888' }}>
+          Current plan:{' '}
+          <span style={{ fontWeight: 600, color: '#333' }}>{currentLabel}</span>
+        </div>
+
+        <div style={plansGrid}>
+          {/* Weekly */}
+          <div style={planCard}>
+            <p style={planName}>Pro Weekly</p>
+            <p style={planPrice}>$4.99<span style={planPer}>/week</span></p>
+            <ul style={featureList}>
+              {['15 scripts per week', 'All content formats', 'Export PDF & Word', 'Thumbnail suggestions', 'Creator style matching', 'Priority support'].map((f) => (
+                <li key={f} style={featureItem}><span style={check}>✓</span>{f}</li>
               ))}
-            </div>
-          </>
-        )}
-        
-        {error && <div className="error-message">{error}</div>}
-      </div>
+            </ul>
+            <button
+              onClick={() => handleUpgrade('weekly')}
+              disabled={loading}
+              style={outlineButtonStyle}
+            >
+              {loading ? 'Processing…' : 'Start Weekly'}
+            </button>
+          </div>
 
-      <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-          padding: 20px;
-        }
+          {/* Monthly */}
+          <div style={{ ...planCard, border: '2px solid #FF3366', background: '#fff9fb' }}>
+            <div style={bestValuePill}>Most popular</div>
+            <p style={{ ...planName, color: '#FF3366' }}>Pro Monthly</p>
+            <p style={planPrice}>$19.99<span style={planPer}>/month</span></p>
+            <ul style={featureList}>
+              {['60 scripts per month', 'All content formats', 'Export PDF & Word', 'Thumbnail suggestions', 'Creator style matching', 'Priority support'].map((f) => (
+                <li key={f} style={featureItem}><span style={check}>✓</span>{f}</li>
+              ))}
+            </ul>
+            <button
+              onClick={() => handleUpgrade('monthly')}
+              disabled={loading}
+              style={primaryButtonStyle}
+            >
+              {loading ? 'Processing…' : 'Start Monthly'}
+            </button>
+          </div>
+        </div>
 
-        .modal-content {
-          background: white;
-          border-radius: 16px;
-          padding: 30px;
-          max-width: 800px;
-          width: 90%;
-          max-height: 90vh;
-          overflow-y: auto;
-          position: relative;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        }
+        {error && <p style={errorStyle}>{error}</p>}
 
-        .close-button {
-          position: absolute;
-          top: 15px;
-          right: 15px;
-          background: none;
-          border: none;
-          font-size: 24px;
-          cursor: pointer;
-          color: #666;
-          padding: 5px;
-          line-height: 1;
-        }
-
-        h2 {
-          color: #333;
-          text-align: center;
-          margin-bottom: 20px;
-          font-size: 1.8rem;
-        }
-
-        .current-plan {
-          text-align: center;
-          margin-bottom: 30px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 10px;
-          font-size: 1.1rem;
-        }
-
-        .plan-badge {
-          padding: 5px 15px;
-          border-radius: 20px;
-          font-weight: 600;
-          text-transform: uppercase;
-        }
-
-        .plan-badge.free {
-          background: #f0f0f0;
-          color: #666;
-        }
-
-        .plan-badge.starter {
-          background: #f0f0f0;
-          color: #666;
-        }
-
-        .plan-badge.pro, .plan-badge.premium, .plan-badge.active {
-          background: #FF3366;
-          color: white;
-        }
-
-        .plans-container {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 20px;
-          margin-top: 20px;
-        }
-
-        .plan-card {
-          border: 2px solid #f0f0f0;
-          border-radius: 12px;
-          padding: 25px;
-          text-align: center;
-          transition: all 0.3s ease;
-        }
-
-        .plan-card:hover {
-          border-color: #FF3366;
-          transform: translateY(-5px);
-        }
-
-        .price {
-          font-size: 2.5rem;
-          font-weight: 700;
-          color: #FF3366;
-          margin: 15px 0;
-        }
-
-        .features {
-          margin: 20px 0;
-          text-align: left;
-        }
-
-        .feature {
-          margin: 10px 0;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .checkmark {
-          color: #FF3366;
-          font-weight: bold;
-        }
-
-        .upgrade-button {
-          width: 100%;
-          padding: 12px;
-          background: #FF3366;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .upgrade-button:hover {
-          background: #ff1f4f;
-        }
-
-        .upgrade-button:disabled {
-          background: #ffb3c4;
-          cursor: not-allowed;
-        }
-
-        .error-message {
-          color: #ff3366;
-          text-align: center;
-          margin-top: 20px;
-        }
-
-        .pro-status {
-          text-align: center;
-          padding: 40px 20px;
-        }
-
-        .pro-badge {
-          background: #FF3366;
-          color: white;
-          padding: 8px 20px;
-          border-radius: 25px;
-          font-weight: 700;
-          font-size: 1.2rem;
-          display: inline-block;
-          margin-bottom: 20px;
-        }
-
-        @media (max-width: 768px) {
-          .modal-content {
-            padding: 20px;
-            width: 95%;
-          }
-
-          .plans-container {
-            grid-template-columns: 1fr;
-          }
-
-          h2 {
-            font-size: 1.5rem;
-          }
-
-          .price {
-            font-size: 2rem;
-          }
-        }
-      `}</style>
-    </div>
+        <p style={{ textAlign: 'center', fontSize: '0.78rem', color: '#aaa', marginTop: '16px' }}>
+          Questions?{' '}
+          <a
+            href={`https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#FF3366', textDecoration: 'none' }}
+          >
+            Chat with us
+          </a>
+        </p>
+      </ModalBox>
+    </Overlay>
   );
 };
 
-export default SubscriptionModal; 
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function Overlay({ children, onClose }) {
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.55)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: '16px',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function ModalBox({ children, onClose }) {
+  return (
+    <div style={{
+      background: 'white', borderRadius: '20px', padding: '28px 28px 24px',
+      maxWidth: '560px', width: '100%', maxHeight: '92vh',
+      overflowY: 'auto', position: 'relative',
+      boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+    }}>
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute', top: '16px', right: '16px',
+          background: 'none', border: 'none', fontSize: '1.5rem',
+          cursor: 'pointer', color: '#999', lineHeight: 1,
+        }}
+      >×</button>
+      {children}
+    </div>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const headingStyle = {
+  margin: 0, fontSize: 'clamp(1.3rem, 4vw, 1.6rem)',
+  color: '#1a1a1a', fontWeight: 700, textAlign: 'center',
+};
+const subStyle = {
+  color: '#666', lineHeight: 1.6, textAlign: 'center',
+  fontSize: '0.95rem', margin: '10px 0 0',
+};
+const badgeStyle = {
+  display: 'inline-block', background: '#FF3366', color: 'white',
+  padding: '5px 14px', borderRadius: '20px', fontWeight: 700,
+  fontSize: '0.8rem', letterSpacing: '0.04em', marginBottom: '14px',
+};
+const primaryButtonStyle = {
+  display: 'block', width: '100%', padding: '13px',
+  background: '#FF3366', color: 'white', border: 'none',
+  borderRadius: '12px', fontSize: '1rem', fontWeight: 600,
+  cursor: 'pointer', transition: 'all 0.2s',
+};
+const outlineButtonStyle = {
+  ...primaryButtonStyle,
+  background: 'transparent', color: '#FF3366',
+  border: '1.5px solid #FF3366',
+};
+const ghostButtonStyle = {
+  display: 'block', width: '100%', padding: '11px',
+  background: 'none', color: '#888', border: 'none',
+  borderRadius: '12px', fontSize: '0.9rem',
+  cursor: 'pointer', marginTop: '8px',
+};
+const errorStyle = {
+  color: '#FF3366', textAlign: 'center', fontSize: '0.85rem',
+  marginTop: '12px',
+};
+const comparisonGrid = {
+  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px',
+  margin: '20px 0 0',
+};
+const planCompareCard = {
+  border: '1.5px solid #eee', borderRadius: '14px',
+  padding: '16px 12px', textAlign: 'center', position: 'relative',
+};
+const compLabel = { margin: 0, fontWeight: 700, fontSize: '0.9rem', color: '#333' };
+const compPrice = { margin: '8px 0 4px', fontSize: '1.5rem', fontWeight: 700, color: '#333' };
+const compSub = { margin: '2px 0', fontSize: '0.8rem', color: '#888' };
+const bestValuePill = {
+  position: 'absolute', top: '-11px', left: '50%', transform: 'translateX(-50%)',
+  background: '#FF3366', color: 'white', fontSize: '0.7rem', fontWeight: 700,
+  padding: '3px 10px', borderRadius: '20px', whiteSpace: 'nowrap',
+};
+const plansGrid = {
+  display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+  gap: '16px',
+};
+const planCard = {
+  border: '1.5px solid #eee', borderRadius: '16px',
+  padding: '20px 18px', position: 'relative',
+};
+const planName = {
+  margin: '0 0 4px', fontWeight: 700, fontSize: '1rem', color: '#333',
+};
+const planPrice = {
+  margin: '0 0 16px', fontSize: '1.8rem', fontWeight: 700, color: '#1a1a1a',
+};
+const planPer = { fontSize: '0.85rem', fontWeight: 400, color: '#888' };
+const featureList = { listStyle: 'none', margin: '0 0 18px', padding: 0 };
+const featureItem = {
+  display: 'flex', alignItems: 'flex-start', gap: '8px',
+  fontSize: '0.88rem', color: '#444', padding: '4px 0',
+};
+const check = { color: '#FF3366', fontWeight: 700, flexShrink: 0 };
+
+export default SubscriptionModal;

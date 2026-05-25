@@ -136,7 +136,7 @@ export default async function handler(req, res) {
     }
 
     const planType = getPlanTypeFromPayload(payloadData);
-    const scriptsLimit = planType === 'monthly' ? 500 : 100;
+    const scriptsLimit = planType === 'monthly' ? 60 : 15;
     const { userId, email } = getUserIdentifiers(payloadData);
     const profileId = await findUser({ userId, email });
 

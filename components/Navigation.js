@@ -3,138 +3,143 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import SubscriptionModal from './SubscriptionModal';
+import ProfileModal from './ProfileModal';
 
 export default function Navigation() {
   const router = useRouter();
   const { user, userProfile, logout } = useAuth();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
-    try {
-      await logout();
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    setMenuOpen(false);
+    try { await logout(); } catch (_e) {}
+    window.location.assign('/');
   };
 
   return (
     <>
       <nav style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: 'white',
-        boxShadow: '0 1px 12px rgba(0, 0, 0, 0.06)',
-        padding: '0.65rem 1rem',
-        minHeight: '64px',
+        top: 0, left: 0, right: 0,
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        padding: '0 20px',
+        height: '64px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+        zIndex: 1000,
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem'
+        {/* Logo */}
+        <Link href="/" style={{
+          textDecoration: 'none',
+          color: '#FF3366',
+          fontSize: '1.5rem',
+          fontWeight: 'bold',
+          flexShrink: 0,
         }}>
-          <Link href="/" style={{
-            textDecoration: 'none',
-            color: '#FF3366',
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            background: 'linear-gradient(135deg, #FF3366 0%, #FF1A53 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            textFillColor: 'transparent'
-          }}>
-            ScriptSea
-          </Link>
-        </div>
+          ScriptSea
+        </Link>
 
+        {/* Desktop right side */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.75rem'
+          gap: '12px',
         }}>
           {user ? (
             <>
-              <Link href="/generate" style={{
-                textDecoration: 'none',
-                color: '#333',
-                fontWeight: '500',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                transition: 'all 0.2s ease',
-                ':hover': {
-                  background: '#f3f4f6'
-                }
-              }}>
-                Generate
-              </Link>
+              {/* Upgrade button */}
               <button
                 onClick={() => setShowSubscriptionModal(true)}
                 style={{
-                  border: 'none',
-                  borderRadius: '8px',
-                  background: '#FF3366',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  backgroundColor: '#FF3366',
                   color: 'white',
-                  padding: '0.45rem 0.8rem',
+                  border: 'none',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
                   fontWeight: 600,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 8px rgba(255,51,102,0.25)',
                 }}
               >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" />
+                  <path d="M2 17L12 22L22 17" />
+                  <path d="M2 12L12 17L22 12" />
+                </svg>
                 Upgrade
               </button>
+
+              {/* Profile button */}
               <button
-                onClick={handleSignOut}
+                onClick={() => setShowProfileModal(true)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#666',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '6px',
+                  width: '36px', height: '36px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: '#f8f9ff',
+                  border: 'none', borderRadius: '50%',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  ':hover': {
-                    background: '#f3f4f6'
-                  }
+                  flexShrink: 0,
                 }}
               >
-                Logout
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
               </button>
             </>
           ) : (
             <>
+              <Link href="/login" style={{
+                textDecoration: 'none',
+                color: '#555',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                padding: '7px 12px',
+              }}>
+                Sign in
+              </Link>
               <Link href="/register" style={{
                 textDecoration: 'none',
                 background: '#FF3366',
                 color: 'white',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
+                padding: '7px 16px',
+                borderRadius: '20px',
                 fontSize: '0.9rem',
-                fontWeight: '500',
-                transition: 'all 0.2s ease',
-                ':hover': {
-                  background: '#FF1A53'
-                }
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
               }}>
-                Sign Up
+                Get started
               </Link>
             </>
           )}
         </div>
       </nav>
 
+      {/* Modals */}
       {showSubscriptionModal && (
-        <SubscriptionModal 
+        <SubscriptionModal
           isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
           userProfile={userProfile}
         />
       )}
+      {showProfileModal && (
+        <ProfileModal
+          onClose={() => setShowProfileModal(false)}
+          user={user}
+        />
+      )}
     </>
   );
-} 
+}

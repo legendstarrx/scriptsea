@@ -23,9 +23,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const subscriptionType = userRow?.subscription_type || 'monthly';
+    const subscriptionType = userRow?.subscription_type || 'weekly';
 
-    const scriptsLimit = plan === 'pro' ? (subscriptionType === 'yearly' ? 1200 : 100) : 0;
+    const scriptsLimit = plan === 'pro' ? (subscriptionType === 'monthly' ? 60 : 15) : 0;
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({

@@ -205,7 +205,7 @@ const GeneratePageNav = () => {
               </a>
 
               <a
-                href="https://wa.me/1234567890"
+                href="https://wa.me/447474762495"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -352,7 +352,6 @@ export default function Generate() {
   const [videoInfo, setVideoInfo] = useState(null);
   const [thumbnailSuggestions, setThumbnailSuggestions] = useState('');
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
-  const [savedScripts, setSavedScripts] = useState([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [keywords, setKeywords] = useState('');
@@ -360,11 +359,6 @@ export default function Generate() {
   const [seoTips, setSeoTips] = useState('');
   const [isGeneratingAdvanced, setIsGeneratingAdvanced] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState('');
-  const [showLoadConfirm, setShowLoadConfirm] = useState(false);
-  const [scriptToLoad, setScriptToLoad] = useState(null);
-  const [loadedScript, setLoadedScript] = useState(null);
-  const [showSavedScripts, setShowSavedScripts] = useState(false);
-  const [expandedScriptId, setExpandedScriptId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -450,94 +444,7 @@ export default function Generate() {
   // Add ref for the response section
   const responseRef = useRef(null);
 
-  // Load saved scripts from localStorage on component mount
-  useEffect(() => {
-    const saved = localStorage.getItem('savedScripts');
-    if (saved) {
-      setSavedScripts(JSON.parse(saved));
-    }
-  }, []);
-
-  // Load a saved script with confirmation
-  const loadScript = (script) => {
-    console.log('Loading script:', script); // Debug log
-    setScriptToLoad(script);
-    setShowLoadConfirm(true);
-  };
-
-  // Update confirmLoadScript to show in its own box
-  const confirmLoadScript = () => {
-    console.log('Confirming load of script:', scriptToLoad); // Debug log
-    if (scriptToLoad) {
-      // Load all script data
-      setVideoTopic(scriptToLoad.title);
-      setGeneratedScript(scriptToLoad.script);
-      setSelectedPlatform(scriptToLoad.platform);
-      setScriptType(scriptToLoad.type);
-      setSelectedTone(scriptToLoad.tone || 'casual');
-      setDuration(scriptToLoad.duration || '60 sec');
-      setSelectedCreator(scriptToLoad.creator || '');
-      setIncludeVisuals(scriptToLoad.includeVisuals ?? true);
-      
-      // Set loaded script for display
-      setLoadedScript(scriptToLoad);
-      
-      // Close modal and reset states
-      setShowLoadConfirm(false);
-      setScriptToLoad(null);
-      
-      // Show success message
-      setError('Script loaded successfully!');
-      setTimeout(() => setError(''), 2000);
-    }
-  };
-
-  // Update saveScript to include all relevant data
-  const saveScript = () => {
-    if (!generatedScript || !videoTopic) {
-      setError('Please generate a script first');
-      return;
-    }
-    
-    // Check if script with same title already exists
-    const existingScript = savedScripts.find(script => script.title === videoTopic);
-    if (existingScript) {
-      setError('A script with this title already exists');
-      return;
-    }
-    
-    const newScript = {
-      id: Date.now(),
-      title: videoTopic,
-      script: generatedScript,
-      date: new Date().toLocaleDateString(),
-      platform: selectedPlatform,
-      type: scriptType,
-      tone: selectedTone,
-      duration: duration,
-      creator: selectedCreator,
-      includeVisuals: includeVisuals
-    };
-
-    const updatedScripts = [...savedScripts, newScript];
-    setSavedScripts(updatedScripts);
-    localStorage.setItem('savedScripts', JSON.stringify(updatedScripts));
-    
-    // Show success message
-    setError('Script saved successfully!');
-    setTimeout(() => setError(''), 2000);
-  };
-
-  // Delete a saved script
-  const deleteScript = (id) => {
-    const updatedScripts = savedScripts.filter(script => script.id !== id);
-    setSavedScripts(updatedScripts);
-    localStorage.setItem('savedScripts', JSON.stringify(updatedScripts));
-    setError('Script deleted successfully!');
-    setTimeout(() => setError(''), 2000); // Clear success message after 2 seconds
-  };
-
-  // Update exportToPDF function to handle saved scripts
+  // Update exportToPDF function
   const exportToPDF = async (script = null) => {
     try {
       const { jsPDF } = await import('jspdf');
@@ -2580,83 +2487,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 )}
 
                 {/* Load Script Confirmation Modal - Moved outside saved scripts section */}
-                {showLoadConfirm && (
-                  <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                  }}>
-                    <div style={{
-                      background: 'white',
-                      borderRadius: '20px',
-                      padding: '30px',
-                      maxWidth: '500px',
-                      width: '90%',
-                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                      animation: 'slideIn 0.3s ease-out'
-                    }}>
-                      <h3 style={{
-                        fontSize: '1.2rem',
-                        color: '#333',
-                        marginBottom: '20px'
-                      }}>
-                        Load Saved Script
-                      </h3>
-                      <p style={{
-                        color: '#666',
-                        marginBottom: '20px',
-                        lineHeight: '1.5'
-                      }}>
-                        Are you sure you want to load "{scriptToLoad?.title}"? This will replace your current form data.
-                      </p>
-                      <div style={{
-                        display: 'flex',
-                        gap: '10px',
-                        justifyContent: 'flex-end'
-                      }}>
-                        <button
-                          onClick={() => {
-                            setShowLoadConfirm(false);
-                            setScriptToLoad(null);
-                          }}
-                          style={{
-                            padding: '10px 20px',
-                            backgroundColor: 'transparent',
-                            color: '#666',
-                            border: '1px solid #ddd',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={confirmLoadScript}
-                          style={{
-                            padding: '10px 20px',
-                            backgroundColor: '#FF3366',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          Load Script
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Action Buttons */}
                 <div style={{
                   marginTop: '30px',
@@ -2666,29 +2496,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   gap: '10px',
                   justifyContent: 'flex-end'
                 }}>
-                  <button 
-                    onClick={() => {
-                      if (!isProUser) {
-                        setShowSubscriptionModal(true);
-                        setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to save your scripts!', type: 'error' });
-                        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
-                      } else {
-                        saveScript();
-                      }
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: 'transparent',
-                      color: '#FF3366',
-                      border: '1px solid #FF3366',
-                      borderRadius: '20px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    Save Script
-                  </button>
                   <div style={{ position: 'relative' }}>
                     <button
                       onClick={() => {
@@ -2798,234 +2605,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
             )}
           </div>
 
-          {/* Saved Scripts Section - Near footer */}
-          {savedScripts.length > 0 && (
-            <div style={{
-              background: 'white',
-              borderRadius: '20px',
-              padding: '20px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-              marginTop: '30px',
-              width: '100%',
-              boxSizing: 'border-box',
-              maxWidth: '800px',
-              margin: '30px auto 0'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <h3 style={{
-                  fontSize: '1.2rem',
-                  color: '#333',
-                  margin: 0
-                }}>
-                  Saved Scripts
-                </h3>
-                <button
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete all saved scripts?')) {
-                      setSavedScripts([]);
-                      localStorage.setItem('savedScripts', JSON.stringify([]));
-                      setError('All scripts deleted successfully!');
-                      setTimeout(() => setError(''), 2000);
-                    }
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: 'transparent',
-                    color: '#FF3366',
-                    border: '1px solid #FF3366',
-                    borderRadius: '20px',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  Clear All
-                </button>
-              </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '15px'
-              }}>
-                {savedScripts.map(script => (
-                  <div
-                    key={script.id}
-                    style={{
-                      background: 'white',
-                      borderRadius: '16px',
-                      padding: '15px',
-                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-                      border: '1px solid #eee',
-                      transition: 'all 0.2s',
-                      cursor: 'pointer',
-                      ':hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
-                      }
-                    }}
-                  >
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: '10px'
-                    }}>
-                      <h4 style={{ 
-                        color: '#333', 
-                        margin: 0,
-                        fontSize: '1rem',
-                        fontWeight: '600',
-                        maxWidth: '70%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {script.title}
-                      </h4>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteScript(script.id);
-                        }}
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: 'transparent',
-                          color: '#FF3366',
-                          border: 'none',
-                          borderRadius: '12px',
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          ':hover': {
-                            backgroundColor: '#FFF2F2'
-                          }
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      gap: '6px',
-                      flexWrap: 'wrap',
-                      marginBottom: '12px'
-                    }}>
-                      <span style={{
-                        padding: '3px 6px',
-                        backgroundColor: '#f8f9ff',
-                        color: '#666',
-                        borderRadius: '10px',
-                        fontSize: '0.75rem'
-                      }}>
-                        {script.date}
-                      </span>
-                      <span style={{
-                        padding: '3px 6px',
-                        backgroundColor: '#f8f9ff',
-                        color: '#666',
-                        borderRadius: '10px',
-                        fontSize: '0.75rem'
-                      }}>
-                        {script.type}
-                      </span>
-                      <span style={{
-                        padding: '3px 6px',
-                        backgroundColor: '#f8f9ff',
-                        color: '#666',
-                        borderRadius: '10px',
-                        fontSize: '0.75rem'
-                      }}>
-                        {script.platform}
-                      </span>
-                    </div>
-                    <div 
-                      onClick={() => setExpandedScriptId(expandedScriptId === script.id ? null : script.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        color: '#FF3366',
-                        fontSize: '0.85rem',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {expandedScriptId === script.id ? 'Hide script ▼' : 'View script ▲'}
-                    </div>
-
-                    {/* Collapsible Script Content */}
-                    {expandedScriptId === script.id && (
-                      <div style={{
-                        marginTop: '15px',
-                        paddingTop: '15px',
-                        borderTop: '1px solid #eee',
-                        animation: 'slideDown 0.3s ease-out'
-                      }}>
-                        <div style={{
-                          backgroundColor: '#f8f9ff',
-                          borderRadius: '12px',
-                          padding: '15px',
-                          color: '#444',
-                          lineHeight: '1.6',
-                          fontSize: '0.9rem'
-                        }}>
-                          <div dangerouslySetInnerHTML={{ __html: script.script }} />
-                        </div>
-                        <div style={{
-                          display: 'flex',
-                          gap: '10px',
-                          marginTop: '15px',
-                          justifyContent: 'flex-end'
-                        }}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              exportToPDF(script);
-                            }}
-                            style={{
-                              padding: '6px 12px',
-                              backgroundColor: 'transparent',
-                              color: '#FF3366',
-                              border: '1px solid #FF3366',
-                              borderRadius: '20px',
-                              fontSize: '0.8rem',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            Export PDF
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              exportToWord(script);
-                            }}
-                            style={{
-                              padding: '6px 12px',
-                              backgroundColor: '#FF3366',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '20px',
-                              fontSize: '0.8rem',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            Export Word
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </main>
 
         <Footer />
