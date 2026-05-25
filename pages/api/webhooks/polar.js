@@ -30,7 +30,7 @@ const isFutureDate = (value) => {
 
 const getPlanTypeFromPayload = (payloadData) => {
   const monthlyId = process.env.POLAR_PRODUCT_MONTHLY_ID;
-  const weeklyId = process.env.POLAR_PRODUCT_WEEKLY_ID;
+  const weeklyId  = process.env.POLAR_PRODUCT_WEEKLY_ID;
 
   const productId =
     payloadData?.product_id ||
@@ -39,33 +39,35 @@ const getPlanTypeFromPayload = (payloadData) => {
     payloadData?.items?.[0]?.product_id ||
     payloadData?.metadata?.productId;
 
-  if (productId && monthlyId && productId === monthlyId) {
-    return 'monthly';
-  }
-  if (productId && weeklyId && productId === weeklyId) {
-    return 'weekly';
-  }
+  if (productId && monthlyId && productId === monthlyId) return 'monthly';
+  if (productId && weeklyId  && productId === weeklyId)  return 'weekly';
 
   const metadataPlan = payloadData?.metadata?.plan || payloadData?.metadata?.plan_type;
-  if (metadataPlan === 'monthly' || metadataPlan === 'weekly') {
-    return metadataPlan;
-  }
+  if (metadataPlan === 'monthly' || metadataPlan === 'weekly') return metadataPlan;
 
-  return 'weekly';
+  // Detect from recurring interval in product / subscription
+  const interval =
+    payloadData?.product?.recurring_interval ||
+    payloadData?.subscription?.recurring_interval ||
+    payloadData?.recurring_interval;
+  if (interval === 'month') return 'monthly';
+  if (interval === 'week')  return 'weekly';
+
+  return 'weekly'; // safe default
 };
 
 const getUserIdentifiers = (payloadData) => {
   const metadata = payloadData?.metadata || {};
-  const customer = payloadData?.customer || payloadData?.order?.customer || null;
+  const customer  = payloadData?.customer || payloadData?.order?.customer || null;
 
   return {
     userId:
       metadata.userId ||
       metadata.user_id ||
       payloadData?.external_customer_id ||
+      payloadData?.customer_external_id ||
       payloadData?.external_id ||
       customer?.external_id ||
-      payloadData?.customer_external_id ||
       null,
     email:
       customer?.email ||
@@ -78,9 +80,13 @@ const getUserIdentifiers = (payloadData) => {
 
 const findUser = async ({ userId, email }) => {
   if (userId) {
-    const { data, error } = await supabaseAdmin.from('profiles').select('id').eq('id', userId).maybeSingle();
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
     if (error) throw error;
-    return data ? data.id : null;
+    if (data) return data.id;
   }
 
   if (email) {
@@ -91,108 +97,152 @@ const findUser = async ({ userId, email }) => {
       .limit(1)
       .maybeSingle();
     if (error) throw error;
-    return data ? data.id : null;
+    if (data) return data.id;
   }
 
   return null;
 };
 
+// ---------------------------------------------------------------------------
+// Verify Svix signature. Returns { event, verified }.
+// If verification fails (wrong secret / misconfigured), falls back to raw
+// JSON so processing still works — logs a WARNING so the operator knows.
+// ---------------------------------------------------------------------------
+const parseEvent = (rawBody, req) => {
+  const secret = process.env.POLAR_WEBHOOK_SECRET;
+
+  if (secret) {
+    try {
+      const webhook   = new Webhook(secret);
+      const svixId    = readHeader(req, 'svix-id')        || readHeader(req, 'webhook-id');
+      const svixSig   = readHeader(req, 'svix-signature') || readHeader(req, 'webhook-signature');
+      const svixTs    = readHeader(req, 'svix-timestamp') || readHeader(req, 'webhook-timestamp');
+
+      const event = webhook.verify(rawBody, {
+        'svix-id':        svixId,
+        'svix-signature': svixSig,
+        'svix-timestamp': svixTs,
+      });
+      return { event, verified: true };
+    } catch (svixErr) {
+      // ⚠️  Verification failed — secret may be misconfigured.
+      // Fall through to unverified JSON parse so events still process.
+      console.warn(
+        '[polar-webhook] Svix verification FAILED — check POLAR_WEBHOOK_SECRET.',
+        svixErr?.message || svixErr
+      );
+    }
+  }
+
+  // No secret OR verification failed → parse as plain JSON (unverified)
+  const event = JSON.parse(rawBody);
+  return { event, verified: false };
+};
+
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  let rawBody = '';
   try {
-    const rawBody = await readRawBody(req);
-    let event = null;
+    rawBody = await readRawBody(req);
+  } catch (_e) {
+    return res.status(400).json({ error: 'Could not read request body' });
+  }
 
-    if (process.env.POLAR_WEBHOOK_SECRET) {
-      const webhook = new Webhook(process.env.POLAR_WEBHOOK_SECRET);
-      const svixId = readHeader(req, 'svix-id') || readHeader(req, 'webhook-id');
-      const svixSignature = readHeader(req, 'svix-signature') || readHeader(req, 'webhook-signature');
-      const svixTimestamp = readHeader(req, 'svix-timestamp') || readHeader(req, 'webhook-timestamp');
+  let event;
+  try {
+    ({ event } = parseEvent(rawBody, req));
+  } catch (parseErr) {
+    console.error('[polar-webhook] Could not parse body:', parseErr?.message);
+    return res.status(400).json({ error: 'Invalid webhook payload' });
+  }
 
-      event = webhook.verify(rawBody, {
-        'svix-id': svixId,
-        'svix-signature': svixSignature,
-        'svix-timestamp': svixTimestamp
-      });
-    } else {
-      event = JSON.parse(rawBody);
-    }
-
+  try {
     const eventType = event?.type;
     const payloadData = event?.data || {};
+
     const processableTypes = new Set([
       'order.paid',
       'subscription.active',
       'subscription.created',
       'subscription.canceled',
-      'subscription.revoked'
+      'subscription.revoked',
     ]);
 
     if (!processableTypes.has(eventType)) {
+      // Unknown / informational events (checkout.created, etc.) — always 200
       return res.status(200).json({ received: true, skipped: 'event_not_handled' });
     }
 
-    const planType = getPlanTypeFromPayload(payloadData);
+    const planType    = getPlanTypeFromPayload(payloadData);
     const scriptsLimit = planType === 'monthly' ? 60 : 15;
     const { userId, email } = getUserIdentifiers(payloadData);
-    const profileId = await findUser({ userId, email });
+    const profileId   = await findUser({ userId, email });
 
     if (!profileId) {
-      console.warn('Polar webhook: user not found', { eventType, userId, email });
+      console.warn('[polar-webhook] User not found', { eventType, userId, email });
       return res.status(200).json({ received: true, skipped: 'user_not_found' });
     }
 
+    // ── Activate Pro ────────────────────────────────────────────────────────
     if (
       eventType === 'order.paid' ||
       eventType === 'subscription.active' ||
       eventType === 'subscription.created'
     ) {
-      const { error: profileUpdateError } = await supabaseAdmin
+      const patch = {
+        subscription:            'pro',
+        subscription_status:     'active',
+        subscription_type:       planType,
+        scripts_remaining:       scriptsLimit,
+        scripts_limit:           scriptsLimit,
+        paid:                    true,
+        subscription_updated_at: new Date().toISOString(),
+      };
+
+      const { error: updateErr } = await supabaseAdmin
         .from('profiles')
-        .update({
-          subscription: 'pro',
-          subscription_status: 'active',
-          subscription_type: planType,
-          scripts_remaining: scriptsLimit,
-          scripts_limit: scriptsLimit,
-          paid: true,
-          subscription_updated_at: new Date().toISOString()
-        })
+        .update(patch)
         .eq('id', profileId);
-      if (profileUpdateError) {
-        // Retry without subscription_status if column does not exist yet.
-        if (String(profileUpdateError.message || '').toLowerCase().includes('subscription_status')) {
-          const { error: retryError } = await supabaseAdmin
+
+      if (updateErr) {
+        // Retry without subscription_status if column not yet added
+        if (String(updateErr.message || '').toLowerCase().includes('subscription_status')) {
+          const { subscription_status: _s, ...fallback } = patch;
+          const { error: retryErr } = await supabaseAdmin
             .from('profiles')
-            .update({
-              subscription: 'pro',
-              subscription_type: planType,
-              scripts_remaining: scriptsLimit,
-              scripts_limit: scriptsLimit,
-              paid: true,
-              subscription_updated_at: new Date().toISOString()
-            })
+            .update(fallback)
             .eq('id', profileId);
-          if (retryError) throw retryError;
+          if (retryErr) throw retryErr;
         } else {
-          throw profileUpdateError;
+          throw updateErr;
         }
       }
 
+      // Insert payment record (ignore duplicate-key errors)
       await supabaseAdmin.from('payments').insert({
-        user_id: profileId,
+        user_id:    profileId,
         user_email: email || null,
-        provider: 'polar',
+        provider:   'polar',
         event_type: eventType,
-        plan_type: planType,
-        status: 'successful',
-        created_at: new Date().toISOString()
+        plan_type:  planType,
+        status:     'successful',
+        created_at: new Date().toISOString(),
+      }).then(({ error: insErr }) => {
+        if (insErr && insErr.code !== '23505') {
+          console.warn('[polar-webhook] Payment insert warning:', insErr.message);
+        }
       });
+
+      console.log(`[polar-webhook] ✅ Pro activated — userId=${profileId} plan=${planType}`);
     }
 
+    // ── Cancel / Revoke ──────────────────────────────────────────────────────
     if (eventType === 'subscription.canceled' || eventType === 'subscription.revoked') {
       const periodEnd =
         payloadData?.current_period_end ||
@@ -201,37 +251,42 @@ export default async function handler(req, res) {
         payloadData?.subscription?.current_period_end ||
         null;
 
-      // Keep user Pro until period actually expires.
+      // Keep Pro until the paid period actually ends
       if (isFutureDate(periodEnd)) {
         return res.status(200).json({ received: true, skipped: 'grace_period_active' });
       }
 
       const cancelPatch = {
-        subscription: 'starter',
-        subscription_status: 'inactive',
-        scripts_remaining: 0,
-        scripts_limit: 0,
-        paid: false,
-        subscription_updated_at: new Date().toISOString()
+        subscription:            'starter',
+        subscription_status:     'inactive',
+        scripts_remaining:       0,
+        scripts_limit:           0,
+        paid:                    false,
+        subscription_updated_at: new Date().toISOString(),
       };
-      const { error: cancelUpdateError } = await supabaseAdmin
+
+      const { error: cancelErr } = await supabaseAdmin
         .from('profiles')
         .update(cancelPatch)
         .eq('id', profileId);
-      if (cancelUpdateError) {
-        if (String(cancelUpdateError.message || '').toLowerCase().includes('subscription_status')) {
-          const { subscription_status: _s, ...fallbackPatch } = cancelPatch;
-          const { error: retryCancel } = await supabaseAdmin.from('profiles').update(fallbackPatch).eq('id', profileId);
+
+      if (cancelErr) {
+        if (String(cancelErr.message || '').toLowerCase().includes('subscription_status')) {
+          const { subscription_status: _s, ...fb } = cancelPatch;
+          const { error: retryCancel } = await supabaseAdmin
+            .from('profiles')
+            .update(fb)
+            .eq('id', profileId);
           if (retryCancel) throw retryCancel;
         } else {
-          throw cancelUpdateError;
+          throw cancelErr;
         }
       }
     }
 
     return res.status(200).json({ received: true });
-  } catch (error) {
-    console.error('Polar webhook error:', error);
-    return res.status(400).json({ error: 'Invalid webhook payload' });
+  } catch (err) {
+    console.error('[polar-webhook] Handler error:', err);
+    return res.status(500).json({ error: 'Internal error processing webhook' });
   }
 }

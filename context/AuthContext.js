@@ -206,14 +206,28 @@ export function AuthProvider({ children }) {
     const { data: listener } = supabase
       ? supabase.auth.onAuthStateChange(async (event, session) => {
           if (!mounted.current) return;
+
           // INITIAL_SESSION is handled by boot() above — skip it to avoid race
           if (event === 'INITIAL_SESSION') return;
+
+          // Token refresh — silently update the user/profile, never sign out
+          if (event === 'TOKEN_REFRESHED') {
+            if (session?.user) {
+              setUser(mapUser(session.user));
+              // Background refresh of profile — don't block anything
+              fetchProfileFromServer(session.access_token)
+                .then((row) => { if (row && mounted.current) applyProfile(mapProfile(row)); })
+                .catch(() => {});
+            }
+            return; // Don't touch loading state
+          }
 
           if (session?.user) {
             setUser(mapUser(session.user));
             const row = await fetchProfileFromServer(session.access_token);
             if (row && mounted.current) applyProfile(mapProfile(row));
-          } else {
+          } else if (event === 'SIGNED_OUT') {
+            // Only clear on an explicit sign-out, not on unknown events
             clearSession();
           }
 
