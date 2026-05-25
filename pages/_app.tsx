@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import type { AppProps } from 'next/app';
-import { initErrorHandling } from '../lib/errorHandling';
 import { AuthProvider } from '../context/AuthContext';
 import ErrorBoundary from '../components/ErrorBoundary';
 import Head from 'next/head';
@@ -33,10 +32,7 @@ declare global {
 function MyApp({ Component, pageProps }: CustomAppProps) {
   const router = useRouter();
 
-  useEffect(() => {
-    // Lightweight global error handlers only.
-    initErrorHandling();
-  }, []);
+  // (error handling initialisation removed — handled by ErrorBoundary)
 
   // Fallback OAuth hash handler: if provider returns tokens on "/", complete session and redirect.
   useEffect(() => {

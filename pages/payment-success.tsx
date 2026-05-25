@@ -28,12 +28,14 @@ export default function PaymentSuccess() {
         const token = sessionData?.session?.access_token;
         if (!token) return false;
 
-        const res = await fetch('/api/account/status', {
+        const res = await fetch('/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return false;
         const data = await res.json();
-        return Boolean(data?.isPro);
+        const p = data?.profile || {};
+        // isPro when subscription=pro OR subscription_status=active OR paid=true
+        return Boolean(p.subscription === 'pro' || p.subscription_status === 'active' || p.paid);
       } catch {
         return false;
       }

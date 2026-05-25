@@ -377,7 +377,7 @@ export default function Generate() {
     const accessToken = sessionData?.session?.access_token;
     if (!accessToken) return null;
 
-    const response = await fetch('/api/account/status', {
+    const response = await fetch('/api/auth/me', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`
@@ -388,7 +388,18 @@ export default function Generate() {
     if (!response.ok) {
       throw new Error(payload?.error || 'Failed to fetch account status.');
     }
-    return payload;
+
+    const profile = payload?.profile || {};
+    const isPro = hasProAccess(profile);
+    return {
+      isPro,
+      planLabel: getPlanLabel(profile),
+      subscription: profile.subscription,
+      subscriptionStatus: profile.subscription_status,
+      scriptsRemaining: profile.scripts_remaining ?? 0,
+      scriptsLimit: profile.scripts_limit ?? 0,
+      paid: profile.paid ?? false,
+    };
   }, []);
 
   const syncServerPlan = useCallback(async ({ extendedRetry = false } = {}) => {

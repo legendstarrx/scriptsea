@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { hasProAccess, getPlanLabel } from '../utils/subscription';
+import { hasProAccess } from '../utils/subscription';
 
 const AuthContext = createContext();
 
@@ -70,52 +70,21 @@ function mapUser(u) {
 }
 
 // ---------------------------------------------------------------------------
-// DB helpers
+// Server-side profile fetch — uses admin key (no RLS issues)
 // ---------------------------------------------------------------------------
 
-async function fetchProfileFromDB(userId) {
-  if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-async function fetchProfileFromServer() {
-  if (!supabase) return null;
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !sessionData?.session?.access_token) return null;
-
-  const res = await fetch('/api/account/profile', {
-    headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
-  });
-  if (!res.ok) return null;
-  const payload = await res.json();
-  return payload?.profile || null;
-}
-
-async function createNewProfile(user) {
-  if (!supabase) return;
-  const payload = {
-    id: user.id,
-    email: user.email,
-    display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || null,
-    photo_url: user.user_metadata?.avatar_url || null,
-    subscription: 'starter',
-    subscription_status: 'inactive',
-    scripts_remaining: 0,
-    scripts_generated: 0,
-    scripts_limit: 0,
-    paid: false,
-    email_verified: Boolean(user.email_confirmed_at),
-    last_login_at: new Date().toISOString(),
-  };
-  const { error } = await supabase.from('profiles').insert(payload);
-  // 23505 = unique_violation: row already exists — fine
-  if (error && error.code !== '23505') throw error;
+async function fetchProfileFromServer(accessToken) {
+  if (!accessToken) return null;
+  try {
+    const res = await fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return null;
+    const payload = await res.json();
+    return payload?.profile || null;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -123,82 +92,68 @@ async function createNewProfile(user) {
 // ---------------------------------------------------------------------------
 
 export function AuthProvider({ children }) {
-  // userProfile is pre-populated from localStorage so returning users
-  // NEVER see the shimmer skeleton on refresh.
+  // Pre-populate from localStorage so returning users NEVER see shimmer on refresh
   const [userProfile, setUserProfile] = useState(() => readCache());
   const [user, setUser]               = useState(null);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
 
-  const mounted       = useRef(true);
-  const bootDone      = useRef(false);
-  const serverSyncing = useRef(false);
+  const mounted   = useRef(true);
+  const bootDone  = useRef(false);
+  const syncing   = useRef(false);
 
-  // Apply a fresh profile to state + cache.
-  // Always uses the latest data — expired subscriptions must show correctly.
+  // Apply a fresh profile to state + cache
   const applyProfile = useCallback((mapped) => {
     if (!mounted.current) return;
     writeCache(mapped);
     setUserProfile(mapped);
   }, []);
 
-  // Clear everything on sign-out.
+  // Clear everything on sign-out
   const clearSession = useCallback(() => {
     writeCache(null);
     setUser(null);
     setUserProfile(null);
   }, []);
 
-  // Kick off a non-blocking background server sync (authoritative).
-  const runServerSync = useCallback((supabaseUser) => {
-    if (serverSyncing.current) return;
-    serverSyncing.current = true;
-    fetchProfileFromServer()
-      .then((row) => {
-        if (row && mounted.current) applyProfile(mapProfile(row));
-      })
-      .catch(() => { /* background — non-critical */ })
-      .finally(() => { serverSyncing.current = false; });
-  }, [applyProfile]);
-
-  // Full profile sync for a logged-in user:
-  // 1. Fast DB query (~50-200ms) → updates UI immediately
-  // 2. Server sync runs in background
+  // Fetch profile from /api/auth/me and apply it
   const syncProfile = useCallback(async (supabaseUser) => {
     if (!supabaseUser) {
       clearSession();
       return;
     }
+    if (syncing.current) return;
+    syncing.current = true;
 
     setUser(mapUser(supabaseUser));
 
-    // Fast path — direct client DB query
     try {
-      const row = await fetchProfileFromDB(supabaseUser.id);
-      if (row) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        syncing.current = false;
+        return;
+      }
+
+      const row = await fetchProfileFromServer(token);
+      if (row && mounted.current) {
         applyProfile(mapProfile(row));
-      } else {
-        // No profile row yet — create one for new users
-        await createNewProfile(supabaseUser);
-        const newRow = await fetchProfileFromDB(supabaseUser.id);
-        if (newRow) applyProfile(mapProfile(newRow));
       }
     } catch (_e) {
-      // DB query failed — localStorage cache is still set, UI not broken
+      // Non-critical — cache is still set, UI is not broken
+    } finally {
+      syncing.current = false;
     }
-
-    // Background: authoritative server-side resolver
-    runServerSync(supabaseUser);
-  }, [applyProfile, clearSession, runServerSync]);
+  }, [applyProfile, clearSession]);
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
   useEffect(() => {
     mounted.current = true;
 
-    // Hard timeout: loading can NEVER stay true longer than 4 seconds
+    // Safety net: loading can NEVER stay true longer than 5 seconds
     const safetyTimer = setTimeout(() => {
       if (mounted.current) setLoading(false);
-    }, 4000);
+    }, 5000);
 
     const boot = async () => {
       try {
@@ -214,34 +169,12 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           setUser(mapUser(session.user));
 
-          // ── Step 1: Fast DB query (~50-200ms) ──────────────────────────
-          let dbRow = null;
-          try { dbRow = await fetchProfileFromDB(session.user.id); } catch (_e) { /* ignore */ }
-
-          if (dbRow && mounted.current) applyProfile(mapProfile(dbRow));
-
-          // ── Step 2: Server sync if user still looks like Starter ────────
-          // Runs synchronously (before setLoading=false) so Pro users are
-          // never shown the wrong plan. The server resolver checks the
-          // payments table and upgrades stale 'free' profiles automatically.
-          // A 3s timeout prevents stuck loading if the API is slow.
-          const currentlooksLikePro = dbRow ? hasProAccess(dbRow) : false;
-
-          if (!currentlooksLikePro) {
-            try {
-              const serverRow = await Promise.race([
-                fetchProfileFromServer(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
-              ]);
-              if (serverRow && mounted.current) applyProfile(mapProfile(serverRow));
-            } catch (_e) { /* timeout or network — keep DB result */ }
-          } else {
-            // Already confirmed Pro from DB — server sync in background
-            runServerSync(session.user);
-          }
-
-          // ── Fallback: never leave userProfile null for a signed-in user ─
-          if (!readCache() && mounted.current) {
+          // Fetch authoritative profile from server (uses admin key — no RLS issues)
+          const row = await fetchProfileFromServer(session.access_token);
+          if (row && mounted.current) {
+            applyProfile(mapProfile(row));
+          } else if (!readCache() && mounted.current) {
+            // Fallback: never leave a signed-in user with no profile data
             setUserProfile(mapProfile({
               id: session.user.id,
               email: session.user.email,
@@ -273,16 +206,17 @@ export function AuthProvider({ children }) {
     const { data: listener } = supabase
       ? supabase.auth.onAuthStateChange(async (event, session) => {
           if (!mounted.current) return;
-          // INITIAL_SESSION is handled by boot() above — skip it
+          // INITIAL_SESSION is handled by boot() above — skip it to avoid race
           if (event === 'INITIAL_SESSION') return;
 
           if (session?.user) {
-            await syncProfile(session.user);
+            setUser(mapUser(session.user));
+            const row = await fetchProfileFromServer(session.access_token);
+            if (row && mounted.current) applyProfile(mapProfile(row));
           } else {
             clearSession();
           }
 
-          // Ensure loading is cleared even if boot() hasn't run yet
           if (mounted.current) setLoading(false);
         })
       : { data: { subscription: { unsubscribe: () => {} } } };
@@ -304,7 +238,6 @@ export function AuthProvider({ children }) {
       options: { data: { display_name: displayName } },
     });
     if (signUpError) throw signUpError;
-    if (data?.user) await createNewProfile(data.user);
     return {
       user: mapUser(data?.user || null),
       hasSession: Boolean(data?.session),
@@ -315,7 +248,13 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) throw signInError;
-    if (data?.user) await syncProfile(data.user);
+
+    if (data?.user && data?.session) {
+      setUser(mapUser(data.user));
+      const row = await fetchProfileFromServer(data.session.access_token);
+      if (row) applyProfile(mapProfile(row));
+    }
+
     return mapUser(data?.user || null);
   };
 
@@ -332,11 +271,9 @@ export function AuthProvider({ children }) {
    * out locally right away.
    */
   const logout = async () => {
-    // Clear everything locally first — sign-out is instant from the user's perspective
     clearSession();
     setLoading(false);
 
-    // Attempt network sign-out (5s timeout so it never hangs)
     if (supabase) {
       await Promise.race([
         supabase.auth.signOut(),
@@ -357,54 +294,42 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   };
 
-  const updateUserProfile = async (data) => {
-    const payload = {};
-    if (data.displayName) payload.display_name = data.displayName;
-    if (data.photoURL) payload.photo_url = data.photoURL;
-    if (user?.uid) {
-      const { error } = await supabase.from('profiles').update(payload).eq('id', user.uid);
-      if (error) throw error;
-      const row = await fetchProfileFromDB(user.uid);
-      if (row) applyProfile(mapProfile(row));
-    }
+  const updateUserProfile = async (_data) => {
+    // Profile updates go through Supabase dashboard or a dedicated API route.
+    // Just refresh from server to pick up any changes.
+    await refreshUserProfile();
   };
 
   const updateSubscription = async (userId, plan) => {
-    const scriptsRemaining = plan === 'pro' ? 100 : 0;
-    const { error } = await supabase
-      .from('profiles')
-      .update({ subscription: plan, scripts_remaining: scriptsRemaining, scripts_limit: scriptsRemaining })
-      .eq('id', userId);
-    if (error) throw error;
-    if (user?.uid === userId) {
-      const row = await fetchProfileFromDB(userId);
+    // This is now handled server-side via webhooks.
+    // Refresh profile to pick up any DB changes.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (token) {
+      const row = await fetchProfileFromServer(token);
       if (row) applyProfile(mapProfile(row));
     }
   };
 
-  const decrementScriptsRemaining = async (userId) => {
-    const row = await fetchProfileFromDB(userId);
-    const nextValue = Math.max((row?.scripts_remaining ?? 0) - 1, 0);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ scripts_remaining: nextValue, last_login_at: new Date().toISOString() })
-      .eq('id', userId);
-    if (error) throw error;
-    if (user?.uid === userId) {
-      const updated = await fetchProfileFromDB(userId);
-      if (updated) applyProfile(mapProfile(updated));
-    }
-    return nextValue;
+  const decrementScriptsRemaining = async (_userId) => {
+    // Decrement is handled server-side. Just refresh the profile to get the latest count.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) return (userProfile?.scriptsRemaining ?? 0);
+
+    const row = await fetchProfileFromServer(token);
+    if (row) applyProfile(mapProfile(row));
+    return row?.scripts_remaining ?? Math.max((userProfile?.scriptsRemaining ?? 0) - 1, 0);
   };
 
-  const refreshUserProfile = async (userId = user?.uid) => {
-    if (!userId || !supabase) return userProfile;
-    let row = null;
-    try { row = await fetchProfileFromServer(); } catch (_e) { /* ignore */ }
-    if (!row) {
-      try { row = await fetchProfileFromDB(userId); } catch (_e) { /* ignore */ }
-    }
+  const refreshUserProfile = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) return userProfile;
+
+    const row = await fetchProfileFromServer(token);
     if (!row) return userProfile;
+
     const mapped = mapProfile(row);
     applyProfile(mapped);
     return mapped;
@@ -415,12 +340,14 @@ export function AuthProvider({ children }) {
     if (sessionError) throw sessionError;
     const token = sessionData?.session?.access_token;
     if (!token) throw new Error('You are not signed in.');
+
     const res = await fetch('/api/account/delete', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
     const payload = await res.json();
     if (!res.ok) throw new Error(payload?.error || 'Failed to delete account.');
+
     try { await supabase.auth.signOut(); } catch (_e) { /* ignore */ }
     clearSession();
     return true;
@@ -430,10 +357,14 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.getUser();
     if (error) return false;
     const verified = Boolean(data?.user?.email_confirmed_at);
-    if (verified && user?.uid) {
-      await supabase.from('profiles').update({ email_verified: true }).eq('id', user.uid);
-      const row = await fetchProfileFromDB(user.uid);
-      if (row) applyProfile(mapProfile(row));
+    if (verified) {
+      // Re-fetch profile to get updated email_verified from server
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (token) {
+        const row = await fetchProfileFromServer(token);
+        if (row) applyProfile(mapProfile(row));
+      }
     }
     return verified;
   };
