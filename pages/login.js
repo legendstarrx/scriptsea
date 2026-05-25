@@ -6,7 +6,7 @@ import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
 
 export default function Login() {
-  const isRedirectLoading = useAuthRedirect();
+  useAuthRedirect();
   const router = useRouter();
   const { login, signInWithGoogle, resetPassword } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -14,8 +14,6 @@ export default function Login() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  if (isRedirectLoading) return <div>Loading...</div>;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

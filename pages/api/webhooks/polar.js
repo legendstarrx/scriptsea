@@ -154,6 +154,7 @@ export default async function handler(req, res) {
         .from('profiles')
         .update({
           subscription: 'pro',
+          subscription_status: 'active',
           subscription_type: planType,
           scripts_remaining: scriptsLimit,
           scripts_limit: scriptsLimit,
@@ -161,7 +162,25 @@ export default async function handler(req, res) {
           subscription_updated_at: new Date().toISOString()
         })
         .eq('id', profileId);
-      if (profileUpdateError) throw profileUpdateError;
+      if (profileUpdateError) {
+        // Retry without subscription_status if column does not exist yet.
+        if (String(profileUpdateError.message || '').toLowerCase().includes('subscription_status')) {
+          const { error: retryError } = await supabaseAdmin
+            .from('profiles')
+            .update({
+              subscription: 'pro',
+              subscription_type: planType,
+              scripts_remaining: scriptsLimit,
+              scripts_limit: scriptsLimit,
+              paid: true,
+              subscription_updated_at: new Date().toISOString()
+            })
+            .eq('id', profileId);
+          if (retryError) throw retryError;
+        } else {
+          throw profileUpdateError;
+        }
+      }
 
       await supabaseAdmin.from('payments').insert({
         user_id: profileId,
@@ -187,17 +206,27 @@ export default async function handler(req, res) {
         return res.status(200).json({ received: true, skipped: 'grace_period_active' });
       }
 
+      const cancelPatch = {
+        subscription: 'starter',
+        subscription_status: 'inactive',
+        scripts_remaining: 0,
+        scripts_limit: 0,
+        paid: false,
+        subscription_updated_at: new Date().toISOString()
+      };
       const { error: cancelUpdateError } = await supabaseAdmin
         .from('profiles')
-        .update({
-          subscription: 'starter',
-          scripts_remaining: 0,
-          scripts_limit: 0,
-          paid: false,
-          subscription_updated_at: new Date().toISOString()
-        })
+        .update(cancelPatch)
         .eq('id', profileId);
-      if (cancelUpdateError) throw cancelUpdateError;
+      if (cancelUpdateError) {
+        if (String(cancelUpdateError.message || '').toLowerCase().includes('subscription_status')) {
+          const { subscription_status: _s, ...fallbackPatch } = cancelPatch;
+          const { error: retryCancel } = await supabaseAdmin.from('profiles').update(fallbackPatch).eq('id', profileId);
+          if (retryCancel) throw retryCancel;
+        } else {
+          throw cancelUpdateError;
+        }
+      }
     }
 
     return res.status(200).json({ received: true });

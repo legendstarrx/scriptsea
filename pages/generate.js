@@ -332,6 +332,9 @@ export default function Generate() {
   const router = useRouter();
   const { user, userProfile, refreshUserProfile } = useAuth();
   const [serverPlan, setServerPlan] = useState(null);
+  // userProfile starts null then hydrates quickly (~50-200 ms with fast path).
+  // Show a neutral skeleton while it loads to avoid a "Starter" flash.
+  const profileReady = userProfile !== null;
   const profileIsProUser = hasProAccess(userProfile || {});
   const isProUser = profileIsProUser || Boolean(serverPlan?.isPro);
   const currentPlanLabel = serverPlan?.planLabel || getPlanLabel(userProfile || {});
@@ -388,20 +391,22 @@ export default function Generate() {
     return payload;
   }, []);
 
-  const syncServerPlan = useCallback(async () => {
-    // Session hydration can lag briefly after refresh/login.
-    // Retry a few times so server truth wins consistently.
-    for (let attempt = 0; attempt < 6; attempt += 1) {
+  const syncServerPlan = useCallback(async ({ extendedRetry = false } = {}) => {
+    // After a payment redirect extendedRetry=true: poll longer waiting for the async Polar webhook.
+    const maxAttempts = extendedRetry ? 25 : 6;
+    const delayMs = extendedRetry ? 600 : 400;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
         const status = await fetchServerPlan();
         if (status) {
           setServerPlan(status);
-          return status;
+          // In extended mode keep retrying until isPro is confirmed or attempts exhausted.
+          if (!extendedRetry || status.isPro) return status;
         }
       } catch (_error) {
         // retry below
       }
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
     return null;
   }, [fetchServerPlan]);
@@ -1321,12 +1326,12 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     const handlePaymentStatus = async () => {
       switch (payment) {
         case 'success':
-          // Force a fresh server-side subscription sync before updating the UI.
-          await syncServerPlan();
+          // Use extendedRetry to keep polling until the async Polar webhook updates the DB.
+          await syncServerPlan({ extendedRetry: true });
           if (user?.uid) {
             await refreshUserProfile(user.uid);
           }
-          toast.success('Payment successful! Your subscription is now active.');
+          toast.success('Payment successful! Your Pro access is now active.');
           break;
         case 'failed':
           toast.error('Payment failed. Please try again or contact support.');
@@ -1448,7 +1453,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               Generate Viral Video Script
             </h1>
 
-            {/* Script Counter */}
+            {/* Plan Badge */}
             <div style={{
               background: 'white',
               borderRadius: '12px',
@@ -1458,15 +1463,34 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: '10px'
+              gap: '10px',
+              transition: 'all 0.3s ease',
             }}>
               <span style={{ fontSize: '1rem', color: '#666' }}>
                 Current Plan:
               </span>
-              <span style={{ fontSize: '1.2rem', fontWeight: '600', color: isProUser ? '#FF3366' : '#666' }}>
-                {isProUser ? currentPlanLabel : 'Starter'}
-              </span>
-              {!isProUser && (
+              {!profileReady ? (
+                /* Loading skeleton — shows while profile hydrates (< 200 ms) */
+                <span style={{
+                  display: 'inline-block',
+                  width: '60px',
+                  height: '20px',
+                  borderRadius: '6px',
+                  background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 1.2s infinite',
+                }} />
+              ) : (
+                <span style={{
+                  fontSize: '1.2rem',
+                  fontWeight: '600',
+                  color: isProUser ? '#FF3366' : '#666',
+                  transition: 'color 0.3s ease',
+                }}>
+                  {isProUser ? currentPlanLabel : 'Starter'}
+                </span>
+              )}
+              {profileReady && !isProUser && (
                 <>
                   <button
                     onClick={() => setShowSubscriptionModal(true)}
@@ -1479,12 +1503,11 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       borderRadius: '20px',
                       fontSize: '0.9rem',
                       cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
                     }}
                   >
                     Upgrade
                   </button>
-
                   <SubscriptionModal
                     isOpen={showSubscriptionModal}
                     onClose={() => setShowSubscriptionModal(false)}

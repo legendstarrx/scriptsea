@@ -2,16 +2,23 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * Redirects authenticated users away from marketing / auth pages to /generate.
+ * Waits for loading to settle before acting so we never redirect on stale state.
+ */
 export function useAuthRedirect() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect authenticated users away from auth/landing pages to generator.
-    if (user && (router.pathname === '/login' || router.pathname === '/register' || router.pathname === '/')) {
+    if (loading) return; // wait for auth to resolve
+    if (
+      user &&
+      (router.pathname === '/login' ||
+        router.pathname === '/register' ||
+        router.pathname === '/')
+    ) {
       router.replace('/generate');
     }
-  }, [user, router]);
-
-  return false;
-} 
+  }, [user, loading, router]);
+}
