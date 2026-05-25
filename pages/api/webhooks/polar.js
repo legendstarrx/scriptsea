@@ -168,29 +168,37 @@ export default async function handler(req, res) {
     const eventType = event?.type;
     const payloadData = event?.data || {};
 
+    // ── Log EVERY event so Vercel logs show exactly what Polar is sending ────
+    console.log(`[polar-webhook] ▶ event=${eventType} id=${event?.data?.id || 'n/a'}`);
+
     const processableTypes = new Set([
       'order.paid',
       'subscription.active',
       'subscription.created',
       'subscription.updated',
-      'checkout.updated',   // fires when checkout status → succeeded
+      'checkout.updated',
       'subscription.canceled',
       'subscription.revoked',
     ]);
 
     if (!processableTypes.has(eventType)) {
-      // Unknown / informational events (checkout.created, etc.) — always 200
-      return res.status(200).json({ received: true, skipped: 'event_not_handled' });
+      console.log(`[polar-webhook] SKIPPED — event type '${eventType}' is not in processable list`);
+      console.log('[polar-webhook] To activate users, enable these events in Polar dashboard: order.paid, subscription.active, subscription.created');
+      return res.status(200).json({ received: true, skipped: 'event_not_handled', eventType });
     }
 
     const planType    = getPlanTypeFromPayload(payloadData);
     const scriptsLimit = planType === 'monthly' ? 60 : 15;
     const { userId, email } = getUserIdentifiers(payloadData);
+
+    console.log(`[polar-webhook] Processing event=${eventType} userId=${userId || 'none'} email=${email || 'none'} plan=${planType}`);
+
     const profileId   = await findUser({ userId, email });
 
     if (!profileId) {
-      console.warn('[polar-webhook] User not found', { eventType, userId, email });
-      return res.status(200).json({ received: true, skipped: 'user_not_found' });
+      console.warn(`[polar-webhook] ❌ User not found — eventType=${eventType} userId=${userId} email=${email}`);
+      console.warn('[polar-webhook] This means the external_customer_id or email in the Polar event does not match any profile in your DB');
+      return res.status(200).json({ received: true, skipped: 'user_not_found', userId, email });
     }
 
     // ── Activate Pro ────────────────────────────────────────────────────────
