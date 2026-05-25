@@ -21,6 +21,13 @@ const readHeader = (req, key) => {
   return value || null;
 };
 
+const isFutureDate = (value) => {
+  if (!value) return false;
+  const ts = new Date(value).getTime();
+  if (Number.isNaN(ts)) return false;
+  return ts > Date.now();
+};
+
 const getPlanTypeFromPayload = (payloadData) => {
   const monthlyId = process.env.POLAR_PRODUCT_MONTHLY_ID;
   const weeklyId = process.env.POLAR_PRODUCT_WEEKLY_ID;
@@ -168,6 +175,18 @@ export default async function handler(req, res) {
     }
 
     if (eventType === 'subscription.canceled' || eventType === 'subscription.revoked') {
+      const periodEnd =
+        payloadData?.current_period_end ||
+        payloadData?.ends_at ||
+        payloadData?.current_period_end_at ||
+        payloadData?.subscription?.current_period_end ||
+        null;
+
+      // Keep user Pro until period actually expires.
+      if (isFutureDate(periodEnd)) {
+        return res.status(200).json({ received: true, skipped: 'grace_period_active' });
+      }
+
       const { error: cancelUpdateError } = await supabaseAdmin
         .from('profiles')
         .update({

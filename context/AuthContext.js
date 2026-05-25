@@ -76,6 +76,20 @@ async function upsertProfile(user, patch = {}) {
   if (error) throw error;
 }
 
+async function createProfileIfMissing(user, patch = {}) {
+  const payload = {
+    id: user.id,
+    email: user.email,
+    display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || null,
+    photo_url: user.user_metadata?.avatar_url || null,
+    ...patch
+  };
+
+  const { error } = await supabase.from('profiles').insert(payload);
+  // Ignore unique conflicts: row already exists and should not be downgraded.
+  if (error && error.code !== '23505') throw error;
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -100,7 +114,7 @@ export function AuthProvider({ children }) {
       if (!profileRow) {
         profileRow = await fetchProfile(supabaseUser.id);
         if (!profileRow) {
-          await upsertProfile(supabaseUser, {
+          await createProfileIfMissing(supabaseUser, {
             subscription: 'starter',
             scripts_remaining: 0,
             scripts_generated: 0,
@@ -109,7 +123,10 @@ export function AuthProvider({ children }) {
             email_verified: Boolean(supabaseUser.email_confirmed_at),
             last_login_at: new Date().toISOString()
           });
-          profileRow = await fetchProfile(supabaseUser.id);
+          profileRow = await fetchProfileViaServer();
+          if (!profileRow) {
+            profileRow = await fetchProfile(supabaseUser.id);
+          }
         } else {
           await upsertProfile(supabaseUser, {
             last_login_at: new Date().toISOString(),
@@ -246,7 +263,7 @@ export function AuthProvider({ children }) {
     });
     if (signUpError) throw signUpError;
     if (data?.user) {
-      await upsertProfile(data.user, {
+      await createProfileIfMissing(data.user, {
         subscription: 'starter',
         scripts_remaining: 0,
         scripts_generated: 0,
