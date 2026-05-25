@@ -83,12 +83,15 @@ export default async function handler(req, res) {
   let activated = false;
 
   try {
+    console.log(`[sync-subscription] Starting for userId=${user.id}`);
+
     // ── 2a. Try subscriptions by external_customer_id ──────────────────────
     const subsData = await polarGet(
       `/subscriptions?external_customer_id=${encodeURIComponent(user.id)}&limit=10`,
       polarToken
     );
     const subs = subsData?.items || subsData?.result?.items || [];
+    console.log(`[sync-subscription] 2a subscriptions found: ${subs.length}, statuses: ${subs.map(s => s.status).join(',') || 'none'}`);
     const activeSub = subs.find(
       (s) => s.status === 'active' || s.status === 'trialing'
     );
@@ -96,6 +99,7 @@ export default async function handler(req, res) {
     if (activeSub) {
       planType  = extractPlanType(activeSub);
       activated = true;
+      console.log(`[sync-subscription] 2a hit — subId=${activeSub.id} plan=${planType}`);
     }
 
     // ── 2b. Fallback: try orders (both param names — Polar API uses external_customer_id) ─
@@ -113,6 +117,7 @@ export default async function handler(req, res) {
         ) || ordersData;
       }
       const orders = ordersData?.items || ordersData?.result?.items || [];
+      console.log(`[sync-subscription] 2b orders found: ${orders.length}, statuses: ${orders.map(o => o.status).join(',') || 'none'}`);
       const paidOrder = orders.find(
         (o) => o.status === 'paid' || o.billing_reason === 'purchase' || o.billing_reason === 'subscription_create'
       );
@@ -120,7 +125,7 @@ export default async function handler(req, res) {
       if (paidOrder) {
         planType  = extractPlanType(paidOrder);
         activated = true;
-        console.log(`[sync-subscription] Found paid order — orderId=${paidOrder.id}`);
+        console.log(`[sync-subscription] 2b hit — orderId=${paidOrder.id} plan=${planType}`);
       }
     }
 
@@ -132,6 +137,7 @@ export default async function handler(req, res) {
       );
       const customers = customerData?.items || customerData?.result?.items || [];
       const polarCustomer = customers[0];
+      console.log(`[sync-subscription] 2c customer lookup: ${polarCustomer ? `found id=${polarCustomer.id}` : 'not found'}`);
 
       if (polarCustomer?.id) {
         const subsData2 = await polarGet(
@@ -139,12 +145,14 @@ export default async function handler(req, res) {
           polarToken
         );
         const subs2 = subsData2?.items || subsData2?.result?.items || [];
+        console.log(`[sync-subscription] 2c subscriptions for customer: ${subs2.length}, statuses: ${subs2.map(s => s.status).join(',') || 'none'}`);
         const activeSub2 = subs2.find(
           (s) => s.status === 'active' || s.status === 'trialing'
         );
         if (activeSub2) {
           planType  = extractPlanType(activeSub2);
           activated = true;
+          console.log(`[sync-subscription] 2c hit — subId=${activeSub2.id} plan=${planType}`);
         }
       }
     }
@@ -166,7 +174,12 @@ export default async function handler(req, res) {
         })
         .eq('id', user.id);
 
-      if (updateErr) throw updateErr;
+      if (updateErr) {
+        // DB update failed — reset activated so we don't lie to the caller
+        activated = false;
+        console.error('[sync-subscription] DB update failed:', updateErr.message);
+        throw updateErr;
+      }
 
       // Record in payments table (idempotent — ignore duplicate-key)
       await supabaseAdmin.from('payments').insert({
@@ -187,8 +200,9 @@ export default async function handler(req, res) {
     }
 
   } catch (syncErr) {
-    // Non-fatal — we'll still return the current profile below
-    console.error('[sync-subscription] Polar API error:', syncErr?.message || syncErr);
+    // Reset activated so the caller doesn't get a false positive
+    activated = false;
+    console.error('[sync-subscription] Error:', syncErr?.message || syncErr);
   }
 
   // ── 4. Return fresh profile ──────────────────────────────────────────────

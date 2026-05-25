@@ -1243,14 +1243,45 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
     const handlePaymentStatus = async () => {
       switch (payment) {
-        case 'success':
-          // Use extendedRetry to keep polling until the async Polar webhook updates the DB.
+        case 'success': {
+          // 1. Try pull-based sync first (most reliable — queries Polar API directly)
+          try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData?.session?.access_token;
+            if (token) {
+              const syncRes = await fetch('/api/account/sync-subscription', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (syncRes.ok) {
+                const syncData = await syncRes.json();
+                const p = syncData?.profile || {};
+                const proFromSync = Boolean(
+                  syncData?.activated ||
+                  p.subscription === 'pro' ||
+                  p.subscription_status === 'active' ||
+                  p.paid
+                );
+                if (proFromSync) {
+                  // Force fresh profile into AuthContext (clears stale localStorage cache)
+                  await refreshUserProfile();
+                  const fresh = await fetchServerPlan();
+                  if (fresh) setServerPlan(fresh);
+                  toast.success('Payment successful! Your Pro access is now active. 🎉');
+                  router.replace('/generate', undefined, { shallow: true });
+                  return;
+                }
+              }
+            }
+          } catch (_e) { /* fall through to polling */ }
+
+          // 2. Fallback: poll /api/auth/me until Pro shows up (max ~15 seconds)
           await syncServerPlan({ extendedRetry: true });
-          if (user?.uid) {
-            await refreshUserProfile(user.uid);
-          }
-          toast.success('Payment successful! Your Pro access is now active.');
+          // Always refresh the AuthContext profile to bust the stale cache
+          await refreshUserProfile().catch(() => {});
+          toast.success('Payment successful! Your Pro access is now active. 🎉');
           break;
+        }
         case 'failed':
           toast.error('Payment failed. Please try again or contact support.');
           break;
@@ -1266,7 +1297,8 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
       console.error('Payment status refresh error:', statusError);
       router.replace('/generate', undefined, { shallow: true });
     });
-  }, [router, router.query.payment, refreshUserProfile, syncServerPlan, user?.uid]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query.payment]);
 
   return (
     <ProtectedRoute>

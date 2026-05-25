@@ -33,6 +33,23 @@ export default function PaymentSuccess() {
   };
 
   /** Call pull-based sync endpoint — returns true if Pro was activated */
+  /** Write Pro status directly into the AuthContext localStorage cache so
+   *  the generate page doesn't load stale Starter data on redirect. */
+  const writeProToCache = (profile: Record<string, unknown>) => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('ss_profile_v1') || 'null') || {};
+      const merged = {
+        ...cached,
+        ...profile,
+        subscription:       'pro',
+        subscriptionStatus: 'active',
+        paid:               true,
+        isPro:              true,
+      };
+      localStorage.setItem('ss_profile_v1', JSON.stringify(merged));
+    } catch { /* ignore private-mode / quota errors */ }
+  };
+
   const syncSubscription = async (): Promise<boolean> => {
     const token = await getToken();
     if (!token) return false;
@@ -44,12 +61,15 @@ export default function PaymentSuccess() {
       if (!res.ok) return false;
       const data = await res.json();
       const p    = data?.profile || {};
-      return Boolean(
+      const isPro = Boolean(
         data?.activated ||
         p.subscription === 'pro' ||
         p.subscription_status === 'active' ||
         p.paid
       );
+      // Pre-load Pro into the localStorage cache so generate page is instant
+      if (isPro) writeProToCache(p);
+      return isPro;
     } catch {
       return false;
     }
@@ -64,7 +84,9 @@ export default function PaymentSuccess() {
       if (!res.ok) return false;
       const data = await res.json();
       const p    = data?.profile || {};
-      return Boolean(p.subscription === 'pro' || p.subscription_status === 'active' || p.paid);
+      const isPro = Boolean(p.subscription === 'pro' || p.subscription_status === 'active' || p.paid);
+      if (isPro) writeProToCache(p);
+      return isPro;
     } catch {
       return false;
     }
