@@ -5,6 +5,32 @@ import { hasProAccess } from '../utils/subscription';
 const AuthContext = createContext();
 
 // ---------------------------------------------------------------------------
+// localStorage profile cache — gives instant hydration on every refresh
+// ---------------------------------------------------------------------------
+const PROFILE_CACHE_KEY = 'ss_profile_v1';
+
+function readCachedProfile() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedProfile(mapped) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (mapped) {
+      localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(mapped));
+    } else {
+      localStorage.removeItem(PROFILE_CACHE_KEY);
+    }
+  } catch { /* storage quota / private mode — silently ignore */ }
+}
+
+// ---------------------------------------------------------------------------
 // Profile mapping helpers
 // ---------------------------------------------------------------------------
 
@@ -100,7 +126,8 @@ async function createProfileIfMissing(user, patch = {}) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
+  // Pre-populate from localStorage so returning users NEVER see the shimmer.
+  const [userProfile, setUserProfile] = useState(() => readCachedProfile());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -110,10 +137,12 @@ export function AuthProvider({ children }) {
 
   /**
    * Safe profile setter — never downgrades from a paid plan.
+   * Also persists to localStorage so the next refresh is instant.
    */
   const safeSetProfile = (mapped) => {
     setUserProfile((prev) => {
       if (prev && isPaidProfile(prev) && !isPaidProfile(mapped)) return prev;
+      writeCachedProfile(mapped);
       return mapped;
     });
   };
@@ -135,6 +164,7 @@ export function AuthProvider({ children }) {
     if (!supabaseUser) {
       setUser(null);
       setUserProfile(null);
+      writeCachedProfile(null); // clear stale cache on sign-out
       return;
     }
 
@@ -360,6 +390,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    writeCachedProfile(null); // clear before sign-out so the next page load is clean
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
@@ -429,6 +460,7 @@ export function AuthProvider({ children }) {
     const payload = await response.json();
     if (!response.ok) throw new Error(payload?.error || 'Failed to delete account.');
     try { await supabase.auth.signOut(); } catch (_e) { /* ignore */ }
+    writeCachedProfile(null);
     setUser(null);
     setUserProfile(null);
     return true;
