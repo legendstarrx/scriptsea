@@ -212,57 +212,47 @@ export function AuthProvider({ children }) {
         if (!mounted.current) return;
 
         if (session?.user) {
-          // Set user immediately so nothing waits
           setUser(mapUser(session.user));
 
-          let profileResolved = false;
+          // ── Step 1: Fast DB query (~50-200ms) ──────────────────────────
+          let dbRow = null;
+          try { dbRow = await fetchProfileFromDB(session.user.id); } catch (_e) { /* ignore */ }
 
-          // ── Attempt 1: direct client DB query (~50-200ms) ──────────────
-          try {
-            const row = await fetchProfileFromDB(session.user.id);
-            if (row && mounted.current) {
-              applyProfile(mapProfile(row));
-              profileResolved = true;
-            }
-          } catch (_e) { /* keep going */ }
+          if (dbRow && mounted.current) applyProfile(mapProfile(dbRow));
 
-          // ── Attempt 2: server sync if DB returned nothing ───────────────
-          // (server uses admin client — bypasses RLS, handles legacy rows)
-          if (!profileResolved) {
+          // ── Step 2: Server sync if user still looks like Starter ────────
+          // Runs synchronously (before setLoading=false) so Pro users are
+          // never shown the wrong plan. The server resolver checks the
+          // payments table and upgrades stale 'free' profiles automatically.
+          // A 3s timeout prevents stuck loading if the API is slow.
+          const currentlooksLikePro = dbRow ? hasProAccess(dbRow) : false;
+
+          if (!currentlooksLikePro) {
             try {
               const serverRow = await Promise.race([
                 fetchProfileFromServer(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500)),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
               ]);
-              if (serverRow && mounted.current) {
-                applyProfile(mapProfile(serverRow));
-                profileResolved = true;
-              }
-            } catch (_e) { /* keep going */ }
+              if (serverRow && mounted.current) applyProfile(mapProfile(serverRow));
+            } catch (_e) { /* timeout or network — keep DB result */ }
+          } else {
+            // Already confirmed Pro from DB — server sync in background
+            runServerSync(session.user);
           }
 
-          // ── Fallback: set a minimal logged-in profile ───────────────────
-          // This guarantees userProfile is NEVER null for a signed-in user.
-          // The background sync will correct it to Pro if appropriate.
-          if (!profileResolved && mounted.current) {
-            const placeholder = mapProfile({
+          // ── Fallback: never leave userProfile null for a signed-in user ─
+          if (!readCache() && mounted.current) {
+            setUserProfile(mapProfile({
               id: session.user.id,
               email: session.user.email,
-              display_name: session.user.user_metadata?.display_name || session.user.user_metadata?.full_name || null,
+              display_name: session.user.user_metadata?.display_name || null,
               subscription: 'starter',
               subscription_status: 'inactive',
               paid: false,
               scripts_remaining: 0,
               scripts_limit: 0,
-              email_verified: Boolean(session.user.email_confirmed_at),
-            });
-            // Only write placeholder to state, NOT to cache
-            // (cache should only hold real data from DB)
-            setUserProfile(placeholder);
+            }));
           }
-
-          // Background: authoritative server-side resolver (always runs)
-          runServerSync(session.user);
         } else {
           clearSession();
         }
