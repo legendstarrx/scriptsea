@@ -34,14 +34,15 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         products: [productId],
-        success_url: `${baseUrl}/payment-success?plan=${plan}`,
+        // Polar appends checkout_id as a query param if you include {CHECKOUT_ID}
+        success_url: `${baseUrl}/payment-success?plan=${plan}&checkout_id={CHECKOUT_ID}`,
         return_url: `${baseUrl}/generate?payment=failed`,
         customer_email: email,
         external_customer_id: userId,
         metadata: {
           userId,
           email,
-          plan
+          plan,
         }
       })
     });

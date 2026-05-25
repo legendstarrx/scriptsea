@@ -332,6 +332,8 @@ export default function Generate() {
   const router = useRouter();
   const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
   const [serverPlan, setServerPlan] = useState(null);
+  // Show full-page overlay while activating Pro after payment redirect
+  const [activatingPro, setActivatingPro] = useState(false);
   // profileReady = true once auth has resolved (loading=false) OR userProfile arrives.
   // This guarantees the shimmer NEVER persists once the page is visible.
   const profileReady = !authLoading || userProfile !== null;
@@ -1236,69 +1238,107 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
   };
 
   useEffect(() => {
-    // Handle payment status
     const { payment } = router.query;
-
     if (!payment) return;
 
     const handlePaymentStatus = async () => {
-      switch (payment) {
-        case 'success': {
-          // 1. Try pull-based sync first (most reliable — queries Polar API directly)
-          try {
-            const { data: sessionData } = await supabase.auth.getSession();
-            const token = sessionData?.session?.access_token;
-            if (token) {
+      if (payment === 'success') {
+        // Show overlay immediately so user never sees "Starter"
+        setActivatingPro(true);
+
+        let proActivated = false;
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData?.session?.access_token;
+
+          if (token) {
+            // Try sync-subscription up to 10 times (40 seconds total), 4s apart
+            for (let i = 0; i < 10; i++) {
               const syncRes = await fetch('/api/account/sync-subscription', {
                 method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
               });
               if (syncRes.ok) {
                 const syncData = await syncRes.json();
                 const p = syncData?.profile || {};
-                const proFromSync = Boolean(
+                proActivated = Boolean(
                   syncData?.activated ||
                   p.subscription === 'pro' ||
                   p.subscription_status === 'active' ||
                   p.paid
                 );
-                if (proFromSync) {
-                  // Force fresh profile into AuthContext (clears stale localStorage cache)
-                  await refreshUserProfile();
-                  const fresh = await fetchServerPlan();
-                  if (fresh) setServerPlan(fresh);
-                  toast.success('Payment successful! Your Pro access is now active. 🎉');
-                  router.replace('/generate', undefined, { shallow: true });
-                  return;
-                }
               }
+              if (proActivated) break;
+              await new Promise(r => setTimeout(r, 4000));
             }
-          } catch (_e) { /* fall through to polling */ }
+          }
+        } catch (_e) { /* fall through */ }
 
-          // 2. Fallback: poll /api/auth/me until Pro shows up (max ~15 seconds)
-          await syncServerPlan({ extendedRetry: true });
-          // Always refresh the AuthContext profile to bust the stale cache
-          await refreshUserProfile().catch(() => {});
+        // Refresh AuthContext — picks up the updated DB row
+        await refreshUserProfile().catch(() => {});
+        // Also update the local serverPlan state
+        const fresh = await fetchServerPlan().catch(() => null);
+        if (fresh) setServerPlan(fresh);
+
+        setActivatingPro(false);
+        router.replace('/generate', undefined, { shallow: true });
+
+        if (proActivated) {
           toast.success('Payment successful! Your Pro access is now active. 🎉');
-          break;
+        } else {
+          toast.success('Payment received! If your plan hasn\'t updated, please contact support.');
         }
-        case 'failed':
-          toast.error('Payment failed. Please try again or contact support.');
-          break;
-        case 'error':
-          toast.error('An error occurred. Please contact support if payment was deducted.');
-          break;
+      } else if (payment === 'failed') {
+        toast.error('Payment failed. Please try again or contact support.');
+        router.replace('/generate', undefined, { shallow: true });
+      } else if (payment === 'error') {
+        toast.error('An error occurred. Please contact support if payment was deducted.');
+        router.replace('/generate', undefined, { shallow: true });
       }
-
-      router.replace('/generate', undefined, { shallow: true });
     };
 
-    handlePaymentStatus().catch((statusError) => {
-      console.error('Payment status refresh error:', statusError);
+    handlePaymentStatus().catch((err) => {
+      console.error('Payment status error:', err);
+      setActivatingPro(false);
       router.replace('/generate', undefined, { shallow: true });
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.query.payment]);
+
+  // ── Pro activation overlay (shown while syncing after payment) ─────────────
+  if (activatingPro) {
+    return (
+      <ProtectedRoute>
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'linear-gradient(135deg,#fff5f7 0%,#ffffff 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: '#FF3366',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 20px',
+            }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"
+                style={{ animation: 'spin 1s linear infinite' }}>
+                <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h2 style={{ margin: '0 0 8px', fontSize: '1.5rem', fontWeight: 700, color: '#1a1a1a' }}>
+              Activating your Pro access…
+            </h2>
+            <p style={{ color: '#666', fontSize: '0.95rem' }}>
+              Just a moment, we&rsquo;re confirming your payment.
+            </p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
