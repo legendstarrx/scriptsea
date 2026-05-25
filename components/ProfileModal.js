@@ -11,18 +11,13 @@ export default function ProfileModal({ onClose, user }) {
   const [success, setSuccess] = useState('');
 
   const handleSignOut = async () => {
-    try {
-      setIsSigningOut(true);
-      setError('');
-      await logout();
-      onClose?.();
-      window.location.assign('/login');
-    } catch (signOutError) {
-      console.error('Error signing out:', signOutError);
-      setError(signOutError?.message || 'Sign out failed. Please try again.');
-    } finally {
-      setIsSigningOut(false);
-    }
+    setIsSigningOut(true);
+    setError('');
+    // logout() clears local state instantly and times out the network call at 5s.
+    // We always navigate to /login regardless of whether the network call succeeds.
+    try { await logout(); } catch (_e) { /* already cleared locally */ }
+    onClose?.();
+    window.location.assign('/login');
   };
 
   const openSupport = (message) => {
