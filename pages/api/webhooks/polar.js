@@ -37,6 +37,8 @@ const getPlanTypeFromPayload = (payloadData) => {
     payloadData?.product?.id ||
     payloadData?.price?.product_id ||
     payloadData?.items?.[0]?.product_id ||
+    payloadData?.products?.[0]?.id ||           // checkout.updated products array
+    payloadData?.products?.[0]?.product_id ||
     payloadData?.metadata?.productId;
 
   if (productId && monthlyId && productId === monthlyId) return 'monthly';
@@ -170,6 +172,8 @@ export default async function handler(req, res) {
       'order.paid',
       'subscription.active',
       'subscription.created',
+      'subscription.updated',
+      'checkout.updated',   // fires when checkout status → succeeded
       'subscription.canceled',
       'subscription.revoked',
     ]);
@@ -190,10 +194,22 @@ export default async function handler(req, res) {
     }
 
     // ── Activate Pro ────────────────────────────────────────────────────────
+    // For checkout.updated: only activate when status is 'succeeded'
+    const checkoutSucceeded =
+      eventType === 'checkout.updated' &&
+      (payloadData?.status === 'succeeded' || payloadData?.status === 'confirmed');
+
+    // For subscription.updated: only activate when status is 'active'
+    const subActivated =
+      eventType === 'subscription.updated' &&
+      (payloadData?.status === 'active');
+
     if (
       eventType === 'order.paid' ||
       eventType === 'subscription.active' ||
-      eventType === 'subscription.created'
+      eventType === 'subscription.created' ||
+      checkoutSucceeded ||
+      subActivated
     ) {
       const patch = {
         subscription:            'pro',
