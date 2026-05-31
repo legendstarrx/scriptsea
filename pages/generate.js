@@ -338,8 +338,12 @@ export default function Generate() {
   // This guarantees the shimmer NEVER persists once the page is visible.
   const profileReady = !authLoading || userProfile !== null;
   const profileIsProUser = hasProAccess(userProfile || {});
-  const isProUser = profileIsProUser || Boolean(serverPlan?.isPro);
-  const currentPlanLabel = serverPlan?.planLabel || getPlanLabel(userProfile || {});
+  // serverPlan (from /api/auth/me) is the authoritative, DB-backed status.
+  // Once it has loaded, BOTH the Pro flag and the label come from it so they
+  // can never disagree (which previously showed "Starter" text in Pro-pink).
+  // Before it loads, fall back to the context profile to avoid any flicker.
+  const isProUser = serverPlan ? Boolean(serverPlan.isPro) : profileIsProUser;
+  const currentPlanLabel = serverPlan ? serverPlan.planLabel : getPlanLabel(userProfile || {});
   const [videoTopic, setVideoTopic] = useState('');
   const [viralReference, setViralReference] = useState('');
   const [selectedTone, setSelectedTone] = useState('casual');

@@ -76,7 +76,7 @@ function mapUser(u) {
 async function fetchProfileFromServer(accessToken) {
   if (!accessToken) return null;
   try {
-    const res = await fetch('/api/account/profile', {
+    const res = await fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (res.status === 401 || res.status === 403) return { __unauthorized: true };

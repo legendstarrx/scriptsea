@@ -57,26 +57,47 @@ function extractPlanType(obj) {
   return 'weekly';
 }
 
-/** Activate Pro in the DB. Returns true on success. */
-async function activateProInDB(userId, planType) {
+/**
+ * Activate Pro in the DB for the row keyed by `userId`. Returns true only when
+ * a row was actually updated — a no-match update is treated as failure so we
+ * never report a "successful" activation that changed nothing.
+ */
+async function activateProInDB(userId, planType, userEmail) {
   const scriptsLimit = planType === 'monthly' ? 60 : 15;
-  const { error } = await supabaseAdmin
+  const patch = {
+    subscription:            'pro',
+    subscription_status:     'active',
+    subscription_type:       planType,
+    scripts_remaining:       scriptsLimit,
+    scripts_limit:           scriptsLimit,
+    paid:                    true,
+    subscription_updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabaseAdmin
     .from('profiles')
-    .update({
-      subscription:            'pro',
-      subscription_status:     'active',
-      subscription_type:       planType,
-      scripts_remaining:       scriptsLimit,
-      scripts_limit:           scriptsLimit,
-      paid:                    true,
-      subscription_updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId);
+    .update(patch)
+    .eq('id', userId)
+    .select('id');
 
   if (error) {
     console.error('[sync-subscription] DB update error:', error.message);
     return false;
   }
+
+  // No row matched the auth id — heal a duplicate row that shares this email
+  // by copying Pro onto the correct (auth-id) row via upsert.
+  if (!data || data.length === 0) {
+    console.warn(`[sync-subscription] No profile row matched id=${userId}; upserting Pro row.`);
+    const { error: upsertErr } = await supabaseAdmin
+      .from('profiles')
+      .upsert({ id: userId, email: userEmail || null, ...patch }, { onConflict: 'id' });
+    if (upsertErr) {
+      console.error('[sync-subscription] Upsert error:', upsertErr.message);
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -119,7 +140,7 @@ export default async function handler(req, res) {
     console.log(`[sync-subscription] A checkout status=${checkout?.status}`);
     if (checkout?.status === 'succeeded' || checkout?.status === 'confirmed') {
       planType  = extractPlanType(checkout);
-      activated = await activateProInDB(user.id, planType);
+      activated = await activateProInDB(user.id, planType, user.email);
       if (activated) console.log(`[sync-subscription] ✅ A activated — plan=${planType}`);
     }
   }
@@ -135,7 +156,7 @@ export default async function handler(req, res) {
     const hit = items.find(s => s.status === 'active' || s.status === 'trialing');
     if (hit) {
       planType  = extractPlanType(hit);
-      activated = await activateProInDB(user.id, planType);
+      activated = await activateProInDB(user.id, planType, user.email);
       if (activated) console.log(`[sync-subscription] ✅ B activated — subId=${hit.id} plan=${planType}`);
     }
   }
@@ -151,7 +172,7 @@ export default async function handler(req, res) {
     const hit = items.find(o => o.status === 'paid' || o.billing_reason === 'purchase' || o.billing_reason === 'subscription_create');
     if (hit) {
       planType  = extractPlanType(hit);
-      activated = await activateProInDB(user.id, planType);
+      activated = await activateProInDB(user.id, planType, user.email);
       if (activated) console.log(`[sync-subscription] ✅ C activated — orderId=${hit.id} plan=${planType}`);
     }
   }
@@ -173,7 +194,7 @@ export default async function handler(req, res) {
       const hit = subs.find(s => s.status === 'active' || s.status === 'trialing');
       if (hit) {
         planType  = extractPlanType(hit);
-        activated = await activateProInDB(user.id, planType);
+        activated = await activateProInDB(user.id, planType, user.email);
         if (activated) console.log(`[sync-subscription] ✅ D activated — subId=${hit.id} plan=${planType}`);
       }
     }
@@ -196,7 +217,7 @@ export default async function handler(req, res) {
       const hit = subs.find(s => s.status === 'active' || s.status === 'trialing');
       if (hit) {
         planType  = extractPlanType(hit);
-        activated = await activateProInDB(user.id, planType);
+        activated = await activateProInDB(user.id, planType, user.email);
         if (activated) console.log(`[sync-subscription] ✅ E activated — subId=${hit.id} plan=${planType}`);
       }
 
@@ -208,7 +229,7 @@ export default async function handler(req, res) {
         const ord = orders.find(o => o.status === 'paid' || o.billing_reason === 'subscription_create');
         if (ord) {
           planType  = extractPlanType(ord);
-          activated = await activateProInDB(user.id, planType);
+          activated = await activateProInDB(user.id, planType, user.email);
           if (activated) console.log(`[sync-subscription] ✅ E-order activated — orderId=${ord.id} plan=${planType}`);
         }
       }
