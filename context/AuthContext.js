@@ -76,9 +76,10 @@ function mapUser(u) {
 async function fetchProfileFromServer(accessToken) {
   if (!accessToken) return null;
   try {
-    const res = await fetch('/api/auth/me', {
+    const res = await fetch('/api/account/profile', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
+    if (res.status === 401 || res.status === 403) return { __unauthorized: true };
     if (!res.ok) return null;
     const payload = await res.json();
     return payload?.profile || null;
@@ -116,6 +117,16 @@ export function AuthProvider({ children }) {
     setUserProfile(null);
   }, []);
 
+  const forceSignOutLocal = useCallback(async () => {
+    clearSession();
+    setLoading(false);
+    try {
+      await supabase?.auth?.signOut();
+    } catch {
+      // local state is already cleared
+    }
+  }, [clearSession]);
+
   // Fetch profile from /api/auth/me and apply it
   const syncProfile = useCallback(async (supabaseUser) => {
     if (!supabaseUser) {
@@ -136,6 +147,11 @@ export function AuthProvider({ children }) {
       }
 
       const row = await fetchProfileFromServer(token);
+      if (row?.__unauthorized) {
+        await forceSignOutLocal();
+        syncing.current = false;
+        return;
+      }
       if (row && mounted.current) {
         applyProfile(mapProfile(row));
       }
@@ -144,7 +160,7 @@ export function AuthProvider({ children }) {
     } finally {
       syncing.current = false;
     }
-  }, [applyProfile, clearSession]);
+  }, [applyProfile, clearSession, forceSignOutLocal]);
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -171,20 +187,12 @@ export function AuthProvider({ children }) {
 
           // Fetch authoritative profile from server (uses admin key — no RLS issues)
           const row = await fetchProfileFromServer(session.access_token);
+          if (row?.__unauthorized) {
+            await forceSignOutLocal();
+            return;
+          }
           if (row && mounted.current) {
             applyProfile(mapProfile(row));
-          } else if (!readCache() && mounted.current) {
-            // Fallback: never leave a signed-in user with no profile data
-            setUserProfile(mapProfile({
-              id: session.user.id,
-              email: session.user.email,
-              display_name: session.user.user_metadata?.display_name || null,
-              subscription: 'starter',
-              subscription_status: 'inactive',
-              paid: false,
-              scripts_remaining: 0,
-              scripts_limit: 0,
-            }));
           }
         } else {
           clearSession();
@@ -216,7 +224,13 @@ export function AuthProvider({ children }) {
               setUser(mapUser(session.user));
               // Background refresh of profile — don't block anything
               fetchProfileFromServer(session.access_token)
-                .then((row) => { if (row && mounted.current) applyProfile(mapProfile(row)); })
+                .then(async (row) => {
+                  if (row?.__unauthorized) {
+                    await forceSignOutLocal();
+                    return;
+                  }
+                  if (row && mounted.current) applyProfile(mapProfile(row));
+                })
                 .catch(() => {});
             }
             return; // Don't touch loading state
@@ -225,6 +239,10 @@ export function AuthProvider({ children }) {
           if (session?.user) {
             setUser(mapUser(session.user));
             const row = await fetchProfileFromServer(session.access_token);
+            if (row?.__unauthorized) {
+              await forceSignOutLocal();
+              return;
+            }
             if (row && mounted.current) applyProfile(mapProfile(row));
           } else if (event === 'SIGNED_OUT') {
             // Only clear on an explicit sign-out, not on unknown events
@@ -240,8 +258,7 @@ export function AuthProvider({ children }) {
       clearTimeout(safetyTimer);
       listener.subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [applyProfile, clearSession, forceSignOutLocal]);
 
   // ── Auth actions ───────────────────────────────────────────────────────────
 
@@ -266,6 +283,10 @@ export function AuthProvider({ children }) {
     if (data?.user && data?.session) {
       setUser(mapUser(data.user));
       const row = await fetchProfileFromServer(data.session.access_token);
+      if (row?.__unauthorized) {
+        await forceSignOutLocal();
+        return null;
+      }
       if (row) applyProfile(mapProfile(row));
     }
 
@@ -321,6 +342,10 @@ export function AuthProvider({ children }) {
     const token = sessionData?.session?.access_token;
     if (token) {
       const row = await fetchProfileFromServer(token);
+      if (row?.__unauthorized) {
+        await forceSignOutLocal();
+        return;
+      }
       if (row) applyProfile(mapProfile(row));
     }
   };
@@ -332,6 +357,10 @@ export function AuthProvider({ children }) {
     if (!token) return (userProfile?.scriptsRemaining ?? 0);
 
     const row = await fetchProfileFromServer(token);
+    if (row?.__unauthorized) {
+      await forceSignOutLocal();
+      return 0;
+    }
     if (row) applyProfile(mapProfile(row));
     return row?.scripts_remaining ?? Math.max((userProfile?.scriptsRemaining ?? 0) - 1, 0);
   };
@@ -342,6 +371,10 @@ export function AuthProvider({ children }) {
     if (!token) return userProfile;
 
     const row = await fetchProfileFromServer(token);
+    if (row?.__unauthorized) {
+      await forceSignOutLocal();
+      return null;
+    }
     if (!row) return userProfile;
 
     const mapped = mapProfile(row);
@@ -362,8 +395,9 @@ export function AuthProvider({ children }) {
     const payload = await res.json();
     if (!res.ok) throw new Error(payload?.error || 'Failed to delete account.');
 
-    try { await supabase.auth.signOut(); } catch (_e) { /* ignore */ }
     clearSession();
+    setLoading(false);
+    try { await supabase.auth.signOut(); } catch (_e) { /* ignore */ }
     return true;
   };
 
@@ -377,6 +411,10 @@ export function AuthProvider({ children }) {
       const token = sessionData?.session?.access_token;
       if (token) {
         const row = await fetchProfileFromServer(token);
+        if (row?.__unauthorized) {
+          await forceSignOutLocal();
+          return false;
+        }
         if (row) applyProfile(mapProfile(row));
       }
     }

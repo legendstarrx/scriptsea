@@ -27,6 +27,7 @@ export default function Register() {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState({
     length: false,
     uppercase: false,
@@ -99,6 +100,10 @@ export default function Register() {
     }
   };
 
+  const showPasswordRules =
+    (isPasswordFocused || formData.password.length > 0) &&
+    !Object.values(passwordValidation).every(Boolean);
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navigation />
@@ -169,6 +174,8 @@ export default function Register() {
               required
               value={formData.password}
               onChange={handleChange}
+              onFocus={() => setIsPasswordFocused(true)}
+              onBlur={() => setIsPasswordFocused(false)}
               style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             />
             <input
@@ -181,13 +188,15 @@ export default function Register() {
               style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             />
 
-            <div style={{ marginTop: '.2rem', padding: '.75rem', backgroundColor: '#f8f9ff', borderRadius: '8px', fontSize: '.8rem' }}>
-              <div style={{ color: passwordValidation.length ? '#48BB78' : '#666' }}>{passwordValidation.length ? '✓' : '○'} 8+ characters</div>
-              <div style={{ color: passwordValidation.uppercase ? '#48BB78' : '#666' }}>{passwordValidation.uppercase ? '✓' : '○'} Uppercase letter</div>
-              <div style={{ color: passwordValidation.lowercase ? '#48BB78' : '#666' }}>{passwordValidation.lowercase ? '✓' : '○'} Lowercase letter</div>
-              <div style={{ color: passwordValidation.number ? '#48BB78' : '#666' }}>{passwordValidation.number ? '✓' : '○'} Number</div>
-              <div style={{ color: passwordValidation.special ? '#48BB78' : '#666' }}>{passwordValidation.special ? '✓' : '○'} Special character</div>
-            </div>
+            {showPasswordRules && (
+              <div style={{ marginTop: '.2rem', padding: '.75rem', backgroundColor: '#f8f9ff', borderRadius: '8px', fontSize: '.8rem' }}>
+                <div style={{ color: passwordValidation.length ? '#48BB78' : '#666' }}>{passwordValidation.length ? '✓' : '○'} 8+ characters</div>
+                <div style={{ color: passwordValidation.uppercase ? '#48BB78' : '#666' }}>{passwordValidation.uppercase ? '✓' : '○'} Uppercase letter</div>
+                <div style={{ color: passwordValidation.lowercase ? '#48BB78' : '#666' }}>{passwordValidation.lowercase ? '✓' : '○'} Lowercase letter</div>
+                <div style={{ color: passwordValidation.number ? '#48BB78' : '#666' }}>{passwordValidation.number ? '✓' : '○'} Number</div>
+                <div style={{ color: passwordValidation.special ? '#48BB78' : '#666' }}>{passwordValidation.special ? '✓' : '○'} Special character</div>
+              </div>
+            )}
 
             <button
               type="submit"
