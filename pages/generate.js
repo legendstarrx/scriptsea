@@ -1083,12 +1083,12 @@ ${includeVisuals ? `
       setError('');
 
       const prompt = await generatePrompt();
-      // Scale token limit with duration so long scripts don't get cut off
+      // Vercel Hobby plan: 60s max → cap at 3500 tokens for all durations
       const tokensByDuration = {
         '15 sec': 512, '30 sec': 768, '45 sec': 1024, '60 sec': 1536,
-        '90 sec': 2048, '2 min': 2560, '3 min': 3500, '5 min': 5500,
-        '10 min': 10000, '15 min': 14000, '20 min': 16000,
-        '30 min': 16000, '45 min': 16000, '60 min': 16000,
+        '90 sec': 2048, '2 min': 2560, '3 min': 3500, '5 min': 3500,
+        '10 min': 3500, '15 min': 3500, '20 min': 3500,
+        '30 min': 3500, '45 min': 3500, '60 min': 3500,
       };
       const maxTokens = tokensByDuration[duration] || 2048;
       const generatedText = await generateWithOpenAI(prompt, {

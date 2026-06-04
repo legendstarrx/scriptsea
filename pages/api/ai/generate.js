@@ -5,9 +5,9 @@ const client = resolvedApiKey
   ? new OpenAI({ apiKey: resolvedApiKey })
   : null;
 
-// Allow up to 5 minutes on Vercel Pro (hobby plan limit is 10s — upgrade required for long scripts)
+// Vercel Hobby plan max is 60 seconds
 export const config = {
-  maxDuration: 300,
+  maxDuration: 60,
 };
 
 export default async function handler(req, res) {
@@ -24,8 +24,8 @@ export default async function handler(req, res) {
 
   try {
     const { prompt, temperature = 0.9, maxTokens: requestedTokens = 2048 } = req.body || {};
-    // Hard cap at 12000 — above this takes >3 min and risks timeout even on Pro
-    const maxTokens = Math.min(Number(requestedTokens) || 2048, 12000);
+    // Hobby plan: 60s limit. GPT-4.1-mini ~60 tok/s → safe cap is 3500 tokens
+    const maxTokens = Math.min(Number(requestedTokens) || 2048, 3500);
 
     if (!prompt || typeof prompt !== 'string') {
       return res.status(400).json({ error: 'A valid prompt is required' });
