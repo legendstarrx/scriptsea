@@ -714,14 +714,14 @@ export default function Generate() {
             title: null,
             author: null,
           };
-          // Fetch real title via YouTube oEmbed (no API key needed)
+          // Fetch title via our server endpoint (avoids CSP restrictions)
           try {
-            const oembed = await fetch(
-              `https://www.youtube.com/oembed?url=${encodeURIComponent(videoData.url)}&format=json`
+            const info = await fetch(
+              `/api/video-info?url=${encodeURIComponent(videoData.url)}`
             ).then(r => r.ok ? r.json() : null);
-            if (oembed?.title) {
-              videoData.title  = oembed.title;
-              videoData.author = oembed.author_name || null;
+            if (info?.title) {
+              videoData.title  = info.title;
+              videoData.author = info.author || null;
             }
           } catch { /* ignore — title is optional */ }
         }
@@ -736,14 +736,14 @@ export default function Generate() {
             title: null,
             author: null,
           };
-          // Fetch real title via TikTok oEmbed
+          // Fetch title via our server endpoint (avoids CSP restrictions)
           try {
-            const oembed = await fetch(
-              `https://www.tiktok.com/oembed?url=${encodeURIComponent(link)}`
+            const info = await fetch(
+              `/api/video-info?url=${encodeURIComponent(link)}`
             ).then(r => r.ok ? r.json() : null);
-            if (oembed?.title) {
-              videoData.title  = oembed.title;
-              videoData.author = oembed.author_name || null;
+            if (info?.title) {
+              videoData.title  = info.title;
+              videoData.author = info.author || null;
             }
           } catch { /* ignore */ }
         }
