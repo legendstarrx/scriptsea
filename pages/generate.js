@@ -695,24 +695,35 @@ export default function Generate() {
 
   const processVideoLink = async (link) => {
     if (!link) return null;
-    
+
     try {
       setIsProcessingVideo(true);
-      // Extract video ID and platform
       let videoData = null;
-      
+
       if (link.includes('youtube.com') || link.includes('youtu.be')) {
-        const videoId = link.includes('youtu.be') 
-          ? link.split('youtu.be/')[1]
+        const videoId = link.includes('youtu.be')
+          ? link.split('youtu.be/')[1]?.split('?')[0]
           : link.split('v=')[1]?.split('&')[0];
-          
+
         if (videoId) {
           videoData = {
             platform: 'YouTube',
             id: videoId,
             url: `https://www.youtube.com/watch?v=${videoId}`,
-            embedUrl: `https://www.youtube.com/embed/${videoId}`
+            embedUrl: `https://www.youtube.com/embed/${videoId}`,
+            title: null,
+            author: null,
           };
+          // Fetch real title via YouTube oEmbed (no API key needed)
+          try {
+            const oembed = await fetch(
+              `https://www.youtube.com/oembed?url=${encodeURIComponent(videoData.url)}&format=json`
+            ).then(r => r.ok ? r.json() : null);
+            if (oembed?.title) {
+              videoData.title  = oembed.title;
+              videoData.author = oembed.author_name || null;
+            }
+          } catch { /* ignore — title is optional */ }
         }
       } else if (link.includes('tiktok.com')) {
         const videoId = link.split('/video/')[1]?.split('?')[0];
@@ -721,21 +732,28 @@ export default function Generate() {
             platform: 'TikTok',
             id: videoId,
             url: link,
-            embedUrl: `https://www.tiktok.com/embed/${videoId}`
+            embedUrl: `https://www.tiktok.com/embed/${videoId}`,
+            title: null,
+            author: null,
           };
+          // Fetch real title via TikTok oEmbed
+          try {
+            const oembed = await fetch(
+              `https://www.tiktok.com/oembed?url=${encodeURIComponent(link)}`
+            ).then(r => r.ok ? r.json() : null);
+            if (oembed?.title) {
+              videoData.title  = oembed.title;
+              videoData.author = oembed.author_name || null;
+            }
+          } catch { /* ignore */ }
         }
       }
 
       if (videoData) {
         setVideoInfo(videoData);
-        return {
-          platform: videoData.platform,
-          id: videoData.id,
-          url: videoData.url,
-          embedUrl: videoData.embedUrl
-        };
+        return videoData;
       }
-      
+
       return null;
     } catch (err) {
       console.error('Error processing video link:', err);
@@ -888,105 +906,144 @@ export default function Generate() {
     `;
   };
 
-  // Update generatePrompt to handle visuals correctly
   const generatePrompt = async () => {
     const videoReference = viralReference ? await processVideoLink(viralReference) : null;
-    
-    let prompt = `You are a master viral content creator who has written scripts for MrBeast, Ryan Trahan, and other top creators. Write a ${duration} ${selectedPlatform} script that sounds completely natural and hooks viewers instantly.
 
-    Topic: "${videoTopic}"
-    Style: ${selectedTone} but highly engaging
-    Platform: ${selectedPlatform}
-    Duration: ${duration}
+    // Exact word count targets (at ~130 wpm speaking pace)
+    const wordCountTargets = {
+      '15 sec':  '30–40',
+      '30 sec':  '60–75',
+      '45 sec':  '95–110',
+      '60 sec':  '125–150',
+      '90 sec':  '190–220',
+      '2 min':   '255–300',
+      '3 min':   '380–440',
+      '5 min':   '635–720',
+      '10 min':  '1250–1450',
+    };
+    const targetWords = wordCountTargets[duration] || '125–150';
 
-    Key Requirements:
-    - Write in a natural, conversational tone exactly like a human creator would speak
-    - Use short, punchy sentences that create instant engagement
-    - Start with an explosive hook that makes it impossible to scroll past
-    - Create multiple "wait, what?" moments that force people to keep watching
-    - Use modern slang and expressions naturally (not forced)
-    - Write like you're talking to a friend, not writing an essay
-    - Focus on storytelling that makes viewers emotionally invested
-    - Create multiple viral "hook" moments that make people want to share
-    - Make every second count - no filler content
-    - Use modern content creator pacing (fast, dynamic, engaging)
-    ${!includeVisuals ? '- Create a voiceover-only script without any visual directions' : ''}
+    // Platform-specific direction
+    const platformGuide = {
+      youtube:   'YouTube: Hook can be 5–8 seconds. Build a clear story arc. Pacing is dynamic but not frantic. Use chapter-like structure for longer videos.',
+      tiktok:    'TikTok: The very FIRST sentence must be the hook — zero warm-up. Ultra-short sentences. High energy. Trending language.',
+      instagram: 'Instagram Reels: Visual storytelling. Hook lands in 2 seconds. Aesthetic and relatable. Community-driven CTA.',
+      facebook:  'Facebook: Slightly slower pace is fine. Emotion and shareability drive performance. Lead with a relatable pain point.',
+    };
+    const platformDir = platformGuide[selectedPlatform] || platformGuide.youtube;
 
-    ${scriptType === 'ad' ? `
-    Advertisement Framework:
-    - Open with a shocking statement or demonstration that stops the scroll
-    - Hit the pain point immediately in a relatable way
-    - Show don't tell - demonstrate value through examples
-    - Build credibility with specific results/numbers
-    - Create FOMO through scarcity/urgency
-    - End with a clear, compelling call-to-action
-    ` : `
-    Viral Framework:
-    - Start with a shocking/intriguing hook that creates instant curiosity
-    - Build tension and anticipation throughout
-    - Include unexpected twists and revelations
-    - Create shareable moments and quotable lines
-    - End with a satisfying payoff that delivers on the hook
-    `}
+    // Tone direction
+    const toneGuide = {
+      casual:        'Talk like you\'re texting your best friend — relaxed, real, no corporate words.',
+      funny:         'Dry wit, unexpected comparisons, self-aware humor. Funny because it\'s TRUE, not because it\'s trying.',
+      informative:   'Teach confidently. Use specifics. Make complex things feel simple and surprising.',
+      inspirational: 'Emotionally resonant. Personal truth. Build to a genuine moment of belief.',
+      creative:      'Break expectations. Unusual angles. Use metaphor and vivid imagery.',
+    };
+    const toneDir = toneGuide[selectedTone] || toneGuide.casual;
 
-    ${selectedCreator ? `
-    Match ${selectedCreator}'s Style:
-    ${creatorStyles[selectedPlatform].find(c => c.name === selectedCreator)?.description}
-    
-    Key style elements to copy:
-    - Use their exact energy level and pacing
-    - Copy their signature transitions and hooks
-    - Match their storytelling techniques
-    - Use their type of humor and delivery
-    - Incorporate their catchphrases naturally
-    ` : ''}
-    
-    ${videoReference ? `
-    Reference Video Analysis:
-    Platform: ${videoReference.platform}
-    Video ID: ${videoReference.id}
-    URL: ${videoReference.url}
-    
-    Copy these viral elements:
-    - Similar hook style and energy
-    - Matching pacing and flow
-    - Equivalent storytelling structure
-    - Related audience engagement techniques
-    - Comparable tension and resolution patterns
-    ` : ''}
-    
-    Format the script with these sections:
+    // Reference video section — use actual title if we fetched it
+    let refVideoSection = '';
+    if (videoReference) {
+      if (videoReference.title) {
+        refVideoSection = `
+REFERENCE VIDEO (your structural blueprint — do NOT copy the topic):
+Title: "${videoReference.title}"${videoReference.author ? `\nCreator: ${videoReference.author}` : ''}
+Platform: ${videoReference.platform}
 
-    # ${scriptType === 'ad' ? 'Advertisement Title Options' : 'Viral Title Options'}
-    Output EXACTLY 3 titles in this exact format (no bullets, no markdown stars, no quotes):
-    Title 1: <title text>
-    Title 2: <title text>
-    Title 3: <title text>
-    Rules:
-    - Each title must be on its own line.
-    - Return exactly 3 titles only.
-    - Do not wrap titles in quotes.
-    - Do not use numbering styles like 1. or 1) in this section.
+Study this title carefully. Reverse-engineer WHY it works:
+- What emotion or curiosity gap does the title create?
+- What hook structure is implied by that title?
+- What pacing and energy does a video with that title use?
+- What kind of payoff does the viewer expect?
 
-    ## Hook
-    [Write an instantly engaging hook that grabs attention in the first 3 seconds - make it impossible to scroll past]
+Now apply THAT same hook structure, pacing, and emotional logic to the topic "${videoTopic}".
+Your script should feel like a spiritual cousin of that video — same energy, completely different content.`;
+      } else {
+        refVideoSection = `
+REFERENCE VIDEO (your structural blueprint):
+Platform: ${videoReference.platform}
+URL: ${videoReference.url}
 
-    ## Body
-    [Main content with constant engagement, mini-hooks, pattern interrupts, and unexpected moments. Keep energy high and pacing dynamic.]
+Apply the viral structure, hook style, and pacing typical of high-performing ${videoReference.platform} videos to the topic "${videoTopic}".`;
+      }
+    }
 
-    ## Conclusion 
-    [Quick, satisfying payoff that delivers on the hook's promise]
+    // Creator style section
+    let creatorSection = '';
+    if (selectedCreator) {
+      const creatorInfo = creatorStyles[selectedPlatform]?.find(c => c.name === selectedCreator);
+      if (creatorInfo) {
+        creatorSection = `
+CREATOR STYLE — write in the voice of ${selectedCreator}:
+${creatorInfo.description}
+Match their energy level, sentence rhythm, signature transitions, and natural catchphrases.`;
+      }
+    }
 
-    ## CTA
-    [Natural call-to-action that feels like value, not a demand]
+    const prompt = `You are a professional scriptwriter who has written viral content that has generated over 500 million views. You write scripts that sound FULLY HUMAN — no AI tells, no filler openers, no generic structure.
 
-    ${includeVisuals ? `
-    ## Visual Elements
-    [Strategic camera angles, transitions, and effects that enhance the story]
+HARD RULES — violating any of these is a failure:
+1. NEVER start with "yo", "hey", "alright", "okay so", "so today", "in this video", "welcome back", or any warm-up phrase. Start COLD with the hook itself.
+2. NEVER use generic AI phrases like "picture this", "imagine a world", "but here's the thing", "let's dive in", "buckle up".
+3. WORD COUNT: The script body (Hook + Body + Conclusion + CTA combined) must be EXACTLY ${targetWords} words. Count carefully. A ${duration} script at normal speaking pace = ${targetWords} words.
+4. No filler. Every single sentence must earn its place. If a sentence doesn't hook, inform, or advance — cut it.
+5. Write in first person, active voice, spoken English. Not written English. Short sentences. Real contractions. How a human actually talks.
 
-    ## Audio Elements
-    [Music and sound design suggestions that amplify emotional impact]
-    ` : ''}`;
+ASSIGNMENT:
+Topic: "${videoTopic}"
+Duration: ${duration} → TARGET WORD COUNT: ${targetWords} words
+Platform: ${selectedPlatform}
+Tone: ${selectedTone}
+Type: ${scriptType === 'ad' ? 'Advertisement' : 'Viral Content'}
+${!includeVisuals ? 'Format: Voiceover only — no camera directions or visual cues.' : ''}
+
+PLATFORM DIRECTION:
+${platformDir}
+
+TONE DIRECTION:
+${toneDir}
+${refVideoSection}
+${creatorSection}
+${scriptType === 'ad' ? `
+AD STRUCTURE:
+Hook → Stop the scroll with the problem or a shocking result (not a question).
+Problem → Make them feel understood in 1–2 sentences.
+Solution → Introduce it through demonstration, not description.
+Proof → One specific, believable result or detail.
+Urgency → Create genuine FOMO without fake scarcity.
+CTA → One clear action. Make it feel like the obvious next step.` : `
+VIRAL STRUCTURE:
+Hook → The first sentence must make stopping feel impossible. Use a statement, not a question.
+Build → Layer in intrigue, tension, or new information every 10–15 seconds.
+Peak → The moment everything clicks. The "oh damn" point.
+Payoff → Deliver exactly what the hook promised. Don't undersell it.
+CTA → One natural ask that feels like a continuation of the story.`}
+
+OUTPUT FORMAT — use these exact section headers, nothing else:
+
+# ${scriptType === 'ad' ? 'Advertisement Title Options' : 'Viral Title Options'}
+Title 1: <title>
+Title 2: <title>
+Title 3: <title>
+
+## Hook
+[First spoken words — no warm-up, maximum impact]
+
+## Body
+[Main content — keep the word count target in mind for the TOTAL script]
+
+## Conclusion
+[Payoff — deliver on the hook's promise]
+
+## CTA
+[One natural call to action]
+${includeVisuals ? `
+## Visual Elements
+[Specific shot types, transitions, and on-screen text that reinforce each moment]
+
+## Audio Elements
+[Music mood, sound effects, and audio pacing notes]` : ''}`;
 
     return prompt;
   };
@@ -1886,7 +1943,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         fontWeight: '500',
                         marginBottom: '4px'
                       }}>
-                        {videoInfo.platform} video detected
+                        {videoInfo.title
+                          ? `"${videoInfo.title}"${videoInfo.author ? ` — ${videoInfo.author}` : ''}`
+                          : `${videoInfo.platform} video detected`}
                       </div>
                       <div style={{
                         fontSize: '0.8rem',
@@ -1901,7 +1960,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                           borderRadius: '12px',
                           border: '1px solid #e0e0e0'
                         }}>
-                          ID: {videoInfo.id}
+                          {videoInfo.platform}
                         </span>
                         <Link 
                           href={videoInfo.url}
