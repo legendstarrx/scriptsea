@@ -920,6 +920,11 @@ export default function Generate() {
       '3 min':   '380–440',
       '5 min':   '635–720',
       '10 min':  '1250–1450',
+      '15 min':  '1900–2150',
+      '20 min':  '2550–2900',
+      '30 min':  '3800–4300',
+      '45 min':  '5700–6400',
+      '60 min':  '7600–8500',
     };
     const targetWords = wordCountTargets[duration] || '125–150';
 
@@ -986,7 +991,7 @@ Match their energy level, sentence rhythm, signature transitions, and natural ca
 HARD RULES — violating any of these is a failure:
 1. NEVER start with "yo", "hey", "alright", "okay so", "so today", "in this video", "welcome back", or any warm-up phrase. Start COLD with the hook itself.
 2. NEVER use generic AI phrases like "picture this", "imagine a world", "but here's the thing", "let's dive in", "buckle up".
-3. WORD COUNT: The script body (Hook + Body + Conclusion + CTA combined) must be EXACTLY ${targetWords} words. Count carefully. A ${duration} script at normal speaking pace = ${targetWords} words.
+3. WORD COUNT: The script (Hook + Body + CTA combined) must be EXACTLY ${targetWords} words. Count carefully. A ${duration} script at normal speaking pace = ${targetWords} words.
 4. No filler. Every single sentence must earn its place. If a sentence doesn't hook, inform, or advance — cut it.
 5. Write in first person, active voice, spoken English. Not written English. Short sentences. Real contractions. How a human actually talks.
 
@@ -1031,13 +1036,10 @@ Title 3: <title>
 [First spoken words — no warm-up, maximum impact]
 
 ## Body
-[Main content — keep the word count target in mind for the TOTAL script]
-
-## Conclusion
-[Payoff — deliver on the hook's promise]
+[Main content — this is the bulk of the script. Keep the word count target in mind for the TOTAL script]
 
 ## CTA
-[One natural call to action]
+[One natural call to action that feels like a continuation of the story, not an interruption]
 ${includeVisuals ? `
 ## Visual Elements
 [Specific shot types, transitions, and on-screen text that reinforce each moment]
@@ -1081,8 +1083,16 @@ ${includeVisuals ? `
       setError('');
 
       const prompt = await generatePrompt();
+      // Scale token limit with duration so long scripts don't get cut off
+      const tokensByDuration = {
+        '15 sec': 512, '30 sec': 768, '45 sec': 1024, '60 sec': 1536,
+        '90 sec': 2048, '2 min': 2560, '3 min': 3500, '5 min': 5500,
+        '10 min': 10000, '15 min': 14000, '20 min': 16000,
+        '30 min': 16000, '45 min': 16000, '60 min': 16000,
+      };
+      const maxTokens = tokensByDuration[duration] || 2048;
       const generatedText = await generateWithOpenAI(prompt, {
-        maxTokens: 2048,
+        maxTokens,
         temperature: 0.9
       });
       const formattedScript = formatScript(generatedText);
