@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { hasProAccess, getPlanLabel } from '../utils/subscription';
 
 const SUPPORT_WHATSAPP_URL = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP_URL || 'https://wa.me/447474762495';
 
-export default function ProfileModal({ onClose, user }) {
+export default function ProfileModal({ onClose, user, userProfile }) {
   const { logout, deleteUserAccount } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -107,16 +108,34 @@ export default function ProfileModal({ onClose, user }) {
 
         <div style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ marginBottom: '0.8rem', color: '#333' }}>Account Information</h3>
-          <div
-            style={{
-              padding: '1rem',
-              background: '#f8f9ff',
-              borderRadius: '12px'
-            }}
-          >
+          <div style={{ padding: '1rem', background: '#f8f9ff', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             <p style={{ margin: 0, color: '#666' }}>
               <strong>Email:</strong> {user.email}
             </p>
+            {userProfile && (() => {
+              const isPro = hasProAccess(userProfile);
+              const planLabel = getPlanLabel(userProfile);
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <strong style={{ color: '#666' }}>Plan:</strong>
+                  <span style={{
+                    padding: '2px 10px',
+                    borderRadius: '20px',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    background: isPro ? '#FFE5EC' : '#f0f0f0',
+                    color: isPro ? '#FF3366' : '#888',
+                  }}>
+                    {isPro ? planLabel : 'Starter (Free)'}
+                  </span>
+                  {isPro && userProfile.scriptsRemaining != null && (
+                    <span style={{ fontSize: '0.82rem', color: '#999' }}>
+                      · {userProfile.scriptsRemaining} scripts left
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 

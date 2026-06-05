@@ -244,6 +244,7 @@ const GeneratePageNav = () => {
         <ProfileModal
           onClose={() => setShowProfileModal(false)}
           user={user}
+          userProfile={userProfile}
         />
       )}
     </>
@@ -1528,69 +1529,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
               Generate Viral Video Script
             </h1>
 
-            {/* Plan Badge */}
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '15px 20px',
-              marginBottom: '20px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '10px',
-              transition: 'all 0.3s ease',
-            }}>
-              <span style={{ fontSize: '1rem', color: '#666' }}>
-                Current Plan:
-              </span>
-              {!profileReady ? (
-                /* Loading skeleton — shows while profile hydrates (< 200 ms) */
-                <span style={{
-                  display: 'inline-block',
-                  width: '60px',
-                  height: '20px',
-                  borderRadius: '6px',
-                  background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
-                  backgroundSize: '200% 100%',
-                  animation: 'shimmer 1.2s infinite',
-                }} />
-              ) : (
-                <span style={{
-                  fontSize: '1.2rem',
-                  fontWeight: '600',
-                  color: isProUser ? '#FF3366' : '#666',
-                  transition: 'color 0.3s ease',
-                }}>
-                  {isProUser ? currentPlanLabel : 'Starter'}
-                </span>
-              )}
-              {profileReady && !isProUser && (
-                <>
-                  <button
-                    onClick={() => setShowSubscriptionModal(true)}
-                    style={{
-                      marginLeft: '10px',
-                      padding: '6px 12px',
-                      backgroundColor: '#FF3366',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '20px',
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    Upgrade
-                  </button>
-                  <SubscriptionModal
-                    isOpen={showSubscriptionModal}
-                    onClose={() => setShowSubscriptionModal(false)}
-                    userProfile={userProfile}
-                  />
-                </>
-              )}
-            </div>
 
             {/* Main Card */}
             <div style={{
