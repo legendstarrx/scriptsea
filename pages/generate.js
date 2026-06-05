@@ -350,7 +350,7 @@ export default function Generate() {
   const [selectedTone, setSelectedTone] = useState('casual');
   const [selectedPlatform, setSelectedPlatform] = useState('youtube');
   const [duration, setDuration] = useState('60 sec');
-  const [scriptType, setScriptType] = useState('viral');
+  const scriptType = 'viral';
   const [includeVisuals, setIncludeVisuals] = useState(true);
   const [generatedScript, setGeneratedScript] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -702,9 +702,17 @@ export default function Generate() {
       let videoData = null;
 
       if (link.includes('youtube.com') || link.includes('youtu.be')) {
-        const videoId = link.includes('youtu.be')
-          ? link.split('youtu.be/')[1]?.split('?')[0]
-          : link.split('v=')[1]?.split('&')[0];
+        // Handle all YouTube URL formats: watch?v=, youtu.be/, /shorts/, /live/
+        let videoId = null;
+        if (link.includes('youtu.be/')) {
+          videoId = link.split('youtu.be/')[1]?.split('?')[0];
+        } else if (link.includes('/shorts/')) {
+          videoId = link.split('/shorts/')[1]?.split('?')[0];
+        } else if (link.includes('/live/')) {
+          videoId = link.split('/live/')[1]?.split('?')[0];
+        } else if (link.includes('v=')) {
+          videoId = link.split('v=')[1]?.split('&')[0];
+        }
 
         if (videoId) {
           videoData = {
@@ -1169,7 +1177,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     setSelectedTone('casual');
     setSelectedPlatform('youtube');
     setDuration('60 sec');
-    setScriptType('viral');
+
     setGeneratedScript('');
     setThumbnailSuggestions('');
     setVideoInfo(null);
@@ -1578,55 +1586,6 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 </div>
               )}
 
-              {/* Script Type Selection */}
-              <div style={{ marginBottom: '25px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#666',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  Script type
-                </label>
-                <div style={{
-                  display: 'flex',
-                  gap: '10px',
-                  flexWrap: 'wrap'
-                }}>
-                  {[
-                    { value: 'viral', label: 'Viral Video Script' },
-                    { value: 'ad', label: 'Advertisement Script' }
-                  ].map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => setScriptType(type.value)}
-                      style={{
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        backgroundColor: scriptType === type.value ? '#FF3366' : 'white',
-                        color: scriptType === type.value ? 'white' : '#666',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                        transition: 'all 0.3s ease',
-                        flex: '1 1 200px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        ':hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                        }
-                      }}
-                    >
-                      {type.value === 'viral' ? '🎥' : '💼'}
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Video Topic/Ideas Input */}
               <div style={{ marginBottom: '25px' }}>
