@@ -751,6 +751,10 @@ export default function Generate() {
 
       if (videoData) {
         setVideoInfo(videoData);
+        // Auto-fill the topic from the video title only when the user hasn't typed one
+        if (videoData.title && !videoTopic.trim()) {
+          setVideoTopic(videoData.title);
+        }
         return videoData;
       }
 
@@ -1863,6 +1867,12 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     <textarea
                       value={viralReference}
                       onChange={(e) => setViralReference(e.target.value)}
+                      onBlur={(e) => {
+                        const val = e.target.value.trim();
+                        if (val.includes('youtube.com') || val.includes('youtu.be') || val.includes('tiktok.com')) {
+                          processVideoLink(val);
+                        }
+                      }}
                       placeholder="https://youtube.com/watch?v=..."
                       style={{
                         width: '100%',
