@@ -734,27 +734,47 @@ export default function Generate() {
             }
           } catch { /* ignore — title is optional */ }
         }
-      } else if (link.includes('tiktok.com')) {
-        const videoId = link.split('/video/')[1]?.split('?')[0];
-        if (videoId) {
+      } else if (link.includes('tiktok.com') || link.includes('vm.tiktok.com') || link.includes('vt.tiktok.com')) {
+        // Handle standard URLs (/@user/video/ID) and short links (vm.tiktok.com/XXX)
+        const videoId = link.includes('/video/')
+          ? link.split('/video/')[1]?.split('?')[0]
+          : link.split('tiktok.com/')[1]?.split('?')[0] || 'short';
+
+        videoData = {
+          platform: 'TikTok',
+          id: videoId,
+          url: link,
+          embedUrl: videoId !== 'short' ? `https://www.tiktok.com/embed/${videoId}` : link,
+          title: null,
+          author: null,
+        };
+        // Fetch title via our server endpoint
+        try {
+          const info = await fetch(
+            `/api/video-info?url=${encodeURIComponent(link)}`
+          ).then(r => r.ok ? r.json() : null);
+          if (info?.title) {
+            videoData.title  = info.title;
+            videoData.author = info.author || null;
+          }
+        } catch { /* ignore */ }
+
+      } else if (link.includes('instagram.com/reel') || link.includes('instagram.com/p/')) {
+        // Instagram Reels / posts
+        const reelId = link.includes('/reel/')
+          ? link.split('/reel/')[1]?.split('/')[0]?.split('?')[0]
+          : link.split('/p/')[1]?.split('/')[0]?.split('?')[0];
+
+        if (reelId) {
           videoData = {
-            platform: 'TikTok',
-            id: videoId,
+            platform: 'Instagram',
+            id: reelId,
             url: link,
-            embedUrl: `https://www.tiktok.com/embed/${videoId}`,
+            embedUrl: null,
             title: null,
             author: null,
           };
-          // Fetch title via our server endpoint (avoids CSP restrictions)
-          try {
-            const info = await fetch(
-              `/api/video-info?url=${encodeURIComponent(link)}`
-            ).then(r => r.ok ? r.json() : null);
-            if (info?.title) {
-              videoData.title  = info.title;
-              videoData.author = info.author || null;
-            }
-          } catch { /* ignore */ }
+          // Instagram oEmbed requires auth token — skip title fetch, still useful as style reference
         }
       }
 
@@ -1776,7 +1796,11 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                       onChange={(e) => setViralReference(e.target.value)}
                       onBlur={(e) => {
                         const val = e.target.value.trim();
-                        if (val.includes('youtube.com') || val.includes('youtu.be') || val.includes('tiktok.com')) {
+                        if (
+                          val.includes('youtube.com') || val.includes('youtu.be') ||
+                          val.includes('tiktok.com') ||
+                          val.includes('instagram.com/reel') || val.includes('instagram.com/p/')
+                        ) {
                           processVideoLink(val);
                         }
                       }}
