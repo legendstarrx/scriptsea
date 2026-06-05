@@ -1106,6 +1106,12 @@ ${includeVisuals ? `
       return;
     }
 
+    // Free users: block durations longer than 30 seconds
+    if (!isProUser && duration !== '15 sec' && duration !== '30 sec') {
+      setShowSubscriptionModal(true);
+      return;
+    }
+
     try {
       setIsGenerating(true);
       setError('');
@@ -1126,21 +1132,13 @@ ${includeVisuals ? `
 
     } catch (err) {
       console.error('Generation error:', err);
-      // Server returned limit_reached — show upgrade modal
       if (err?.message === 'limit_reached' || String(err?.message).includes('limit_reached')) {
+        // Open upgrade modal directly — no error toast, just the hard sell
         setShowSubscriptionModal(true);
-        setNotification({
-          show: true,
-          message: isProUser
-            ? 'You\'ve used all your scripts for this period. Upgrade your plan for more.'
-            : 'You\'ve used your 1 free script. Upgrade to Pro to keep generating.',
-          type: 'error',
-        });
-        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 4000);
       } else {
         setError('Error generating script. Please try again.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsGenerating(false);
     }
@@ -2048,6 +2046,27 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                 }}>
                   Select from common durations or choose a custom length
                 </p>
+                {/* Free user duration warning */}
+                {!isProUser && duration !== '15 sec' && duration !== '30 sec' && (
+                  <div
+                    onClick={() => setShowSubscriptionModal(true)}
+                    style={{
+                      marginTop: '10px',
+                      padding: '10px 14px',
+                      background: '#fff5f7',
+                      border: '1px solid #ffd6e0',
+                      borderRadius: '10px',
+                      fontSize: '0.82rem',
+                      color: '#FF3366',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    🔒 Free plan is limited to 30 seconds. <strong style={{ textDecoration: 'underline' }}>Upgrade to Pro</strong> to unlock all durations.
+                  </div>
+                )}
               </div>
 
               {/* Tone Selection */}
@@ -2134,43 +2153,76 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                     display: 'block',
                     color: '#666',
                     marginBottom: '8px',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
                   }}>
                     Creator Style (Optional)
+                    {!isProUser && (
+                      <span style={{
+                        fontSize: '0.75rem', fontWeight: 600,
+                        color: '#FF3366', background: '#fff0f3',
+                        padding: '1px 8px', borderRadius: '20px',
+                      }}>Pro</span>
+                    )}
                   </label>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                    gap: '15px'
-                  }}>
-                    {creatorStyles[selectedPlatform].map((creator) => (
-                      <button
-                        key={creator.name}
-                        onClick={() => setSelectedCreator(creator.name)}
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                      gap: '15px',
+                      filter: isProUser ? 'none' : 'blur(3px)',
+                      pointerEvents: isProUser ? 'auto' : 'none',
+                      userSelect: isProUser ? 'auto' : 'none',
+                    }}>
+                      {creatorStyles[selectedPlatform].map((creator) => (
+                        <button
+                          key={creator.name}
+                          onClick={() => setSelectedCreator(creator.name)}
+                          style={{
+                            padding: '12px 16px',
+                            borderRadius: '12px',
+                            border: '1px solid #e0e0e0',
+                            backgroundColor: selectedCreator === creator.name ? '#FF3366' : 'white',
+                            color: selectedCreator === creator.name ? 'white' : '#333',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            textAlign: 'left',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                          }}
+                        >
+                          <span style={{ fontWeight: '600' }}>{creator.name}</span>
+                          <span style={{ fontSize: '0.8rem', opacity: selectedCreator === creator.name ? 0.9 : 0.7 }}>
+                            {creator.description}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Pro overlay for free users */}
+                    {!isProUser && (
+                      <div
+                        onClick={() => setShowSubscriptionModal(true)}
                         style={{
-                          padding: '12px 16px',
-                          borderRadius: '12px',
-                          border: '1px solid #e0e0e0',
-                          backgroundColor: selectedCreator === creator.name ? '#FF3366' : 'white',
-                          color: selectedCreator === creator.name ? 'white' : '#333',
-                          cursor: 'pointer',
-                          fontSize: '0.9rem',
-                          textAlign: 'left',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '4px'
+                          position: 'absolute', inset: 0,
+                          display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', gap: '8px',
                         }}
                       >
-                        <span style={{ fontWeight: '600' }}>{creator.name}</span>
-                        <span style={{ 
-                          fontSize: '0.8rem',
-                          opacity: selectedCreator === creator.name ? 0.9 : 0.7
+                        <span style={{ fontSize: '1.5rem' }}>🔒</span>
+                        <span style={{
+                          fontSize: '0.9rem', fontWeight: 600, color: '#FF3366',
+                          background: 'white', padding: '6px 14px',
+                          borderRadius: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                         }}>
-                          {creator.description}
+                          Upgrade to Pro to use Creator Styles
                         </span>
-                      </button>
-                    ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
