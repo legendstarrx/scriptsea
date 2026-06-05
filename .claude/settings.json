@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\Users\\\\HP\\\\Desktop\\\\scriptsea\\\\scriptsea\" ; npx next build 2>&1 | Select-String \"error|Error\" | Where-Object { $_ -notmatch \"payment-error\" } | Select-Object -First 5)"
+    ]
+  }
+}

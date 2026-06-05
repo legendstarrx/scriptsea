@@ -910,8 +910,11 @@ export default function Generate() {
     `;
   };
 
-  const generatePrompt = async () => {
+  const generatePrompt = async (topicOverride) => {
     const videoReference = viralReference ? await processVideoLink(viralReference) : null;
+    // topicOverride is used when the topic was resolved from the reference video title
+    // in the same render cycle (React state hasn't updated yet)
+    const effectiveTopic = topicOverride || videoTopic;
 
     // Exact word count targets (at ~130 wpm speaking pace)
     const wordCountTargets = {
@@ -966,7 +969,7 @@ Study this title carefully. Reverse-engineer WHY it works:
 - What pacing and energy does a video with that title use?
 - What kind of payoff does the viewer expect?
 
-Now apply THAT same hook structure, pacing, and emotional logic to the topic "${videoTopic}".
+Now apply THAT same hook structure, pacing, and emotional logic to the topic "${effectiveTopic}".
 Your script should feel like a spiritual cousin of that video — same energy, completely different content.`;
       } else {
         refVideoSection = `
@@ -974,7 +977,7 @@ REFERENCE VIDEO (your structural blueprint):
 Platform: ${videoReference.platform}
 URL: ${videoReference.url}
 
-Apply the viral structure, hook style, and pacing typical of high-performing ${videoReference.platform} videos to the topic "${videoTopic}".`;
+Apply the viral structure, hook style, and pacing typical of high-performing ${videoReference.platform} videos to the topic "${effectiveTopic}".`;
       }
     }
 
@@ -1000,7 +1003,7 @@ HARD RULES — violating any of these is a failure:
 5. Write in first person, active voice, spoken English. Not written English. Short sentences. Real contractions. How a human actually talks.
 
 ASSIGNMENT:
-Topic: "${videoTopic}"
+Topic: "${effectiveTopic}"
 Duration: ${duration} → TARGET WORD COUNT: ${targetWords} words
 Platform: ${selectedPlatform}
 Tone: ${selectedTone}
@@ -1055,13 +1058,20 @@ ${includeVisuals ? `
   };
 
   const handleGenerate = async () => {
-    if (!videoTopic) {
-      setError('Please enter a video topic');
-      // Scroll to error message
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+    // Resolve topic: use what the user typed, or fall back to the reference video title
+    let resolvedTopic = videoTopic.trim();
+
+    if (!resolvedTopic && viralReference.trim()) {
+      const ref = await processVideoLink(viralReference.trim());
+      if (ref?.title) {
+        resolvedTopic = ref.title;
+        setVideoTopic(ref.title); // update the UI field too
+      }
+    }
+
+    if (!resolvedTopic) {
+      setError('Please enter a video topic (or paste a YouTube/TikTok link to use its title)');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -1086,7 +1096,7 @@ ${includeVisuals ? `
       setIsGenerating(true);
       setError('');
 
-      const prompt = await generatePrompt();
+      const prompt = await generatePrompt(resolvedTopic);
       // Vercel Hobby plan: 60s max → cap at 3500 tokens for all durations
       const tokensByDuration = {
         '15 sec': 512, '30 sec': 768, '45 sec': 1024, '60 sec': 1536,
