@@ -323,7 +323,8 @@ const generateWithOpenAI = async (prompt, options = {}) => {
   try { payload = raw ? JSON.parse(raw) : null; } catch { payload = null; }
 
   if (!response.ok) {
-    const reason = payload?.detail || payload?.error || (raw && raw.trim()) || 'Failed to generate content';
+    // Throw with the server's error string so handleGenerate can pattern-match on it
+    const reason = payload?.error || payload?.detail || (raw && raw.trim()) || 'Failed to generate content';
     throw new Error(reason);
   }
 
