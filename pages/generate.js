@@ -299,30 +299,31 @@ const creatorStyles = {
 export const dynamic = 'force-dynamic';
 
 const generateWithOpenAI = async (prompt, options = {}) => {
+  // Get auth token so the server can check + decrement limits
+  let authHeader = {};
+  try {
+    const { supabase } = await import('../lib/supabaseClient');
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (token) authHeader = { Authorization: `Bearer ${token}` };
+  } catch { /* no token — server will gracefully skip limit check */ }
+
   const response = await fetch('/api/ai/generate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeader },
     body: JSON.stringify({
       prompt,
       temperature: options.temperature ?? 0.9,
-      maxTokens: options.maxTokens ?? 2048
-    })
+      maxTokens: options.maxTokens ?? 2048,
+    }),
   });
 
   const raw = await response.text();
   let payload = null;
-  try {
-    payload = raw ? JSON.parse(raw) : null;
-  } catch (_parseError) {
-    payload = null;
-  }
+  try { payload = raw ? JSON.parse(raw) : null; } catch { payload = null; }
 
   if (!response.ok) {
-    const reason =
-      payload?.detail ||
-      payload?.error ||
-      (raw && raw.trim()) ||
-      'Failed to generate content';
+    const reason = payload?.detail || payload?.error || (raw && raw.trim()) || 'Failed to generate content';
     throw new Error(reason);
   }
 
@@ -1104,29 +1105,11 @@ ${includeVisuals ? `
       return;
     }
 
-    const hasProAccess = await ensureProAccess();
-    if (!hasProAccess) {
-      setShowSubscriptionModal(true);
-      setNotification({
-        show: true,
-        message: 'Your next viral script is one upgrade away. Go Pro to keep generating instantly.',
-        type: 'error'
-      });
-      setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
-      // Scroll to error message
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-      return;
-    }
-
     try {
       setIsGenerating(true);
       setError('');
 
       const prompt = await generatePrompt(resolvedTopic);
-      // Vercel Hobby plan: 60s max → cap at 3500 tokens for all durations
       const tokensByDuration = {
         '15 sec': 512, '30 sec': 768, '45 sec': 1024, '60 sec': 1536,
         '90 sec': 2048, '2 min': 2560, '3 min': 3500, '5 min': 3500,
@@ -1134,21 +1117,29 @@ ${includeVisuals ? `
         '30 min': 3500, '45 min': 3500, '60 min': 3500,
       };
       const maxTokens = tokensByDuration[duration] || 2048;
-      const generatedText = await generateWithOpenAI(prompt, {
-        maxTokens,
-        temperature: 0.9
-      });
+      const generatedText = await generateWithOpenAI(prompt, { maxTokens, temperature: 0.9 });
       const formattedScript = formatScript(generatedText);
       setGeneratedScript(formattedScript);
+      // Refresh profile so scripts_remaining updates in the UI
+      refreshUserProfile().catch(() => {});
 
     } catch (err) {
       console.error('Generation error:', err);
-      setError('Error generating script. Please try again.');
-      // Scroll to error message
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+      // Server returned limit_reached — show upgrade modal
+      if (err?.message === 'limit_reached' || String(err?.message).includes('limit_reached')) {
+        setShowSubscriptionModal(true);
+        setNotification({
+          show: true,
+          message: isProUser
+            ? 'You\'ve used all your scripts for this period. Upgrade your plan for more.'
+            : 'You\'ve used your 1 free script. Upgrade to Pro to keep generating.',
+          type: 'error',
+        });
+        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 4000);
+      } else {
+        setError('Error generating script. Please try again.');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsGenerating(false);
     }
@@ -2300,8 +2291,19 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   }}>
                     Generated Script
                   </h2>
-                  <button 
+                  <button
                     onClick={async () => {
+                      // Starter users who have used their free script must upgrade to copy
+                      if (!isProUser) {
+                        setShowSubscriptionModal(true);
+                        setNotification({
+                          show: true,
+                          message: 'Upgrade to Pro to copy and use your scripts.',
+                          type: 'error',
+                        });
+                        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+                        return;
+                      }
                       try {
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = generatedScript;
