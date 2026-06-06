@@ -13,11 +13,10 @@ import { supabase } from '../lib/supabaseClient';
 import { getPlanLabel, hasProAccess } from '../utils/subscription';
 
 // GeneratePageNav Component
-const GeneratePageNav = () => {
+const GeneratePageNav = ({ onOpenUpgrade }) => {
   const router = useRouter();
   const { user, userProfile } = useAuth();
   const [showContactModal, setShowContactModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   return (
@@ -60,7 +59,7 @@ const GeneratePageNav = () => {
           }}>
             {/* Upgrade Button */}
             <button
-              onClick={() => setShowSubscriptionModal(true)}
+              onClick={() => onOpenUpgrade?.()}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -228,15 +227,6 @@ const GeneratePageNav = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Subscription Modal */}
-      {showSubscriptionModal && (
-        <SubscriptionModal 
-          isOpen={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)} 
-          userProfile={userProfile}
-        />
       )}
 
       {/* Profile Modal */}
@@ -1452,7 +1442,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
         flexDirection: 'column',
         paddingTop: '80px'
       }}>
-        <GeneratePageNav />
+        <GeneratePageNav onOpenUpgrade={() => setShowSubscriptionModal(true)} />
         
         {notification.show && (
           <div style={{
@@ -2750,6 +2740,13 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
         <Footer />
       </div>
+
+      {/* Subscription Modal — single instance for the whole page */}
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        userProfile={userProfile}
+      />
     </ProtectedRoute>
   );
 } 
