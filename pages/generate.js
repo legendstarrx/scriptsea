@@ -343,7 +343,6 @@ export default function Generate() {
   const [selectedPlatform, setSelectedPlatform] = useState('youtube');
   const [duration, setDuration] = useState('60 sec');
   const scriptType = 'viral';
-  const [includeVisuals, setIncludeVisuals] = useState(true);
   const [generatedScript, setGeneratedScript] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -1029,7 +1028,7 @@ Duration: ${duration} → TARGET WORD COUNT: ${targetWords} words
 Platform: ${selectedPlatform}
 Tone: ${selectedTone}
 Type: ${scriptType === 'ad' ? 'Advertisement' : 'Viral Content'}
-${!includeVisuals ? 'Format: Voiceover only — no camera directions or visual cues.' : ''}
+Format: Voiceover/spoken script only — no camera directions or visual cues.
 
 PLATFORM DIRECTION:
 ${platformDir}
@@ -1068,12 +1067,7 @@ Title 3: <title>
 
 ## CTA
 [One natural call to action that feels like a continuation of the story, not an interruption]
-${includeVisuals ? `
-## Visual Elements
-[Specific shot types, transitions, and on-screen text that reinforce each moment]
-
-## Audio Elements
-[Music mood, sound effects, and audio pacing notes]` : ''}`;
+`;
 
     return prompt;
   };
@@ -1932,126 +1926,62 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
               {/* Duration Selection */}
               <div style={{ marginBottom: '25px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#666',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem'
-                }}>
+                <label style={{ display: 'block', color: '#666', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 500 }}>
                   Duration
                 </label>
-                <div style={{
-                  display: 'flex',
-                  gap: '10px',
-                  flexWrap: 'wrap',
-                  alignItems: 'center'
-                }}>
-                  {['30 sec', '60 sec', '2 min', '3 min'].map((time) => (
-                    <button
-                      key={time}
-                      onClick={() => setDuration(time)}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '20px',
-                        border: 'none',
-                        backgroundColor: duration === time ? '#FF3366' : 'white',
-                        color: duration === time ? 'white' : '#666',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                        transition: 'all 0.2s',
-                        ':hover': {
-                          backgroundColor: duration === time ? '#FF3366' : '#f8f9ff'
-                        }
-                      }}
-                    >
-                      {time}
-                    </button>
-                  ))}
+                <div style={{ position: 'relative' }}>
                   <select
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
                     style={{
-                      padding: '8px 16px',
-                      borderRadius: '20px',
-                      border: '1px solid #e0e0e0',
+                      width: '100%',
+                      padding: '12px 44px 12px 16px',
+                      borderRadius: '12px',
+                      border: `2px solid ${duration !== '60 sec' ? '#FF3366' : '#e8e8e8'}`,
                       backgroundColor: 'white',
-                      color: '#666',
+                      color: '#222',
+                      fontSize: '0.95rem',
+                      fontWeight: 500,
                       cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                      transition: 'all 0.2s',
+                      outline: 'none',
                       appearance: 'none',
-                      backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23666666\' d=\'M6 8L2 4h8z\'/%3E%3C/svg%3E")',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 12px center',
-                      paddingRight: '32px',
-                      minWidth: '120px'
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                      transition: 'border-color 0.2s',
                     }}
                   >
-                    <option value="" disabled>More options...</option>
-                    <option value="5 min">5 minutes</option>
-                    <option value="10 min">10 minutes</option>
-                    <option value="15 min">15 minutes</option>
-                    <option value="20 min">20 minutes</option>
-                    <option value="30 min">30 minutes</option>
-                    <option value="45 min">45 minutes</option>
-                    <option value="60 min">60 minutes</option>
-                    <option value="custom">Custom duration...</option>
+                    <option value="15 sec">⚡ 15 seconds</option>
+                    <option value="30 sec">⏱ 30 seconds</option>
+                    <option value="60 sec">🎯 1 minute</option>
+                    <option value="90 sec">🔥 1.5 minutes</option>
+                    <option value="2 min">📱 2 minutes</option>
+                    <option value="3 min">🎬 3 minutes</option>
+                    <option value="5 min">🎥 5 minutes</option>
+                    <option value="10 min">📺 10 minutes</option>
+                    <option value="15 min">🎙 15 minutes</option>
+                    <option value="20 min">📡 20 minutes</option>
+                    <option value="30 min">🌟 30 minutes</option>
+                    <option value="45 min">🏆 45 minutes</option>
+                    <option value="60 min">👑 60 minutes</option>
                   </select>
-                  {duration === 'custom' && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Enter minutes"
-                        onChange={(e) => setDuration(`${e.target.value} min`)}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: '20px',
-                          border: '1px solid #e0e0e0',
-                          backgroundColor: 'white',
-                          color: '#666',
-                          fontSize: '0.9rem',
-                          width: '100px',
-                          outline: 'none',
-                          ':focus': {
-                            borderColor: '#FF3366',
-                            boxShadow: '0 0 0 2px rgba(255, 51, 102, 0.1)'
-                          }
-                        }}
-                      />
-                      <span style={{ color: '#666', fontSize: '0.9rem' }}>minutes</span>
-                    </div>
-                  )}
+                  {/* Custom chevron */}
+                  <div style={{
+                    position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
+                    pointerEvents: 'none', color: '#FF3366',
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
                 </div>
-                <p style={{
-                  marginTop: '8px',
-                  fontSize: '0.8rem',
-                  color: '#999'
-                }}>
-                  Select from common durations or choose a custom length
-                </p>
                 {/* Free user duration warning */}
                 {!isProUser && duration !== '15 sec' && duration !== '30 sec' && (
                   <div
                     onClick={() => setShowSubscriptionModal(true)}
                     style={{
-                      marginTop: '10px',
-                      padding: '10px 14px',
-                      background: '#fff5f7',
-                      border: '1px solid #ffd6e0',
-                      borderRadius: '10px',
-                      fontSize: '0.82rem',
-                      color: '#FF3366',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
+                      marginTop: '10px', padding: '10px 14px',
+                      background: '#fff5f7', border: '1px solid #ffd6e0',
+                      borderRadius: '10px', fontSize: '0.82rem', color: '#FF3366',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
                     }}
                   >
                     🔒 Free plan is limited to 30 seconds. <strong style={{ textDecoration: 'underline' }}>Upgrade to Pro</strong> to unlock all durations.
@@ -2138,141 +2068,81 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
               {/* Creator Style Selection */}
               {selectedPlatform && (
-                <div style={{ marginBottom: '30px' }}>
-                  <label style={{
-                    display: 'block',
-                    color: '#666',
-                    marginBottom: '8px',
-                    fontSize: '0.9rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}>
-                    Creator Style (Optional)
+                <div style={{ marginBottom: '25px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <label style={{ color: '#666', fontSize: '0.9rem', fontWeight: 500 }}>
+                      Creator Style
+                      <span style={{ color: '#999', fontWeight: 400, marginLeft: '6px' }}>(optional)</span>
+                    </label>
                     {!isProUser && (
                       <span style={{
-                        fontSize: '0.75rem', fontWeight: 600,
+                        fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
                         color: '#FF3366', background: '#fff0f3',
-                        padding: '1px 8px', borderRadius: '20px',
-                      }}>Pro</span>
+                        padding: '2px 10px', borderRadius: '20px', border: '1px solid #ffd6e0',
+                      }}>✦ PRO</span>
                     )}
-                  </label>
+                  </div>
                   <div style={{ position: 'relative' }}>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                      gap: '15px',
-                      filter: isProUser ? 'none' : 'blur(3px)',
-                      pointerEvents: isProUser ? 'auto' : 'none',
-                      userSelect: isProUser ? 'auto' : 'none',
-                    }}>
-                      {creatorStyles[selectedPlatform].map((creator) => (
-                        <button
-                          key={creator.name}
-                          onClick={() => setSelectedCreator(creator.name)}
-                          style={{
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            border: '1px solid #e0e0e0',
-                            backgroundColor: selectedCreator === creator.name ? '#FF3366' : 'white',
-                            color: selectedCreator === creator.name ? 'white' : '#333',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                            textAlign: 'left',
-                            transition: 'all 0.2s',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                          }}
-                        >
-                          <span style={{ fontWeight: '600' }}>{creator.name}</span>
-                          <span style={{ fontSize: '0.8rem', opacity: selectedCreator === creator.name ? 0.9 : 0.7 }}>
-                            {creator.description}
-                          </span>
-                        </button>
+                    <select
+                      value={selectedCreator}
+                      onChange={(e) => isProUser && setSelectedCreator(e.target.value)}
+                      disabled={!isProUser}
+                      style={{
+                        width: '100%',
+                        padding: '12px 44px 12px 16px',
+                        borderRadius: '12px',
+                        border: `2px solid ${selectedCreator ? '#FF3366' : '#e8e8e8'}`,
+                        backgroundColor: isProUser ? 'white' : '#fafafa',
+                        color: selectedCreator ? '#222' : '#999',
+                        fontSize: '0.95rem',
+                        fontWeight: selectedCreator ? 500 : 400,
+                        cursor: isProUser ? 'pointer' : 'default',
+                        outline: 'none',
+                        appearance: 'none',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                        transition: 'border-color 0.2s',
+                        filter: isProUser ? 'none' : 'blur(1.5px)',
+                      }}
+                    >
+                      <option value="">— No creator style —</option>
+                      {creatorStyles[selectedPlatform].map((c) => (
+                        <option key={c.name} value={c.name}>{c.name} · {c.description}</option>
                       ))}
+                    </select>
+                    <div style={{
+                      position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
+                      pointerEvents: 'none', color: selectedCreator ? '#FF3366' : '#bbb',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
                     </div>
-                    {/* Pro overlay for free users */}
+                    {/* Pro lock overlay */}
                     {!isProUser && (
                       <div
                         onClick={() => setShowSubscriptionModal(true)}
                         style={{
-                          position: 'absolute', inset: 0,
-                          display: 'flex', flexDirection: 'column',
-                          alignItems: 'center', justifyContent: 'center',
-                          cursor: 'pointer', gap: '8px',
+                          position: 'absolute', inset: 0, borderRadius: '12px',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', gap: '8px',
+                          background: 'rgba(255,255,255,0.6)',
                         }}
                       >
-                        <span style={{ fontSize: '1.5rem' }}>🔒</span>
-                        <span style={{
-                          fontSize: '0.9rem', fontWeight: 600, color: '#FF3366',
-                          background: 'white', padding: '6px 14px',
-                          borderRadius: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        }}>
-                          Upgrade to Pro to use Creator Styles
+                        <span style={{ fontSize: '1rem' }}>🔒</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#FF3366' }}>
+                          Upgrade to Pro to unlock
                         </span>
                       </div>
                     )}
                   </div>
+                  {selectedCreator && isProUser && (
+                    <p style={{ margin: '8px 0 0', fontSize: '0.78rem', color: '#999' }}>
+                      Your script will match {selectedCreator}&rsquo;s style and energy.
+                      <button onClick={() => setSelectedCreator('')} style={{ marginLeft: '8px', background: 'none', border: 'none', color: '#FF3366', cursor: 'pointer', fontSize: '0.78rem', padding: 0 }}>Clear</button>
+                    </p>
+                  )}
                 </div>
               )}
-
-              {/* Visual Suggestions Toggle */}
-              <div style={{ marginBottom: '25px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#666',
-                  marginBottom: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  Include Visual Suggestions
-                </label>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <button
-                    onClick={() => setIncludeVisuals(!includeVisuals)}
-                    style={{
-                      width: '50px',
-                      height: '26px',
-                      borderRadius: '13px',
-                      backgroundColor: includeVisuals ? '#FF3366' : '#e0e0e0',
-                      position: 'relative',
-                      cursor: 'pointer',
-                      border: 'none',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    <div style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                      position: 'absolute',
-                      top: '2px',
-                      left: includeVisuals ? '26px' : '2px',
-                      transition: 'left 0.2s'
-                    }} />
-                  </button>
-                  <span style={{
-                    color: '#666',
-                    fontSize: '0.9rem'
-                  }}>
-                    {includeVisuals ? 'On' : 'Off'}
-                  </span>
-                </div>
-                <p style={{
-                  marginTop: '8px',
-                  fontSize: '0.8rem',
-                  color: '#999'
-                }}>
-                  {includeVisuals 
-                    ? 'Script will include visual suggestions like transitions, effects, and shots ideas'
-                    : 'Script will focus on content and dialogue only'}
-                </p>
-              </div>
 
               {/* Generate Button */}
               <button
