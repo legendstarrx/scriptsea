@@ -348,8 +348,8 @@ export default function Generate() {
   const [error, setError] = useState('');
   const [isProcessingVideo, setIsProcessingVideo] = useState(false);
   const [videoInfo, setVideoInfo] = useState(null);
-  const [thumbnailSuggestions, setThumbnailSuggestions] = useState('');
-  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  const [videoPrompt, setVideoPrompt] = useState('');
+  const [isGeneratingVideoPrompt, setIsGeneratingVideoPrompt] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [keywords, setKeywords] = useState('');
@@ -1128,39 +1128,45 @@ Title 3: <title>
     }
   };
 
-  const generateThumbnailPrompt = (script) => {
-    return `Based on this YouTube video script, suggest 3 viral thumbnail ideas that would grab attention and increase CTR:
+  const buildVideoPromptRequest = (script) => {
+    return `You are an expert AI video director. Convert this script into a series of detailed AI video generation prompts optimized for tools like Runway, Kling, Sora, and Pika.
 
+SCRIPT:
 ${script}
 
-For each thumbnail idea, provide these details in a clear, concise format:
-1. Main visual concept
-2. Text overlay suggestions
-3. Color scheme
-4. Emotional trigger
-5. Why it would be effective
+Break the script into SCENES. For each scene write ONE AI video generation prompt.
 
-Format each thumbnail idea as a clear section with a title, followed by bullet points for each detail. Do not use markdown symbols like # or **.`;
+Rules:
+- Each prompt is 2-3 sentences maximum
+- Include: subject, action, camera angle, lighting, mood, visual style
+- Style: cinematic, ultra-realistic, 4K, photorealistic unless the content calls for animation
+- Do NOT mention the script text verbatim — describe what the CAMERA should show
+- Format each scene as: SCENE [number] ([duration estimate]): [prompt]
+
+Example format:
+SCENE 1 (0-3s): Close-up of hands typing on a glowing keyboard in a dark room, blue neon light casting sharp shadows, cinematic 4K, tense atmosphere.
+SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by multiple monitors showing analytics charts, warm afternoon light through blinds, documentary style.`;
   };
 
-  const handleGenerateThumbnail = async () => {
+  const handleGenerateVideoPrompt = async () => {
     if (!generatedScript) return;
+    if (!isProUser) { setShowSubscriptionModal(true); return; }
 
     try {
-      setIsGeneratingThumbnail(true);
+      setIsGeneratingVideoPrompt(true);
       setError('');
-
-      const prompt = generateThumbnailPrompt(generatedScript.replace(/<[^>]+>/g, ''));
-      const generatedText = await generateWithOpenAI(prompt, {
-        maxTokens: 1024,
-        temperature: 0.9
-      });
-      setThumbnailSuggestions(generatedText);
+      const cleanScript = generatedScript.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      const prompt = buildVideoPromptRequest(cleanScript);
+      const generatedText = await generateWithOpenAI(prompt, { maxTokens: 2000, temperature: 0.8 });
+      setVideoPrompt(generatedText);
     } catch (err) {
-      console.error('Thumbnail generation error:', err);
-      setError('Error generating thumbnail suggestions. Please try again.');
+      if (err?.message === 'limit_reached' || String(err?.message).includes('limit_reached')) {
+        setShowSubscriptionModal(true);
+      } else {
+        setError('Error generating video prompts. Please try again.');
+      }
     } finally {
-      setIsGeneratingThumbnail(false);
+      setIsGeneratingVideoPrompt(false);
     }
   };
 
@@ -1173,7 +1179,7 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
     setDuration('60 sec');
 
     setGeneratedScript('');
-    setThumbnailSuggestions('');
+    setVideoPrompt('');
     setVideoInfo(null);
     setError('');
 
@@ -1926,64 +1932,64 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
 
               {/* Duration Selection */}
               <div style={{ marginBottom: '25px' }}>
-                <label style={{ display: 'block', color: '#666', marginBottom: '10px', fontSize: '0.9rem', fontWeight: 500 }}>
+                <label style={{ display: 'block', color: '#444', marginBottom: '12px', fontSize: '0.9rem', fontWeight: 600 }}>
                   Duration
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <select
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '12px 44px 12px 16px',
-                      borderRadius: '12px',
-                      border: `2px solid ${duration !== '60 sec' ? '#FF3366' : '#e8e8e8'}`,
-                      backgroundColor: 'white',
-                      color: '#222',
-                      fontSize: '0.95rem',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      outline: 'none',
-                      appearance: 'none',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                      transition: 'border-color 0.2s',
-                    }}
-                  >
-                    <option value="15 sec">⚡ 15 seconds</option>
-                    <option value="30 sec">⏱ 30 seconds</option>
-                    <option value="60 sec">🎯 1 minute</option>
-                    <option value="90 sec">🔥 1.5 minutes</option>
-                    <option value="2 min">📱 2 minutes</option>
-                    <option value="3 min">🎬 3 minutes</option>
-                    <option value="5 min">🎥 5 minutes</option>
-                    <option value="10 min">📺 10 minutes</option>
-                    <option value="15 min">🎙 15 minutes</option>
-                    <option value="20 min">📡 20 minutes</option>
-                    <option value="30 min">🌟 30 minutes</option>
-                    <option value="45 min">🏆 45 minutes</option>
-                    <option value="60 min">👑 60 minutes</option>
-                  </select>
-                  {/* Custom chevron */}
-                  <div style={{
-                    position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-                    pointerEvents: 'none', color: '#FF3366',
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
+                {/* Short-form row */}
+                <div style={{ marginBottom: '8px' }}>
+                  <p style={{ fontSize: '0.72rem', color: '#aaa', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 6px' }}>Short-form</p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { val: '15 sec', label: '15s' },
+                      { val: '30 sec', label: '30s' },
+                      { val: '60 sec', label: '1 min' },
+                      { val: '90 sec', label: '1.5 min' },
+                    ].map(({ val, label }) => (
+                      <button key={val} onClick={() => setDuration(val)} style={{
+                        padding: '8px 18px', borderRadius: '50px', border: 'none', cursor: 'pointer',
+                        fontSize: '0.88rem', fontWeight: 600, transition: 'all 0.15s',
+                        background: duration === val ? '#FF3366' : '#f4f4f5',
+                        color: duration === val ? '#fff' : '#444',
+                        boxShadow: duration === val ? '0 4px 12px rgba(255,51,102,0.3)' : 'none',
+                        transform: duration === val ? 'scale(1.04)' : 'scale(1)',
+                      }}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                {/* Long-form row */}
+                <div style={{ marginBottom: '8px' }}>
+                  <p style={{ fontSize: '0.72rem', color: '#aaa', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 6px' }}>Long-form</p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { val: '2 min', label: '2 min' },
+                      { val: '3 min', label: '3 min' },
+                      { val: '5 min', label: '5 min' },
+                      { val: '10 min', label: '10 min' },
+                      { val: '15 min', label: '15 min' },
+                      { val: '20 min', label: '20 min' },
+                      { val: '30 min', label: '30 min' },
+                      { val: '45 min', label: '45 min' },
+                      { val: '60 min', label: '60 min' },
+                    ].map(({ val, label }) => (
+                      <button key={val} onClick={() => setDuration(val)} style={{
+                        padding: '8px 18px', borderRadius: '50px', border: 'none', cursor: 'pointer',
+                        fontSize: '0.88rem', fontWeight: 600, transition: 'all 0.15s',
+                        background: duration === val ? '#FF3366' : '#f4f4f5',
+                        color: duration === val ? '#fff' : '#444',
+                        boxShadow: duration === val ? '0 4px 12px rgba(255,51,102,0.3)' : 'none',
+                        transform: duration === val ? 'scale(1.04)' : 'scale(1)',
+                      }}>{label}</button>
+                    ))}
                   </div>
                 </div>
                 {/* Free user duration warning */}
                 {!isProUser && duration !== '15 sec' && duration !== '30 sec' && (
-                  <div
-                    onClick={() => setShowSubscriptionModal(true)}
-                    style={{
-                      marginTop: '10px', padding: '10px 14px',
-                      background: '#fff5f7', border: '1px solid #ffd6e0',
-                      borderRadius: '10px', fontSize: '0.82rem', color: '#FF3366',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                    }}
-                  >
+                  <div onClick={() => setShowSubscriptionModal(true)} style={{
+                    marginTop: '10px', padding: '10px 14px',
+                    background: '#fff5f7', border: '1px solid #ffd6e0',
+                    borderRadius: '10px', fontSize: '0.82rem', color: '#FF3366',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                  }}>
                     🔒 Free plan is limited to 30 seconds. <strong style={{ textDecoration: 'underline' }}>Upgrade to Pro</strong> to unlock all durations.
                   </div>
                 )}
@@ -2093,9 +2099,9 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                         borderRadius: '12px',
                         border: `2px solid ${selectedCreator ? '#FF3366' : '#e8e8e8'}`,
                         backgroundColor: isProUser ? 'white' : '#fafafa',
-                        color: selectedCreator ? '#222' : '#999',
+                        color: '#222',
                         fontSize: '0.95rem',
-                        fontWeight: selectedCreator ? 500 : 400,
+                        fontWeight: selectedCreator ? 600 : 400,
                         cursor: isProUser ? 'pointer' : 'default',
                         outline: 'none',
                         appearance: 'none',
@@ -2378,114 +2384,74 @@ Format each thumbnail idea as a clear section with a title, followed by bullet p
                   </div>
                 )}
 
-                {/* Thumbnail Section */}
-                {selectedPlatform === 'youtube' && (
-                  <div style={{
-                    marginTop: '30px',
-                    paddingTop: '30px',
-                    borderTop: '1px solid #eee'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '20px'
-                    }}>
-                      <h3 style={{
-                        fontSize: '1.1rem',
-                        color: '#333',
-                        margin: 0
-                      }}>
-                        Thumbnail Ideas
+                {/* AI Video Prompt Section */}
+                <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #f0f0f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1rem', color: '#222', margin: '0 0 4px', fontWeight: 700 }}>
+                        🎬 AI Video Prompts
                       </h3>
+                      <p style={{ margin: 0, fontSize: '0.78rem', color: '#999' }}>
+                        Scene-by-scene prompts for Runway, Kling, Sora & Pika
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleGenerateVideoPrompt}
+                      disabled={isGeneratingVideoPrompt}
+                      style={{
+                        padding: '9px 20px',
+                        background: isGeneratingVideoPrompt ? '#FFE5EC' : '#FF3366',
+                        color: isGeneratingVideoPrompt ? '#FF3366' : 'white',
+                        border: 'none', borderRadius: '20px',
+                        fontSize: '0.88rem', fontWeight: 600,
+                        cursor: isGeneratingVideoPrompt ? 'not-allowed' : 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        transition: 'all 0.2s',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {isGeneratingVideoPrompt
+                        ? <><span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span> Generating…</>
+                        : '✦ Generate Prompts'}
+                    </button>
+                  </div>
+                  {videoPrompt && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {videoPrompt.split('\n').filter(l => l.trim()).map((line, i) => {
+                        const isScene = /^SCENE\s+\d+/i.test(line.trim());
+                        return (
+                          <div key={i} style={{
+                            padding: '12px 16px',
+                            borderRadius: '10px',
+                            background: isScene ? '#fff5f7' : '#f9f9f9',
+                            border: isScene ? '1px solid #ffd6e0' : '1px solid #f0f0f0',
+                            fontSize: '0.88rem',
+                            color: '#333',
+                            lineHeight: 1.6,
+                          }}>
+                            {isScene && <span style={{ fontWeight: 700, color: '#FF3366', marginRight: '6px' }}>▶</span>}
+                            {line.trim()}
+                          </div>
+                        );
+                      })}
                       <button
                         onClick={() => {
-                          if (!isProUser) {
-                            setShowSubscriptionModal(true);
-                            setNotification({ show: true, message: 'This is a premium feature. Upgrade to Pro to access it!', type: 'error' });
-                            setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
-                          } else {
-                            handleGenerateThumbnail();
-                          }
+                          navigator.clipboard.writeText(videoPrompt);
+                          setNotification({ show: true, message: 'Prompts copied!', type: 'success' });
+                          setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
                         }}
-                        disabled={isGeneratingThumbnail}
                         style={{
-                          padding: '8px 16px',
-                          backgroundColor: isGeneratingThumbnail ? '#FFE5EC' : '#FF3366',
-                          color: isGeneratingThumbnail ? '#FF3366' : 'white',
-                          border: 'none',
-                          borderRadius: '20px',
-                          fontSize: '0.9rem',
-                          cursor: isGeneratingThumbnail ? 'not-allowed' : 'pointer',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
+                          alignSelf: 'flex-start', padding: '8px 18px',
+                          background: 'transparent', color: '#FF3366',
+                          border: '1px solid #FF3366', borderRadius: '20px',
+                          fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
                         }}
                       >
-                        {isGeneratingThumbnail ? (
-                          <>
-                            <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⌛</span>
-                            Generating...
-                          </>
-                        ) : (
-                          'Generate'
-                        )}
+                        Copy all prompts
                       </button>
                     </div>
-                    {thumbnailSuggestions && (
-                      <div 
-                        style={{
-                          backgroundColor: '#f8f9ff',
-                          borderRadius: '12px',
-                          padding: '20px',
-                          color: '#444',
-                          lineHeight: '1.6',
-                          fontSize: '1rem'
-                        }}
-                      >
-                        {thumbnailSuggestions.split('\n\n').map((section, index) => {
-                          const lines = section.split('\n');
-                          const title = lines[0];
-                          const content = lines.slice(1);
-                          
-                          return (
-                            <div key={index} style={{ marginBottom: '20px' }}>
-                              <h4 style={{
-                                color: '#FF3366',
-                                fontSize: '1.1rem',
-                                marginBottom: '10px',
-                                fontWeight: '600'
-                              }}>
-                                {title}
-                              </h4>
-                              <ul style={{
-                                listStyle: 'none',
-                                padding: 0,
-                                margin: 0
-                              }}>
-                                {content.map((line, lineIndex) => (
-                                  <li key={lineIndex} style={{
-                                    marginBottom: '8px',
-                                    paddingLeft: '20px',
-                                    position: 'relative'
-                                  }}>
-                                    <span style={{
-                                      position: 'absolute',
-                                      left: 0,
-                                      color: '#FF3366'
-                                    }}>•</span>
-                                    {line}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Load Script Confirmation Modal - Moved outside saved scripts section */}
                 {/* Action Buttons */}

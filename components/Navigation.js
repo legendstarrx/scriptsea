@@ -45,6 +45,22 @@ export default function Navigation() {
           ScriptSea
         </Link>
 
+        {/* Center nav links */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Link href="/generate" style={{
+            textDecoration: 'none', color: '#555', fontSize: '0.88rem', fontWeight: 500,
+            padding: '6px 14px', borderRadius: '20px', transition: 'background 0.15s',
+          }}>
+            Script Generator
+          </Link>
+          <Link href="/video-prompt" style={{
+            textDecoration: 'none', color: '#555', fontSize: '0.88rem', fontWeight: 500,
+            padding: '6px 14px', borderRadius: '20px', transition: 'background 0.15s',
+          }}>
+            Video Prompts
+          </Link>
+        </div>
+
         {/* Desktop right side */}
         <div style={{
           display: 'flex',
