@@ -321,6 +321,211 @@ const generateWithOpenAI = async (prompt, options = {}) => {
   return payload?.text || '';
 };
 
+// ── VideoPromptTab ─────────────────────────────────────────────────────────
+function VideoPromptTab({ isProUser, onUpgrade }) {
+  const [input, setInput] = useState('');
+  const [image, setImage] = useState(null); // { base64, mimeType, name, preview }
+  const [platform, setPlatform] = useState('tiktok');
+  const [vidDuration, setVidDuration] = useState('30 sec');
+  const [style, setStyle] = useState('cinematic');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const STYLES = [
+    { id: 'cinematic', label: 'Cinematic' },
+    { id: 'commercial', label: 'Commercial' },
+    { id: 'ugc', label: 'UGC / Viral' },
+    { id: 'documentary', label: 'Documentary' },
+    { id: 'luxury', label: 'Luxury' },
+    { id: 'animation', label: 'Animation' },
+  ];
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      const base64 = dataUrl.split(',')[1];
+      setImage({ base64, mimeType: file.type, name: file.name, preview: dataUrl });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const generate = async () => {
+    if (!input.trim() && !image) { setErr('Paste a script, describe your idea, or upload an image.'); return; }
+    if (!isProUser) { onUpgrade(); return; }
+    setErr(''); setResult(''); setLoading(true);
+    try {
+      const { supabase } = await import('../lib/supabaseClient');
+      const { data: sd } = await supabase.auth.getSession();
+      const token = sd?.session?.access_token;
+      const res = await fetch('/api/ai/video-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          input: input.trim(),
+          imageBase64: image?.base64 || null,
+          imageMimeType: image?.mimeType || null,
+          platform, duration: vidDuration, style,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Generation failed');
+      setResult(data.text || '');
+    } catch (e) {
+      setErr(e?.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const pillStyle = (active) => ({
+    padding: '7px 16px', borderRadius: '50px', border: 'none', cursor: 'pointer',
+    fontSize: '0.82rem', fontWeight: 600, transition: 'all 0.15s',
+    background: active ? '#FF3366' : '#f0f0f0',
+    color: active ? '#fff' : '#555',
+    boxShadow: active ? '0 3px 10px rgba(255,51,102,0.25)' : 'none',
+  });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Input card */}
+      <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <label style={{ display: 'block', fontWeight: 700, color: '#222', marginBottom: '10px', fontSize: '0.92rem' }}>
+          Your script, product, or idea
+        </label>
+        <div style={{ position: 'relative' }}>
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            rows={5}
+            placeholder="Paste your script, describe your product, or explain your video idea here…&#10;&#10;Example: I want to market ScriptSea — an AI tool that generates viral video scripts. Target audience: content creators. Tone: exciting and modern."
+            style={{
+              width: '100%', padding: '14px 16px', borderRadius: '12px', border: '2px solid #e8e8e8',
+              fontSize: '0.93rem', color: '#222', resize: 'vertical', outline: 'none',
+              boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.6,
+            }}
+            onFocus={e => e.target.style.borderColor = '#FF3366'}
+            onBlur={e => e.target.style.borderColor = '#e8e8e8'}
+          />
+        </div>
+
+        {/* Image upload */}
+        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <label style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '8px 16px', borderRadius: '50px', border: '1.5px dashed #ddd',
+            cursor: 'pointer', fontSize: '0.85rem', color: '#666', fontWeight: 500,
+            transition: 'border-color 0.2s',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            {image ? image.name : 'Upload product image (optional)'}
+            <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+          </label>
+          {image && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img src={image.preview} alt="preview" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+              <button onClick={() => setImage(null)} style={{ background: 'none', border: 'none', color: '#FF3366', cursor: 'pointer', fontSize: '1.1rem' }}>×</button>
+            </div>
+          )}
+        </div>
+
+        {/* Settings row */}
+        <div style={{ marginTop: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Platform */}
+          <div>
+            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Platform</p>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {['TikTok', 'Instagram', 'YouTube', 'Ads'].map(p => (
+                <button key={p} onClick={() => setPlatform(p.toLowerCase())} style={pillStyle(platform === p.toLowerCase())}>{p}</button>
+              ))}
+            </div>
+          </div>
+          {/* Duration */}
+          <div>
+            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</p>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {['15 sec', '30 sec', '60 sec', '2 min', '5 min'].map(d => (
+                <button key={d} onClick={() => setVidDuration(d)} style={pillStyle(vidDuration === d)}>{d}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Style */}
+        <div style={{ marginTop: '16px' }}>
+          <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visual style</p>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {STYLES.map(s => (
+              <button key={s.id} onClick={() => setStyle(s.id)} style={pillStyle(style === s.id)}>{s.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {err && <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff0f3', borderRadius: '10px', color: '#FF3366', fontSize: '0.85rem' }}>{err}</div>}
+
+        <button
+          onClick={generate}
+          disabled={loading}
+          style={{
+            width: '100%', marginTop: '20px', padding: '15px',
+            background: loading ? '#FFE5EC' : 'linear-gradient(135deg,#FF3366,#ff6b8a)',
+            color: loading ? '#FF3366' : 'white', border: 'none', borderRadius: '12px',
+            fontSize: '1rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+            boxShadow: loading ? 'none' : '0 6px 20px rgba(255,51,102,0.3)',
+          }}
+        >
+          {loading ? '✦ Creating your prompts…' : isProUser ? '✦ Generate AI Video Prompts' : '🔒 Pro Feature — Upgrade to Generate'}
+        </button>
+      </div>
+
+      {/* Result */}
+      {result && (
+        <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#111' }}>Your AI Video Prompt Package</h2>
+            <button onClick={() => { navigator.clipboard.writeText(result); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+              style={{ padding: '7px 18px', background: copied ? '#22c55e' : '#FF3366', color: 'white', border: 'none', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}>
+              {copied ? '✓ Copied!' : 'Copy all'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {result.split('\n').filter(l => l.trim()).map((line, i) => {
+              const isHeader = /^[🎬📽️🎨❌💡]|^SCENE\s+\d+|^---/.test(line.trim());
+              const isScene = /^SCENE\s+\d+/i.test(line.trim());
+              const isDivider = /^---/.test(line.trim());
+              if (isDivider) return <hr key={i} style={{ border: 'none', borderTop: '1px solid #f0f0f0', margin: '4px 0' }} />;
+              return (
+                <div key={i} style={{
+                  padding: isHeader ? '10px 14px' : '8px 14px',
+                  borderRadius: '10px',
+                  background: isScene ? '#fff5f7' : isHeader ? '#f8f8f8' : '#fcfcfc',
+                  borderLeft: isScene ? '3px solid #FF3366' : isHeader ? '3px solid #eee' : 'none',
+                  fontSize: isHeader ? '0.9rem' : '0.87rem',
+                  fontWeight: isHeader ? 700 : 400,
+                  color: isScene ? '#FF3366' : '#333',
+                  lineHeight: 1.65,
+                }}>
+                  {line.trim()}
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: '16px', padding: '12px 16px', background: '#f0fff4', border: '1px solid #bbf7d0', borderRadius: '10px', fontSize: '0.8rem', color: '#166534' }}>
+            💡 Paste the MASTER PROMPT into Runway Gen-3, Kling, Sora, or Pika. Use SCENE prompts for multi-clip sequences.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Generate() {
   const router = useRouter();
   const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
@@ -361,6 +566,7 @@ export default function Generate() {
   const [recognition, setRecognition] = useState(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [activeTab, setActiveTab] = useState('script');
 
   const fetchServerPlan = useCallback(async () => {
     if (!supabase) return null;
@@ -1527,17 +1733,41 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
             flexDirection: 'column',
             gap: '30px'
           }}>
-            {/* Header */}
-            <h1 style={{
-              fontSize: '2rem',
-              color: '#333',
-              textAlign: 'center',
-              marginBottom: '20px'
-            }}>
-              Generate Viral Video Script
-            </h1>
+            {/* Tab Switcher */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
+              {[
+                { key: 'script', label: '🎬 Script Generator' },
+                { key: 'video-prompt', label: '✦ Video Prompt' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    padding: '10px 24px',
+                    borderRadius: '50px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    transition: 'all 0.2s',
+                    background: activeTab === tab.key ? '#FF3366' : '#f0f0f0',
+                    color: activeTab === tab.key ? '#fff' : '#555',
+                    boxShadow: activeTab === tab.key ? '0 4px 16px rgba(255,51,102,0.3)' : 'none',
+                    transform: activeTab === tab.key ? 'scale(1.04)' : 'scale(1)',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
+            {/* ── VIDEO PROMPT TAB ─────────────────────────────────────────── */}
+            {activeTab === 'video-prompt' && (
+              <VideoPromptTab isProUser={isProUser} onUpgrade={() => setShowSubscriptionModal(true)} />
+            )}
 
+            {/* ── SCRIPT GENERATOR TAB ─────────────────────────────────────── */}
+            {activeTab === 'script' && <>
             {/* Main Card */}
             <div style={{
               background: 'white',
@@ -1942,8 +2172,7 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
                     {[
                       { val: '15 sec', label: '15s' },
                       { val: '30 sec', label: '30s' },
-                      { val: '60 sec', label: '1 min' },
-                      { val: '90 sec', label: '1.5 min' },
+                      { val: '60 sec', label: '60s' },
                     ].map(({ val, label }) => (
                       <button key={val} onClick={() => setDuration(val)} style={{
                         padding: '8px 18px', borderRadius: '50px', border: 'none', cursor: 'pointer',
@@ -1961,8 +2190,6 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
                   <p style={{ fontSize: '0.72rem', color: '#aaa', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 6px' }}>Long-form</p>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {[
-                      { val: '2 min', label: '2 min' },
-                      { val: '3 min', label: '3 min' },
                       { val: '5 min', label: '5 min' },
                       { val: '10 min', label: '10 min' },
                       { val: '15 min', label: '15 min' },
@@ -2570,6 +2797,8 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
                 </div>
               </div>
             )}
+          </> /* end activeTab === 'script' */}
+
           </div>
 
         </main>
