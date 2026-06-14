@@ -325,7 +325,7 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 function VideoPromptTab({ isProUser, onUpgrade }) {
   const [input, setInput] = useState('');
   const [image, setImage] = useState(null); // { base64, mimeType, name, preview }
-  const [vidDuration, setVidDuration] = useState('15 sec');
+  const [vidDuration, setVidDuration] = useState('10 sec');
   const [style, setStyle] = useState('ugc');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -437,7 +437,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           <div>
             <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clip duration</p>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {['8 sec', '15 sec', '30 sec'].map(d => (
+              {['8 sec', '10 sec', '15 sec'].map(d => (
                 <button key={d} onClick={() => setVidDuration(d)} style={pillStyle(vidDuration === d)}>{d}</button>
               ))}
             </div>
