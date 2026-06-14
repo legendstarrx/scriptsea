@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   const { data: authData, error: authErr } = await supabaseAdmin.auth.getUser(token);
   if (authErr || !authData?.user) return res.status(401).json({ error: 'Invalid or expired session.' });
 
-  const { input, imageBase64, imageMimeType, platform = 'tiktok', duration = '30 sec', style = 'cinematic' } = req.body || {};
+  const { input, imageBase64, imageMimeType, duration = '15 sec', style = 'ugc' } = req.body || {};
   if (!input?.trim() && !imageBase64) return res.status(400).json({ error: 'Please provide a script, idea, or image.' });
 
   const systemPrompt = `You are the world's best AI video director and prompt engineer. You create hyper-detailed, cinematic video prompts that generate stunning, realistic AI videos. Every word you write translates directly into stunning visuals. Your prompts are used by top brands, creators, and agencies to generate content with tools like Runway Gen-3 Alpha, Kling 1.6, Sora, and Pika 2.0.`;
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   const userPrompt = `${input ? `INPUT (script, product, or idea):\n"${input.trim()}"` : ''}
 ${imageBase64 ? '\n[An image has been provided — analyze it and base the video prompts on what you see.]' : ''}
 
-Platform: ${platform} | Duration: ${duration} | Style: ${style}
+Clip Duration: ${duration} | Visual Style: ${style}
 
 Generate a COMPLETE PROFESSIONAL VIDEO PROMPT PACKAGE. Be hyper-specific. No vague adjectives — only concrete visual details.
 

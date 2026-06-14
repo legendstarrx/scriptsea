@@ -325,20 +325,16 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 function VideoPromptTab({ isProUser, onUpgrade }) {
   const [input, setInput] = useState('');
   const [image, setImage] = useState(null); // { base64, mimeType, name, preview }
-  const [platform, setPlatform] = useState('tiktok');
-  const [vidDuration, setVidDuration] = useState('30 sec');
-  const [style, setStyle] = useState('cinematic');
+  const [vidDuration, setVidDuration] = useState('15 sec');
+  const [style, setStyle] = useState('ugc');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [copied, setCopied] = useState(false);
 
   const STYLES = [
-    { id: 'cinematic', label: 'Cinematic' },
-    { id: 'commercial', label: 'Commercial' },
     { id: 'ugc', label: 'UGC / Viral' },
-    { id: 'documentary', label: 'Documentary' },
-    { id: 'luxury', label: 'Luxury' },
+    { id: 'broll', label: 'B-Roll' },
     { id: 'animation', label: 'Animation' },
   ];
 
@@ -369,7 +365,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           input: input.trim(),
           imageBase64: image?.base64 || null,
           imageMimeType: image?.mimeType || null,
-          platform, duration: vidDuration, style,
+          duration: vidDuration, style,
         }),
       });
       const data = await res.json();
@@ -436,35 +432,23 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           )}
         </div>
 
-        {/* Settings row */}
-        <div style={{ marginTop: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {/* Platform */}
+        {/* Duration + Style */}
+        <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Platform</p>
+            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clip duration</p>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {['TikTok', 'Instagram', 'YouTube', 'Ads'].map(p => (
-                <button key={p} onClick={() => setPlatform(p.toLowerCase())} style={pillStyle(platform === p.toLowerCase())}>{p}</button>
-              ))}
-            </div>
-          </div>
-          {/* Duration */}
-          <div>
-            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</p>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {['15 sec', '30 sec', '60 sec', '2 min', '5 min'].map(d => (
+              {['8 sec', '15 sec', '30 sec'].map(d => (
                 <button key={d} onClick={() => setVidDuration(d)} style={pillStyle(vidDuration === d)}>{d}</button>
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Style */}
-        <div style={{ marginTop: '16px' }}>
-          <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visual style</p>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {STYLES.map(s => (
-              <button key={s.id} onClick={() => setStyle(s.id)} style={pillStyle(style === s.id)}>{s.label}</button>
-            ))}
+          <div>
+            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visual style</p>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {STYLES.map(s => (
+                <button key={s.id} onClick={() => setStyle(s.id)} style={pillStyle(style === s.id)}>{s.label}</button>
+              ))}
+            </div>
           </div>
         </div>
 
