@@ -500,7 +500,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0' }}>
             <div>
               <p style={{ margin: 0, fontWeight: 600, color: '#222', fontSize: '0.88rem' }}>Include voiceover script</p>
-              <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#999' }}>Adds a high-converting script with hook, body & CTA for each clip</p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#999' }}>One continuous hook → body → CTA script, split across your 3 clips</p>
             </div>
             <button
               onClick={() => setWithVoiceover(v => !v)}
@@ -552,12 +552,33 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           {/* Voiceover */}
           {scene.voiceover && (
             <div style={{ marginTop: '12px', padding: '16px', background: '#fff5f7', borderRadius: '12px', border: '1px solid #ffd6e0' }}>
-              <p style={{ margin: '0 0 8px', fontSize: '0.72rem', fontWeight: 700, color: '#FF3366', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🎙️ Voiceover Script</p>
+              <p style={{ margin: '0 0 8px', fontSize: '0.72rem', fontWeight: 700, color: '#FF3366', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🎙️ Voiceover — Part {i + 1} of {scenes.length}</p>
               <p style={{ margin: 0, fontSize: '0.9rem', color: '#222', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{scene.voiceover}</p>
             </div>
           )}
         </div>
       ))}
+
+      {/* Full combined voiceover script */}
+      {scenes.length > 0 && scenes.some(s => s.voiceover) && (
+        <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#FF3366' }}>🎙️ Full Voiceover Script (one continuous read)</h3>
+            <button
+              onClick={() => copyText(scenes.map(s => s.voiceover).filter(Boolean).join(' '), 'fullvo')}
+              style={{ padding: '6px 16px', background: copiedIdx === 'fullvo' ? '#22c55e' : 'transparent', color: copiedIdx === 'fullvo' ? 'white' : '#FF3366', border: '1.5px solid', borderColor: copiedIdx === 'fullvo' ? '#22c55e' : '#FF3366', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {copiedIdx === 'fullvo' ? '✓ Copied' : 'Copy'}
+            </button>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: '#222', lineHeight: 1.85 }}>
+            {scenes.map(s => s.voiceover).filter(Boolean).join(' ')}
+          </p>
+          <p style={{ margin: '12px 0 0', fontSize: '0.78rem', color: '#999' }}>
+            Record this as one take, then split it across your 3 clips when you stitch the video together.
+          </p>
+        </div>
+      )}
 
       {/* Negative prompt */}
       {negativePrompt && (

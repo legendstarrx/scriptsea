@@ -16,7 +16,7 @@ const STYLE_SYSTEM = {
 - Describe the character specifically: approximate age, gender, ethnicity/skin tone, hairstyle, clothing, facial expression, and energy.
 - The character is holding, using, demonstrating, or reacting to the product/idea — describe exactly what they do with their hands and body.
 ${withVoiceover
-    ? '- The character appears to be SPEAKING directly to camera — mouth moving naturally, engaged expression, as if delivering the voiceover script live.'
+    ? '- The character appears to be SPEAKING directly to camera — mouth moving naturally, engaged expression, as if delivering that part of the voiceover live.'
     : '- The character reacts with expressive body language and facial expressions — no dialogue, purely visual storytelling.'}
 - Setting: real, relatable environments (bedroom, kitchen, car, desk, outdoors) — never a studio.
 - Lighting: natural window light, daylight, or a ring light — never professional studio lighting.
@@ -44,8 +44,14 @@ ${withVoiceover ? '- If a character speaks, describe them as expressive and anim
   },
 };
 
-// Roughly 2.5 spoken words per second for natural pacing
-const WORD_BUDGET = { '8 sec': '18-22', '10 sec': '22-28', '15 sec': '34-40' };
+// Roughly 2.5 spoken words per second for natural pacing.
+// The 3 scenes are sequential clips of ONE video, stitched together — totals reflect all 3 clips combined.
+const TOTAL_DURATION = { '8 sec': '24 sec', '10 sec': '30 sec', '15 sec': '45 sec' };
+const WORD_BUDGET = {
+  '8 sec':  { total: '55-65',   perScene: '18-22' },
+  '10 sec': { total: '70-85',   perScene: '23-28' },
+  '15 sec': { total: '105-125', perScene: '35-42' },
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -63,26 +69,31 @@ export default async function handler(req, res) {
 
   const styleConfig = STYLE_SYSTEM[style] || STYLE_SYSTEM.ugc;
   const wordBudget = WORD_BUDGET[duration] || WORD_BUDGET['10 sec'];
+  const totalDuration = TOTAL_DURATION[duration] || TOTAL_DURATION['10 sec'];
 
   const systemPrompt = `You are two world-class experts in one: (1) the best AI video prompt engineer alive, who writes single, hyper-detailed prompts that produce stunning, realistic results on Veo, Kling, SeedDance, Hailuo, Runway and Pika; and (2) a direct-response copywriter who has written hooks for videos with hundreds of millions of views. You write prompts and scripts that are immediately ready to use — no placeholders, no fluff.`;
 
   const voiceoverInstructions = withVoiceover ? `
-VOICEOVER REQUIREMENTS (for each scene):
-- Write a voiceover script timed to fit naturally within ${duration} when spoken aloud (~${wordBudget} words total).
-- Structure: HOOK (the first 2-4 words must stop the scroll — a bold claim, pattern interrupt, or question), then BODY (1-2 short sentences delivering value, story, or proof), then CTA (a clear, specific next action).
-- Write it the way a top-performing creator actually talks — conversational, punchy, zero corporate language, zero filler words like "Hey guys" or "So basically".
-- The CTA should point toward scriptsea.com / the product/idea naturally, not like an ad.
-After the scene's video prompt, add this block:
-🎙️ VOICEOVER
-HOOK: [hook line]
-BODY: [body lines]
-CTA: [call to action]` : '';
+VOICEOVER REQUIREMENTS — READ CAREFULLY:
+This is ONE video told across 3 sequential clips (Scene 1 → Scene 2 → Scene 3), each ${duration} long. The user generates each clip separately with an AI video tool, then stitches them together in order into one ~${totalDuration} video. The voiceover is therefore ONE continuous script for the whole video — NOT three separate scripts.
+
+- First, mentally write ONE continuous voiceover script for the full ~${totalDuration} video (~${wordBudget.total} words total).
+- Part 1 = the HOOK — the first words must stop the scroll (bold claim, pattern interrupt, or question). This plays during Scene 1.
+- Part 2 = the BODY — continues the SAME sentence/thought from where Part 1 left off, delivering value, story, or proof. This plays during Scene 2. Do NOT repeat the hook or restart the pitch.
+- Part 3 = the PAYOFF + CTA — continues naturally from Part 2 and ends with one clear call to action (pointing toward scriptsea.com / the product, said naturally, not like an ad). This plays during Scene 3.
+- Each part should be roughly ${wordBudget.perScene} words to match its ${duration} clip when spoken aloud at a natural pace.
+- Write it the way a real top-performing creator talks — conversational, punchy, zero filler ("Hey guys", "So basically", "In today's video").
+- Read Part 1 + Part 2 + Part 3 together — they must form ONE seamless, grammatically continuous script, as if one person spoke it without pausing between clips.
+
+After each scene's video prompt, add this block (on its own lines):
+🎙️ VOICEOVER — PART [N] OF 3
+[the script text for this part only — just the words to speak, nothing else]` : '';
 
   const userPrompt = `INPUT:
 ${input?.trim() ? `"${input.trim()}"` : '[No text provided — base everything on the uploaded image]'}
 ${imageBase64 ? '\n[An image is attached — analyze it carefully and use its exact visual details (colors, shapes, branding, materials) in every prompt.]' : ''}
 
-DURATION PER CLIP: ${duration}
+DURATION PER CLIP: ${duration}${withVoiceover ? ` (3 clips stitched = ~${totalDuration} total video)` : ''}
 ${styleConfig.rule(withVoiceover)}
 ${voiceoverInstructions}
 
@@ -94,13 +105,13 @@ OUTPUT FORMAT — follow this EXACTLY, no extra commentary, no headers besides t
 [One line, comma-separated: 15-20 specific things to avoid in this exact video — mix universal issues (blurry, watermark, text, distorted, extra limbs, flicker) with content-specific issues for this product/style]
 
 SCENE 1 — [short punchy scene name]
-[ONE single, complete, ready-to-paste AI video generation prompt as one flowing paragraph, 70-110 words. Cover: character/subject description (per style rules above), setting, lighting, action/motion, and camera movement placed near the end of the prompt. Do not label the parts — write it as natural descriptive prose a video model can read directly.]${withVoiceover ? '\n🎙️ VOICEOVER\nHOOK: ...\nBODY: ...\nCTA: ...' : ''}
+[ONE single, complete, ready-to-paste AI video generation prompt as one flowing paragraph, 70-110 words. Cover: character/subject description (per style rules above), setting, lighting, action/motion, and camera movement placed near the end of the prompt. Do not label the parts — write it as natural descriptive prose a video model can read directly.]${withVoiceover ? '\n🎙️ VOICEOVER — PART 1 OF 3\n[hook text]' : ''}
 
-SCENE 2 — [different angle or moment, same product/idea]
-[same format as above]${withVoiceover ? '\n🎙️ VOICEOVER\nHOOK: ...\nBODY: ...\nCTA: ...' : ''}
+SCENE 2 — [different angle or moment, continuing the SAME story, same product/idea]
+[same format as above]${withVoiceover ? '\n🎙️ VOICEOVER — PART 2 OF 3\n[continuation text]' : ''}
 
-SCENE 3 — [different angle or moment, same product/idea]
-[same format as above]${withVoiceover ? '\n🎙️ VOICEOVER\nHOOK: ...\nBODY: ...\nCTA: ...' : ''}`;
+SCENE 3 — [different angle or moment, continuing the SAME story, same product/idea]
+[same format as above]${withVoiceover ? '\n🎙️ VOICEOVER — PART 3 OF 3\n[continuation + CTA text]' : ''}`;
 
   try {
     let responseText = '';
