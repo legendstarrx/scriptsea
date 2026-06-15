@@ -324,18 +324,20 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 // ── VideoPromptTab ─────────────────────────────────────────────────────────
 function VideoPromptTab({ isProUser, onUpgrade }) {
   const [input, setInput] = useState('');
-  const [image, setImage] = useState(null); // { base64, mimeType, name, preview }
+  const [image, setImage] = useState(null);
   const [vidDuration, setVidDuration] = useState('10 sec');
   const [style, setStyle] = useState('ugc');
-  const [result, setResult] = useState('');
+  const [withVoiceover, setWithVoiceover] = useState(false);
+  const [scenes, setScenes] = useState([]); // parsed scene objects
+  const [negativePrompt, setNegativePrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState(null);
 
   const STYLES = [
-    { id: 'ugc', label: 'UGC / Viral' },
-    { id: 'broll', label: 'B-Roll' },
-    { id: 'animation', label: 'Animation' },
+    { id: 'ugc', label: '🎥 UGC / Viral', desc: 'Person on camera' },
+    { id: 'broll', label: '🎬 B-Roll', desc: 'No characters' },
+    { id: 'animation', label: '✨ Animation', desc: 'Animated story' },
   ];
 
   const handleImageUpload = (e) => {
@@ -344,16 +346,46 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target.result;
-      const base64 = dataUrl.split(',')[1];
-      setImage({ base64, mimeType: file.type, name: file.name, preview: dataUrl });
+      setImage({ base64: dataUrl.split(',')[1], mimeType: file.type, name: file.name, preview: dataUrl });
     };
     reader.readAsDataURL(file);
   };
 
+  const parseResult = (text) => {
+    // Split on SCENE headers
+    const sceneBlocks = text.split(/\n(?=SCENE\s+\d+)/i).filter(b => b.trim());
+    const parsed = [];
+    let negPrompt = '';
+
+    // Extract negative prompt section (appears before SCENE 1)
+    const negMatch = text.match(/❌[^\n]*\n([\s\S]*?)(?=\nSCENE\s+\d+|\n[🎬📽️💡]|$)/i);
+    if (negMatch) negPrompt = negMatch[1].trim();
+
+    sceneBlocks.forEach(block => {
+      if (!/^SCENE\s+\d+/i.test(block.trim())) return;
+      const lines = block.trim().split('\n');
+      const title = lines[0].trim();
+      let prompt = '', voiceover = '';
+      let inVoiceover = false;
+
+      lines.slice(1).forEach(line => {
+        const l = line.trim();
+        if (!l || /^❌|^💡/.test(l)) return;
+        if (/^🎙️|^VOICEOVER/i.test(l)) { inVoiceover = true; return; }
+        if (inVoiceover) voiceover += (voiceover ? '\n' : '') + l;
+        else if (l) prompt += (prompt ? ' ' : '') + l;
+      });
+
+      if (prompt) parsed.push({ title, prompt: prompt.trim(), voiceover: voiceover.trim() });
+    });
+
+    return { parsed, negPrompt };
+  };
+
   const generate = async () => {
-    if (!input.trim() && !image) { setErr('Paste a script, describe your idea, or upload an image.'); return; }
+    if (!input.trim() && !image) { setErr('Describe your product, paste a script, or upload an image.'); return; }
     if (!isProUser) { onUpgrade(); return; }
-    setErr(''); setResult(''); setLoading(true);
+    setErr(''); setScenes([]); setNegativePrompt(''); setLoading(true);
     try {
       const { supabase } = await import('../lib/supabaseClient');
       const { data: sd } = await supabase.auth.getSession();
@@ -362,15 +394,16 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
-          input: input.trim(),
-          imageBase64: image?.base64 || null,
+          input: input.trim(), imageBase64: image?.base64 || null,
           imageMimeType: image?.mimeType || null,
-          duration: vidDuration, style,
+          duration: vidDuration, style, withVoiceover,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Generation failed');
-      setResult(data.text || '');
+      const { parsed, negPrompt } = parseResult(data.text || '');
+      setScenes(parsed);
+      setNegativePrompt(negPrompt);
     } catch (e) {
       setErr(e?.message || 'Something went wrong.');
     } finally {
@@ -378,132 +411,170 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
     }
   };
 
-  const pillStyle = (active) => ({
+  const pill = (active) => ({
     padding: '7px 16px', borderRadius: '50px', border: 'none', cursor: 'pointer',
     fontSize: '0.82rem', fontWeight: 600, transition: 'all 0.15s',
-    background: active ? '#FF3366' : '#f0f0f0',
-    color: active ? '#fff' : '#555',
+    background: active ? '#FF3366' : '#f0f0f0', color: active ? '#fff' : '#555',
     boxShadow: active ? '0 3px 10px rgba(255,51,102,0.25)' : 'none',
   });
+
+  const copyText = (text, idx) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 2000);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Input card */}
       <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
         <label style={{ display: 'block', fontWeight: 700, color: '#222', marginBottom: '10px', fontSize: '0.92rem' }}>
-          Your script, product, or idea
+          Describe your product, idea, or paste a script
         </label>
-        <div style={{ position: 'relative' }}>
-          <textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            rows={5}
-            placeholder="Paste your script, describe your product, or explain your video idea here…&#10;&#10;Example: I want to market ScriptSea — an AI tool that generates viral video scripts. Target audience: content creators. Tone: exciting and modern."
-            style={{
-              width: '100%', padding: '14px 16px', borderRadius: '12px', border: '2px solid #e8e8e8',
-              fontSize: '0.93rem', color: '#222', resize: 'vertical', outline: 'none',
-              boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.6,
-            }}
-            onFocus={e => e.target.style.borderColor = '#FF3366'}
-            onBlur={e => e.target.style.borderColor = '#e8e8e8'}
-          />
-        </div>
+        <textarea
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          rows={4}
+          placeholder="e.g. ScriptSea — an AI tool that writes viral video scripts in seconds. Target: content creators aged 18-35. Tone: exciting, modern, FOMO-driven."
+          style={{
+            width: '100%', padding: '14px 16px', borderRadius: '12px', border: '2px solid #e8e8e8',
+            fontSize: '0.93rem', color: '#222', resize: 'vertical', outline: 'none',
+            boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.6,
+          }}
+          onFocus={e => e.target.style.borderColor = '#FF3366'}
+          onBlur={e => e.target.style.borderColor = '#e8e8e8'}
+        />
 
         {/* Image upload */}
-        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <label style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '8px 16px', borderRadius: '50px', border: '1.5px dashed #ddd',
-            cursor: 'pointer', fontSize: '0.85rem', color: '#666', fontWeight: 500,
-            transition: 'border-color 0.2s',
+            display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
+            borderRadius: '50px', border: '1.5px dashed #ddd', cursor: 'pointer',
+            fontSize: '0.83rem', color: '#888', fontWeight: 500,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
               <polyline points="21 15 16 10 5 21"/>
             </svg>
-            {image ? image.name : 'Upload product image (optional)'}
+            {image ? image.name : 'Upload product image'}
             <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
           </label>
           {image && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img src={image.preview} alt="preview" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
-              <button onClick={() => setImage(null)} style={{ background: 'none', border: 'none', color: '#FF3366', cursor: 'pointer', fontSize: '1.1rem' }}>×</button>
-            </div>
+            <>
+              <img src={image.preview} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover' }} />
+              <button onClick={() => setImage(null)} style={{ background: 'none', border: 'none', color: '#FF3366', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+            </>
           )}
         </div>
 
-        {/* Duration + Style */}
+        {/* Settings */}
         <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Duration */}
           <div>
-            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clip duration</p>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <p style={{ margin: '0 0 6px', fontSize: '0.7rem', color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Clip duration</p>
+            <div style={{ display: 'flex', gap: '6px' }}>
               {['8 sec', '10 sec', '15 sec'].map(d => (
-                <button key={d} onClick={() => setVidDuration(d)} style={pillStyle(vidDuration === d)}>{d}</button>
+                <button key={d} onClick={() => setVidDuration(d)} style={pill(vidDuration === d)}>{d}</button>
               ))}
             </div>
           </div>
+
+          {/* Style */}
           <div>
-            <p style={{ margin: '0 0 6px', fontSize: '0.72rem', color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visual style</p>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <p style={{ margin: '0 0 6px', fontSize: '0.7rem', color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Visual style</p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {STYLES.map(s => (
-                <button key={s.id} onClick={() => setStyle(s.id)} style={pillStyle(style === s.id)}>{s.label}</button>
+                <button key={s.id} onClick={() => setStyle(s.id)} style={{
+                  ...pill(style === s.id),
+                  display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                  padding: '10px 16px', borderRadius: '12px', lineHeight: 1.3,
+                }}>
+                  <span style={{ fontSize: '0.85rem' }}>{s.label}</span>
+                  <span style={{ fontSize: '0.72rem', opacity: 0.75, fontWeight: 400 }}>{s.desc}</span>
+                </button>
               ))}
             </div>
+          </div>
+
+          {/* Voiceover toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0' }}>
+            <div>
+              <p style={{ margin: 0, fontWeight: 600, color: '#222', fontSize: '0.88rem' }}>Include voiceover script</p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#999' }}>Adds a high-converting script with hook, body & CTA for each clip</p>
+            </div>
+            <button
+              onClick={() => setWithVoiceover(v => !v)}
+              style={{
+                width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
+                background: withVoiceover ? '#FF3366' : '#ddd', position: 'relative', flexShrink: 0, transition: 'background 0.2s',
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: 3, left: withVoiceover ? 25 : 3,
+                width: 20, height: 20, borderRadius: '50%', background: 'white',
+                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }} />
+            </button>
           </div>
         </div>
 
         {err && <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff0f3', borderRadius: '10px', color: '#FF3366', fontSize: '0.85rem' }}>{err}</div>}
 
-        <button
-          onClick={generate}
-          disabled={loading}
-          style={{
-            width: '100%', marginTop: '20px', padding: '15px',
-            background: loading ? '#FFE5EC' : 'linear-gradient(135deg,#FF3366,#ff6b8a)',
-            color: loading ? '#FF3366' : 'white', border: 'none', borderRadius: '12px',
-            fontSize: '1rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
-            boxShadow: loading ? 'none' : '0 6px 20px rgba(255,51,102,0.3)',
-          }}
-        >
-          {loading ? '✦ Creating your prompts…' : isProUser ? '✦ Generate AI Video Prompts' : '🔒 Pro Feature — Upgrade to Generate'}
+        <button onClick={generate} disabled={loading} style={{
+          width: '100%', marginTop: '20px', padding: '15px',
+          background: loading ? '#FFE5EC' : 'linear-gradient(135deg,#FF3366,#ff6b8a)',
+          color: loading ? '#FF3366' : 'white', border: 'none', borderRadius: '12px',
+          fontSize: '1rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+          boxShadow: loading ? 'none' : '0 6px 20px rgba(255,51,102,0.3)',
+        }}>
+          {loading ? '✦ Crafting your prompts…' : isProUser ? '✦ Generate Video Prompts' : '🔒 Pro Feature — Upgrade to Generate'}
         </button>
       </div>
 
-      {/* Result */}
-      {result && (
-        <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#111' }}>Your AI Video Prompt Package</h2>
-            <button onClick={() => { navigator.clipboard.writeText(result); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-              style={{ padding: '7px 18px', background: copied ? '#22c55e' : '#FF3366', color: 'white', border: 'none', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}>
-              {copied ? '✓ Copied!' : 'Copy all'}
+      {/* Scene cards */}
+      {scenes.length > 0 && scenes.map((scene, i) => (
+        <div key={i} style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#FF3366' }}>{scene.title}</h3>
+            <button
+              onClick={() => copyText(scene.prompt + (scene.voiceover ? `\n\nVOICEOVER:\n${scene.voiceover}` : ''), i)}
+              style={{ padding: '6px 16px', background: copiedIdx === i ? '#22c55e' : 'transparent', color: copiedIdx === i ? 'white' : '#FF3366', border: '1.5px solid', borderColor: copiedIdx === i ? '#22c55e' : '#FF3366', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {copiedIdx === i ? '✓ Copied' : 'Copy'}
             </button>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {result.split('\n').filter(l => l.trim()).map((line, i) => {
-              const isHeader = /^[🎬📽️🎨❌💡]|^SCENE\s+\d+|^---/.test(line.trim());
-              const isScene = /^SCENE\s+\d+/i.test(line.trim());
-              const isDivider = /^---/.test(line.trim());
-              if (isDivider) return <hr key={i} style={{ border: 'none', borderTop: '1px solid #f0f0f0', margin: '4px 0' }} />;
-              return (
-                <div key={i} style={{
-                  padding: isHeader ? '10px 14px' : '8px 14px',
-                  borderRadius: '10px',
-                  background: isScene ? '#fff5f7' : isHeader ? '#f8f8f8' : '#fcfcfc',
-                  borderLeft: isScene ? '3px solid #FF3366' : isHeader ? '3px solid #eee' : 'none',
-                  fontSize: isHeader ? '0.9rem' : '0.87rem',
-                  fontWeight: isHeader ? 700 : 400,
-                  color: isScene ? '#FF3366' : '#333',
-                  lineHeight: 1.65,
-                }}>
-                  {line.trim()}
-                </div>
-              );
-            })}
+
+          {/* Video prompt */}
+          <div style={{ padding: '16px', background: '#fafafa', borderRadius: '12px', fontSize: '0.9rem', color: '#222', lineHeight: 1.75, border: '1px solid #f0f0f0' }}>
+            {scene.prompt}
           </div>
-          <div style={{ marginTop: '16px', padding: '12px 16px', background: '#f0fff4', border: '1px solid #bbf7d0', borderRadius: '10px', fontSize: '0.8rem', color: '#166534' }}>
-            💡 Paste the MASTER PROMPT into Runway Gen-3, Kling, Sora, or Pika. Use SCENE prompts for multi-clip sequences.
+
+          {/* Voiceover */}
+          {scene.voiceover && (
+            <div style={{ marginTop: '12px', padding: '16px', background: '#fff5f7', borderRadius: '12px', border: '1px solid #ffd6e0' }}>
+              <p style={{ margin: '0 0 8px', fontSize: '0.72rem', fontWeight: 700, color: '#FF3366', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🎙️ Voiceover Script</p>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#222', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{scene.voiceover}</p>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Negative prompt */}
+      {negativePrompt && (
+        <div style={{ background: 'white', borderRadius: '20px', padding: '20px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#888' }}>❌ NEGATIVE PROMPT — paste this into every tool</p>
+            <button onClick={() => copyText(negativePrompt, 'neg')} style={{ padding: '5px 14px', background: copiedIdx === 'neg' ? '#22c55e' : 'transparent', color: copiedIdx === 'neg' ? 'white' : '#888', border: '1px solid #ddd', borderRadius: '20px', fontSize: '0.78rem', cursor: 'pointer' }}>
+              {copiedIdx === 'neg' ? '✓' : 'Copy'}
+            </button>
           </div>
+          <p style={{ margin: 0, fontSize: '0.83rem', color: '#555', lineHeight: 1.6 }}>{negativePrompt}</p>
+        </div>
+      )}
+
+      {scenes.length > 0 && (
+        <div style={{ padding: '14px 16px', background: '#f0fff4', border: '1px solid #bbf7d0', borderRadius: '12px', fontSize: '0.8rem', color: '#166534' }}>
+          💡 Paste the video prompt directly into Kling, Veo, SeedDance, Hailuo, Runway or Pika. Each prompt is ready to use as-is.
         </div>
       )}
     </div>
