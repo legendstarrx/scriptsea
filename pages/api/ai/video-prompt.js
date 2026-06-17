@@ -5,7 +5,10 @@ const client = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-export const config = { maxDuration: 60 };
+export const config = {
+  maxDuration: 60,
+  api: { bodyParser: { sizeLimit: '10mb' } },
+};
 
 // Style-specific rules — based on research into Veo, Kling, SeedDance, Hailuo, Runway, Pika prompting patterns
 const STYLE_SYSTEM = {
@@ -71,7 +74,10 @@ export default async function handler(req, res) {
   const wordBudget = WORD_BUDGET[duration] || WORD_BUDGET['10 sec'];
   const totalDuration = TOTAL_DURATION[duration] || TOTAL_DURATION['10 sec'];
 
-  const systemPrompt = `You are two world-class experts in one: (1) the best AI video prompt engineer alive, who writes single, hyper-detailed prompts that produce stunning, realistic results on Veo, Kling, SeedDance, Hailuo, Runway and Pika; and (2) a direct-response copywriter who has written hooks for videos with hundreds of millions of views. You write prompts and scripts that are immediately ready to use — no placeholders, no fluff.`;
+  const systemPrompt = `You are two world-class experts in one: (1) the best AI video prompt engineer alive, who writes single, hyper-detailed prompts that produce stunning, realistic results on Veo, Kling, SeedDance, Hailuo, Runway and Pika; and (2) a direct-response copywriter who has written hooks for videos with hundreds of millions of views. You write prompts and scripts that are immediately ready to use — no placeholders, no fluff.
+
+CRITICAL RULE — respect the user's script:
+If the user's input already contains a voiceover, script, or spoken words (i.e. dialogue, narration, or any text clearly meant to be read aloud), you MUST use their EXACT words as the voiceover. Do NOT rewrite, rephrase, add to, or shorten their script. Your job in that case is ONLY to (1) generate the video prompts for each scene and (2) split their existing voiceover/script into 3 chronological parts matching the scenes. Preserve every word — do not change even a single word of what they wrote.`;
 
   const voiceoverInstructions = withVoiceover ? `
 VOICEOVER REQUIREMENTS — READ CAREFULLY:
@@ -84,6 +90,7 @@ This is ONE video told across 3 sequential clips (Scene 1 → Scene 2 → Scene 
 - Each part should be roughly ${wordBudget.perScene} words to match its ${duration} clip when spoken aloud at a natural pace.
 - Write it the way a real top-performing creator talks — conversational, punchy, zero filler ("Hey guys", "So basically", "In today's video").
 - Read Part 1 + Part 2 + Part 3 together — they must form ONE seamless, grammatically continuous script, as if one person spoke it without pausing between clips.
+- IMPORTANT: If the user's input already IS a voiceover/script (it reads like spoken words or narration), use their EXACT text as the voiceover — do NOT rewrite, rephrase, or add any words. Just split their script into 3 chronological parts. Every single word must come from what they wrote, in the same order they wrote it.
 
 After each scene's video prompt, add this block (on its own lines):
 🎙️ VOICEOVER — PART [N] OF 3
