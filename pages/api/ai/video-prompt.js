@@ -73,10 +73,10 @@ export default async function handler(req, res) {
   const styleConfig = STYLE_SYSTEM[style] || STYLE_SYSTEM.ugc;
   const clipSec = parseInt(duration) || 10;
 
-  // Calculate how many clips are needed based on the script length
+  // Calculate how many clips are needed based on the script/input length
   const inputWords = (input?.trim() || '').split(/\s+/).filter(Boolean).length;
   let numScenes;
-  if (withVoiceover && inputWords > 15) {
+  if (inputWords > 15) {
     const totalReadSec = inputWords / 2.5; // ~2.5 spoken words per second
     numScenes = Math.max(2, Math.ceil(totalReadSec / clipSec));
   } else {
@@ -144,39 +144,51 @@ OUTPUT FORMAT — follow this EXACTLY. Generate exactly ${numScenes} scenes. No 
 
 ${sceneInstructions}`;
 
+  const maxTok = Math.min(1200 + numScenes * 400, 8000);
+
+  const callVision = () => client.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: userPrompt },
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:${imageMimeType || 'image/jpeg'};base64,${imageBase64}`,
+              detail: 'auto',
+            },
+          },
+        ],
+      },
+    ],
+    max_tokens: maxTok,
+    temperature: 0.85,
+  });
+
+  const callText = () => client.responses.create({
+    model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    input: `${systemPrompt}\n\n${userPrompt}`,
+    temperature: 0.85,
+    max_output_tokens: maxTok,
+  });
+
   try {
     let responseText = '';
 
     if (imageBase64) {
-      const completion = await client.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: userPrompt },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${imageMimeType || 'image/jpeg'};base64,${imageBase64}`,
-                  detail: 'high',
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: Math.min(1200 + numScenes * 400, 8000),
-        temperature: 0.85,
-      });
+      let completion;
+      try {
+        completion = await callVision();
+      } catch (firstErr) {
+        console.warn('[video-prompt] Vision first attempt failed, retrying:', firstErr?.message);
+        completion = await callVision();
+      }
       responseText = completion.choices[0]?.message?.content?.trim() || '';
     } else {
-      const response = await client.responses.create({
-        model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
-        input: `${systemPrompt}\n\n${userPrompt}`,
-        temperature: 0.85,
-        max_output_tokens: Math.min(1200 + numScenes * 400, 8000),
-      });
+      const response = await callText();
       responseText = response.output_text?.trim() || '';
     }
 
