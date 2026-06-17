@@ -71,54 +71,67 @@ export default async function handler(req, res) {
   if (!input?.trim() && !imageBase64) return res.status(400).json({ error: 'Please provide a script, idea, or image.' });
 
   const styleConfig = STYLE_SYSTEM[style] || STYLE_SYSTEM.ugc;
-  const wordBudget = WORD_BUDGET[duration] || WORD_BUDGET['10 sec'];
-  const totalDuration = TOTAL_DURATION[duration] || TOTAL_DURATION['10 sec'];
+  const clipSec = parseInt(duration) || 10;
+
+  // Calculate how many clips are needed based on the script length
+  const inputWords = (input?.trim() || '').split(/\s+/).filter(Boolean).length;
+  let numScenes;
+  if (withVoiceover && inputWords > 15) {
+    const totalReadSec = inputWords / 2.5; // ~2.5 spoken words per second
+    numScenes = Math.max(2, Math.ceil(totalReadSec / clipSec));
+  } else {
+    numScenes = 3;
+  }
+  const wordsPerScene = Math.round(clipSec * 2.5);
+  const totalVideoSec = numScenes * clipSec;
 
   const systemPrompt = `You are two world-class experts in one: (1) the best AI video prompt engineer alive, who writes single, hyper-detailed prompts that produce stunning, realistic results on Veo, Kling, SeedDance, Hailuo, Runway and Pika; and (2) a direct-response copywriter who has written hooks for videos with hundreds of millions of views. You write prompts and scripts that are immediately ready to use — no placeholders, no fluff.
 
 CRITICAL RULE — respect the user's script:
-If the user's input already contains a voiceover, script, or spoken words (i.e. dialogue, narration, or any text clearly meant to be read aloud), you MUST use their EXACT words as the voiceover. Do NOT rewrite, rephrase, add to, or shorten their script. Your job in that case is ONLY to (1) generate the video prompts for each scene and (2) split their existing voiceover/script into 3 chronological parts matching the scenes. Preserve every word — do not change even a single word of what they wrote.`;
+If the user's input already contains a voiceover, script, or spoken words (i.e. dialogue, narration, or any text clearly meant to be read aloud), you MUST use their EXACT words as the voiceover. Do NOT rewrite, rephrase, add to, or shorten their script. Your job is ONLY to (1) generate video prompts for each scene and (2) split their existing script into ${numScenes} chronological parts matching the scenes. Preserve every single word — do not change, add, or remove anything.`;
 
   const voiceoverInstructions = withVoiceover ? `
 VOICEOVER REQUIREMENTS — READ CAREFULLY:
-This is ONE video told across 3 sequential clips (Scene 1 → Scene 2 → Scene 3), each ${duration} long. The user generates each clip separately with an AI video tool, then stitches them together in order into one ~${totalDuration} video. The voiceover is therefore ONE continuous script for the whole video — NOT three separate scripts.
+This is ONE video told across ${numScenes} sequential clips (Scene 1 → Scene ${numScenes}), each ${duration} long, stitched together into one ~${totalVideoSec} second video. The voiceover is ONE continuous script — NOT ${numScenes} separate scripts.
 
-- First, mentally write ONE continuous voiceover script for the full ~${totalDuration} video (~${wordBudget.total} words total).
-- Part 1 = the HOOK — the first words must stop the scroll (bold claim, pattern interrupt, or question). This plays during Scene 1.
-- Part 2 = the BODY — continues the SAME sentence/thought from where Part 1 left off, delivering value, story, or proof. This plays during Scene 2. Do NOT repeat the hook or restart the pitch.
-- Part 3 = the PAYOFF + CTA — continues naturally from Part 2 and ends with one clear call to action (pointing toward scriptsea.com / the product, said naturally, not like an ad). This plays during Scene 3.
-- Each part should be roughly ${wordBudget.perScene} words to match its ${duration} clip when spoken aloud at a natural pace.
-- Write it the way a real top-performing creator talks — conversational, punchy, zero filler ("Hey guys", "So basically", "In today's video").
-- Read Part 1 + Part 2 + Part 3 together — they must form ONE seamless, grammatically continuous script, as if one person spoke it without pausing between clips.
-- IMPORTANT: If the user's input already IS a voiceover/script (it reads like spoken words or narration), use their EXACT text as the voiceover — do NOT rewrite, rephrase, or add any words. Just split their script into 3 chronological parts. Every single word must come from what they wrote, in the same order they wrote it.
+- If the user's input IS a script/voiceover (it reads like spoken words): use their EXACT text. Do NOT rewrite, rephrase, or add words. Just split it into ${numScenes} roughly equal chronological parts (~${wordsPerScene} words per part to fill each ${duration} clip).
+- If the user's input is a product description or idea (NOT a script): write ONE continuous voiceover for the full ~${totalVideoSec}s video, then split it into ${numScenes} parts.
+  - Part 1 = HOOK (scroll-stopping first words)
+  - Middle parts = BODY (continue naturally, deliver value/proof/story)
+  - Part ${numScenes} = PAYOFF + CTA (continue from previous part, end with call to action)
+- Each part ~${wordsPerScene} words to match its ${duration} clip when spoken aloud.
+- All parts must form ONE seamless, continuous script — Part 2 continues where Part 1 left off, etc. No repeated hooks, no restarts.
+- Write conversationally — zero filler ("Hey guys", "So basically").
 
-After each scene's video prompt, add this block (on its own lines):
-🎙️ VOICEOVER — PART [N] OF 3
-[the script text for this part only — just the words to speak, nothing else]` : '';
+After each scene's video prompt, add:
+🎙️ VOICEOVER — PART [N] OF ${numScenes}
+[the script text for this part only]` : '';
+
+  // Build the scene list for the output format dynamically
+  const sceneInstructions = Array.from({ length: numScenes }, (_, i) => {
+    const n = i + 1;
+    const sceneName = n === 1 ? '[short punchy scene name]' : '[different angle or moment, continuing the story]';
+    const voLabel = n === 1 ? 'hook' : n === numScenes ? 'payoff + CTA' : 'continuation';
+    return `SCENE ${n} — ${sceneName}
+[ONE single, complete, ready-to-paste AI video generation prompt as one flowing paragraph, 70-110 words. Character/subject → setting → lighting → action/motion → camera movement near end. Natural prose, no labels.]${withVoiceover ? `\n🎙️ VOICEOVER — PART ${n} OF ${numScenes}\n[${voLabel} text]` : ''}`;
+  }).join('\n\n');
 
   const userPrompt = `INPUT:
 ${input?.trim() ? `"${input.trim()}"` : '[No text provided — base everything on the uploaded image]'}
 ${imageBase64 ? '\n[An image is attached — analyze it carefully and use its exact visual details (colors, shapes, branding, materials) in every prompt.]' : ''}
 
-DURATION PER CLIP: ${duration}${withVoiceover ? ` (3 clips stitched = ~${totalDuration} total video)` : ''}
+DURATION PER CLIP: ${duration}${withVoiceover ? ` (${numScenes} clips × ${duration} = ~${totalVideoSec}s total video)` : ''}
 ${styleConfig.rule(withVoiceover)}
 ${voiceoverInstructions}
 
 ---
 
-OUTPUT FORMAT — follow this EXACTLY, no extra commentary, no headers besides these:
+OUTPUT FORMAT — follow this EXACTLY. Generate exactly ${numScenes} scenes. No extra commentary, no headers besides these:
 
 ❌ NEGATIVE PROMPT
-[One line, comma-separated: 15-20 specific things to avoid in this exact video — mix universal issues (blurry, watermark, text, distorted, extra limbs, flicker) with content-specific issues for this product/style]
+[One line, comma-separated: 15-20 specific things to avoid — universal issues + content-specific issues]
 
-SCENE 1 — [short punchy scene name]
-[ONE single, complete, ready-to-paste AI video generation prompt as one flowing paragraph, 70-110 words. Cover: character/subject description (per style rules above), setting, lighting, action/motion, and camera movement placed near the end of the prompt. Do not label the parts — write it as natural descriptive prose a video model can read directly.]${withVoiceover ? '\n🎙️ VOICEOVER — PART 1 OF 3\n[hook text]' : ''}
-
-SCENE 2 — [different angle or moment, continuing the SAME story, same product/idea]
-[same format as above]${withVoiceover ? '\n🎙️ VOICEOVER — PART 2 OF 3\n[continuation text]' : ''}
-
-SCENE 3 — [different angle or moment, continuing the SAME story, same product/idea]
-[same format as above]${withVoiceover ? '\n🎙️ VOICEOVER — PART 3 OF 3\n[continuation + CTA text]' : ''}`;
+${sceneInstructions}`;
 
   try {
     let responseText = '';
@@ -142,7 +155,7 @@ SCENE 3 — [different angle or moment, continuing the SAME story, same product/
             ],
           },
         ],
-        max_tokens: 2200,
+        max_tokens: Math.min(1200 + numScenes * 350, 4000),
         temperature: 0.85,
       });
       responseText = completion.choices[0]?.message?.content?.trim() || '';
@@ -151,7 +164,7 @@ SCENE 3 — [different angle or moment, continuing the SAME story, same product/
         model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
         input: `${systemPrompt}\n\n${userPrompt}`,
         temperature: 0.85,
-        max_output_tokens: 2200,
+        max_output_tokens: Math.min(1200 + numScenes * 350, 4000),
       });
       responseText = response.output_text?.trim() || '';
     }
