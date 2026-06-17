@@ -7,52 +7,6 @@ const client = process.env.OPENAI_API_KEY
 
 export const config = { maxDuration: 300 };
 
-// Style-specific rules — based on research into Veo, Kling, SeedDance, Hailuo, Runway, Pika prompting patterns
-const STYLE_SYSTEM = {
-  ugc: {
-    name: 'UGC / Viral',
-    rule: (withVoiceover) => `STYLE: UGC / Viral
-- The video MUST feature ONE real human character on camera — a UGC-style creator. Never generate a scene without this person.
-- Describe the character specifically: approximate age, gender, ethnicity/skin tone, hairstyle, clothing, facial expression, and energy.
-- The character is holding, using, demonstrating, or reacting to the product/idea — describe exactly what they do with their hands and body.
-${withVoiceover
-    ? '- The character appears to be SPEAKING directly to camera — mouth moving naturally, engaged expression, as if delivering that part of the voiceover live.'
-    : '- The character reacts with expressive body language and facial expressions — no dialogue, purely visual storytelling.'}
-- Setting: real, relatable environments (bedroom, kitchen, car, desk, outdoors) — never a studio.
-- Lighting: natural window light, daylight, or a ring light — never professional studio lighting.
-- Camera: handheld smartphone feel, slight natural shake, close-up framing on face and product.
-- End the prompt with: photorealistic, ultra HD, no watermark, no text, no subtitles.`,
-  },
-  broll: {
-    name: 'B-Roll',
-    rule: (withVoiceover) => `STYLE: B-Roll
-- ZERO people, hands, faces, or body parts in frame. The product and its environment are the only subjects.
-- Describe the product's exact appearance (shape, color, material, texture, label/branding details) and its setting (surface, background, props).
-- Camera: smooth cinematic movement — slow push-in, orbit, macro pan, slider move, or product rotation.
-- Lighting: premium and intentional — golden hour, rim light, soft diffusion, dramatic shadow play.
-${withVoiceover ? '- This visual will be paired with a narrator voiceover — make it feel like a premium ad backdrop that supports the words without needing a speaker on screen.' : ''}
-- End the prompt with: photorealistic, ultra HD, no watermark, no text, no subtitles.`,
-  },
-  animation: {
-    name: 'Animation',
-    rule: (withVoiceover) => `STYLE: Animation
-- Specify the exact animation style based on what fits the content best (e.g. "3D Pixar-style render", "2D flat motion graphics", "hand-drawn cel-shaded animation").
-- Describe the animated character(s) or world with specific visual details — design, color palette, proportions, textures.
-- Each scene should advance a clear story beat (setup → demonstration/tension → payoff across the 3 scenes).
-${withVoiceover ? '- If a character speaks, describe them as expressive and animated, with mouth/face movement matching dialogue.' : ''}
-- End the prompt with: high quality render, smooth animation, no watermark, no text, no subtitles.`,
-  },
-};
-
-// Roughly 2.5 spoken words per second for natural pacing.
-// The 3 scenes are sequential clips of ONE video, stitched together — totals reflect all 3 clips combined.
-const TOTAL_DURATION = { '8 sec': '24 sec', '10 sec': '30 sec', '15 sec': '45 sec' };
-const WORD_BUDGET = {
-  '8 sec':  { total: '55-65',   perScene: '18-22' },
-  '10 sec': { total: '70-85',   perScene: '23-28' },
-  '15 sec': { total: '105-125', perScene: '35-42' },
-};
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!client) return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
@@ -67,72 +21,99 @@ export default async function handler(req, res) {
   const { input, duration = '10 sec', style = 'ugc', withVoiceover = false } = req.body || {};
   if (!input?.trim()) return res.status(400).json({ error: 'Please describe your product or paste your script.' });
 
-  const styleConfig = STYLE_SYSTEM[style] || STYLE_SYSTEM.ugc;
   const clipSec = parseInt(duration) || 10;
-
-  // Calculate how many clips are needed based on the script/input length
-  const inputWords = (input?.trim() || '').split(/\s+/).filter(Boolean).length;
-  let numScenes;
-  if (inputWords > 15) {
-    const totalReadSec = inputWords / 2.5; // ~2.5 spoken words per second
-    numScenes = Math.max(2, Math.ceil(totalReadSec / clipSec));
-  } else {
-    numScenes = 3;
-  }
+  const inputWords = input.trim().split(/\s+/).filter(Boolean).length;
+  const numScenes = inputWords > 15 ? Math.max(2, Math.ceil((inputWords / 2.5) / clipSec)) : 3;
   const wordsPerScene = Math.round(clipSec * 2.5);
   const totalVideoSec = numScenes * clipSec;
 
-  const systemPrompt = `You are two world-class experts in one: (1) the best AI video prompt engineer alive, who writes single, hyper-detailed prompts that produce stunning, realistic results on Veo, Kling, SeedDance, Hailuo, Runway and Pika; and (2) a direct-response copywriter who has written hooks for videos with hundreds of millions of views. You write prompts and scripts that are immediately ready to use — no placeholders, no fluff.
+  const styleLabel = { ugc: 'UGC / Viral', broll: 'B-Roll', animation: 'Animation' }[style] || 'UGC / Viral';
 
-CRITICAL RULES:
+  const systemPrompt = `You are a world-class AI video prompt engineer. You write prompts that produce stunning, hyper-realistic results when pasted into Veo, Kling, SeedDance, Hailuo, Runway, or Pika.
 
-1. RESPECT THE USER'S SCRIPT:
-If the user's input already contains a voiceover, script, or spoken words (i.e. dialogue, narration, or any text clearly meant to be read aloud), you MUST use their EXACT words as the voiceover. Do NOT rewrite, rephrase, add to, or shorten their script. Your job is ONLY to (1) generate video prompts for each scene and (2) split their existing script into ${numScenes} chronological parts matching the scenes. Preserve every single word — do not change, add, or remove anything.
+YOUR #1 RULE: ANALYZE BEFORE YOU WRITE.
+Before generating a single word of output, you MUST deeply analyze the user's input:
+- What is this about? (product, service, idea, religion, education, entertainment, etc.)
+- Who is the target audience? (age, culture, interests, values)
+- What is the tone and mood? (serious, fun, luxury, spiritual, educational, hype, etc.)
+- Is there cultural, religious, or community context? (Islamic, Christian, African, Asian, Western, Latin, etc.)
+- What kind of person would realistically appear in this video? (Do NOT default to any gender, ethnicity, or look — derive it 100% from the content)
+- What settings and environments fit this specific content? (Do NOT use generic settings)
 
-2. RESPECT CULTURAL AND RELIGIOUS CONTEXT:
-Read the user's script carefully for cultural, religious, or thematic context. If the script is Islamic, faith-based, or references any specific culture, religion, or community — EVERY character description MUST reflect that context accurately (e.g., hijab, modest clothing, appropriate settings like mosques, prayer rooms, halal products). If the script mentions specific cultural dress, traditions, or settings, describe them precisely in every scene. Never generate characters or settings that contradict the cultural context of the script.`;
+EVERY detail in your prompts — the character, their clothing, their skin tone, their hair, the setting, the lighting, the mood — must come directly from your analysis of the input. NEVER use defaults. NEVER use templates. A video about Islamic content must have characters in full hijab and modest clothing. A video about gaming must look completely different from a video about cooking. A video about YouTube growth should not default to any specific gender or ethnicity.
 
-  const voiceoverInstructions = withVoiceover ? `
-VOICEOVER REQUIREMENTS — READ CAREFULLY:
-This is ONE video told across ${numScenes} sequential clips (Scene 1 → Scene ${numScenes}), each ${duration} long, stitched together into one ~${totalVideoSec} second video. The voiceover is ONE continuous script — NOT ${numScenes} separate scripts.
+STRICT RULES:
+- If the input has religious/cultural context (Islam, Christianity, Hinduism, Judaism, any faith or culture): characters MUST be dressed and styled appropriately for that specific religion/culture. Islamic = full hijab, modest dress, no exposed hair. Do not get this wrong.
+- NEVER default all characters to one ethnicity. Read the input and choose what fits.
+- NEVER reuse the same character description template across different inputs. Every prompt must be uniquely crafted for THIS specific input.
+- Each prompt must be vivid, cinematic, and specific enough that someone who has never seen the product/script can picture the exact video frame.
 
-- If the user's input IS a script/voiceover (it reads like spoken words): use their EXACT text. Do NOT rewrite, rephrase, or add words. Just split it into ${numScenes} roughly equal chronological parts (~${wordsPerScene} words per part to fill each ${duration} clip).
-- If the user's input is a product description or idea (NOT a script): write ONE continuous voiceover for the full ~${totalVideoSec}s video, then split it into ${numScenes} parts.
-  - Part 1 = HOOK (scroll-stopping first words)
-  - Middle parts = BODY (continue naturally, deliver value/proof/story)
-  - Part ${numScenes} = PAYOFF + CTA (continue from previous part, end with call to action)
-- Each part ~${wordsPerScene} words to match its ${duration} clip when spoken aloud.
-- All parts must form ONE seamless, continuous script — Part 2 continues where Part 1 left off, etc. No repeated hooks, no restarts.
-- Write conversationally — zero filler ("Hey guys", "So basically").
+VOICEOVER SCRIPT RULE:
+If the user's input reads like a voiceover or script (spoken words, narration, dialogue), use their EXACT words. Do NOT change, rephrase, add to, or shorten a single word. Just split their text across scenes chronologically.`;
 
-After each scene's video prompt, add:
+  const styleRules = {
+    ugc: `STYLE: UGC / Viral
+- Each scene features a real person on camera. WHO this person is must be derived from the script content (their appearance, clothing, setting, energy — all must match the topic).
+- Camera: handheld smartphone feel, slight natural shake, close-up on face and any product.
+- Lighting: natural (window, outdoor, ring light) — never studio.
+- Setting: real environment that matches the content (NOT a generic bedroom for every video).
+${withVoiceover ? '- The person is speaking directly to camera — mouth moving, expressive, delivering the voiceover naturally.' : '- The person reacts with expressive body language — no dialogue.'}
+- End every prompt with: photorealistic, ultra HD, no watermark, no text, no subtitles, no distortion.`,
+    broll: `STYLE: B-Roll
+- ZERO people in any frame. Only the product, environment, or abstract visuals.
+- Camera: smooth cinematic movement — slow push-in, orbit, macro, slider, product rotation.
+- Lighting: premium — golden hour, rim light, dramatic shadows, soft diffusion.
+- Setting and mood must match the content's theme and cultural context.
+- End every prompt with: photorealistic, ultra HD, no watermark, no text, no subtitles, no distortion.`,
+    animation: `STYLE: Animation
+- Specify the exact animation style that fits THIS content (3D Pixar, 2D flat, motion graphics, hand-drawn, etc.).
+- Characters and worlds must reflect the content's cultural/thematic context.
+- Each scene advances a clear story beat.
+- End every prompt with: high quality render, smooth animation, no watermark, no text, no subtitles.`,
+  };
+
+  const voiceoverBlock = withVoiceover ? `
+VOICEOVER:
+This is ONE video across ${numScenes} clips (each ${duration}), stitched into ~${totalVideoSec}s total.
+The voiceover is ONE continuous script split into ${numScenes} parts — NOT ${numScenes} separate scripts.
+
+If the user's input IS a script/voiceover: use their EXACT words. Split into ${numScenes} equal parts (~${wordsPerScene} words each). Do not change a single word.
+If the user's input is a description/idea: write ONE continuous voiceover (~${numScenes * wordsPerScene} words total), then split it. Part 1 = hook, middle = body, Part ${numScenes} = CTA. Each part continues from the previous — no restarts.
+Write conversationally. Zero filler ("Hey guys", "So basically").
+
+After each scene prompt, add on its own line:
 🎙️ VOICEOVER — PART [N] OF ${numScenes}
-[the script text for this part only]` : '';
+[script text for this part only]` : '';
 
-  // Build the scene list for the output format dynamically
-  const sceneInstructions = Array.from({ length: numScenes }, (_, i) => {
+  const sceneFormat = Array.from({ length: numScenes }, (_, i) => {
     const n = i + 1;
-    const sceneName = n === 1 ? '[short punchy scene name]' : '[different angle or moment, continuing the story]';
-    const voLabel = n === 1 ? 'hook' : n === numScenes ? 'payoff + CTA' : 'continuation';
-    return `SCENE ${n} — ${sceneName}
-[ONE single, complete, ready-to-paste AI video generation prompt as one flowing paragraph, 70-110 words. Character/subject → setting → lighting → action/motion → camera movement near end. Natural prose, no labels.]${withVoiceover ? `\n🎙️ VOICEOVER — PART ${n} OF ${numScenes}\n[${voLabel} text]` : ''}`;
+    const vo = withVoiceover ? `\n🎙️ VOICEOVER — PART ${n} OF ${numScenes}\n[text]` : '';
+    return `SCENE ${n} — [name]\n[prompt]${vo}`;
   }).join('\n\n');
 
-  const userPrompt = `INPUT:
+  const userPrompt = `ANALYZE THIS INPUT CAREFULLY BEFORE WRITING ANYTHING:
 "${input.trim()}"
 
-DURATION PER CLIP: ${duration}${withVoiceover ? ` (${numScenes} clips × ${duration} = ~${totalVideoSec}s total video)` : ''}
-${styleConfig.rule(withVoiceover)}
-${voiceoverInstructions}
+Style: ${styleLabel}
+Clip duration: ${duration} (${numScenes} clips = ~${totalVideoSec}s total)
+${styleRules[style] || styleRules.ugc}
+${voiceoverBlock}
 
 ---
 
-OUTPUT FORMAT — follow this EXACTLY. Generate exactly ${numScenes} scenes. No extra commentary, no headers besides these:
+First, internally analyze: What is this about? Who is the audience? What cultural/religious context exists? What kind of person and setting fits THIS specific content? Then generate:
 
 ❌ NEGATIVE PROMPT
-[One line, comma-separated: 15-20 specific things to avoid — universal issues + content-specific issues]
+[comma-separated, 15-20 items: universal issues + things specifically wrong for THIS content]
 
-${sceneInstructions}`;
+${sceneFormat}
+
+RULES FOR EACH SCENE PROMPT:
+- One flowing paragraph, 70-120 words. No labels like "Character:" or "Setting:" — write it as natural vivid prose.
+- Every visual detail must come from your analysis of the input — not from a template.
+- Each scene should show a different moment/angle but tell one coherent story across all ${numScenes} scenes.
+- Be specific: exact clothing items, exact colors, exact materials, exact facial expressions, exact gestures, exact lighting quality, exact camera movement.
+- Camera movement goes near the END of the prompt (works best across all AI video tools).`;
 
   const maxTok = Math.min(1200 + numScenes * 400, 8000);
 
@@ -140,7 +121,7 @@ ${sceneInstructions}`;
     const response = await client.responses.create({
       model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
       input: `${systemPrompt}\n\n${userPrompt}`,
-      temperature: 0.85,
+      temperature: 0.82,
       max_output_tokens: maxTok,
     });
     const responseText = response.output_text?.trim() || '';
