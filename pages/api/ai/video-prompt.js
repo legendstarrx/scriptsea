@@ -6,7 +6,7 @@ const client = process.env.OPENAI_API_KEY
   : null;
 
 export const config = {
-  maxDuration: 60,
+  maxDuration: 300,
   api: { bodyParser: { sizeLimit: '10mb' } },
 };
 
@@ -161,7 +161,7 @@ ${sceneInstructions}`;
             ],
           },
         ],
-        max_tokens: Math.min(1200 + numScenes * 350, 4000),
+        max_tokens: Math.min(1200 + numScenes * 400, 8000),
         temperature: 0.85,
       });
       responseText = completion.choices[0]?.message?.content?.trim() || '';
@@ -170,7 +170,7 @@ ${sceneInstructions}`;
         model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
         input: `${systemPrompt}\n\n${userPrompt}`,
         temperature: 0.85,
-        max_output_tokens: Math.min(1200 + numScenes * 350, 4000),
+        max_output_tokens: Math.min(1200 + numScenes * 400, 8000),
       });
       responseText = response.output_text?.trim() || '';
     }

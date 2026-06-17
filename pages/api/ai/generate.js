@@ -5,7 +5,7 @@ const client = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   }
 
   // ── 4. Generate ───────────────────────────────────────────────────────────
-  const maxTokens = Math.min(Number(requestedTokens) || 2048, 3500);
+  const maxTokens = Math.min(Number(requestedTokens) || 2048, 8000);
   const preferredModel = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
   const fallbackModel = 'gpt-4o-mini';
 
