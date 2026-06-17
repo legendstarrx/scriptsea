@@ -5,10 +5,7 @@ const client = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-export const config = {
-  maxDuration: 300,
-  api: { bodyParser: { sizeLimit: '10mb' } },
-};
+export const config = { maxDuration: 300 };
 
 // Style-specific rules — based on research into Veo, Kling, SeedDance, Hailuo, Runway, Pika prompting patterns
 const STYLE_SYSTEM = {
@@ -67,8 +64,8 @@ export default async function handler(req, res) {
   const { data: authData, error: authErr } = await supabaseAdmin.auth.getUser(token);
   if (authErr || !authData?.user) return res.status(401).json({ error: 'Invalid or expired session.' });
 
-  const { input, imageBase64, imageMimeType, duration = '10 sec', style = 'ugc', withVoiceover = false } = req.body || {};
-  if (!input?.trim() && !imageBase64) return res.status(400).json({ error: 'Please provide a script, idea, or image.' });
+  const { input, duration = '10 sec', style = 'ugc', withVoiceover = false } = req.body || {};
+  if (!input?.trim()) return res.status(400).json({ error: 'Please describe your product or paste your script.' });
 
   const styleConfig = STYLE_SYSTEM[style] || STYLE_SYSTEM.ugc;
   const clipSec = parseInt(duration) || 10;
@@ -122,14 +119,7 @@ After each scene's video prompt, add:
   }).join('\n\n');
 
   const userPrompt = `INPUT:
-${input?.trim() ? `"${input.trim()}"` : '[No text provided — base everything on the uploaded image]'}
-${imageBase64 ? `
-[PRODUCT IMAGE ATTACHED — this is the most important input. Before writing any prompts, study this image and identify:
-- What the product IS (type, category)
-- Its exact colors, shape, size, materials, textures
-- Any branding, logos, labels, packaging details
-- How it looks when held, placed on a surface, or in use
-Then EVERY scene prompt you write must describe THIS SPECIFIC product with those exact visual details — not a generic version of the product. The reader of your prompt has never seen the image, so your words must paint an exact picture of it.]` : ''}
+"${input.trim()}"
 
 DURATION PER CLIP: ${duration}${withVoiceover ? ` (${numScenes} clips × ${duration} = ~${totalVideoSec}s total video)` : ''}
 ${styleConfig.rule(withVoiceover)}
@@ -146,51 +136,14 @@ ${sceneInstructions}`;
 
   const maxTok = Math.min(1200 + numScenes * 400, 8000);
 
-  const callVision = () => client.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: userPrompt },
-          {
-            type: 'image_url',
-            image_url: {
-              url: `data:${imageMimeType || 'image/jpeg'};base64,${imageBase64}`,
-              detail: 'auto',
-            },
-          },
-        ],
-      },
-    ],
-    max_tokens: maxTok,
-    temperature: 0.85,
-  });
-
-  const callText = () => client.responses.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
-    input: `${systemPrompt}\n\n${userPrompt}`,
-    temperature: 0.85,
-    max_output_tokens: maxTok,
-  });
-
   try {
-    let responseText = '';
-
-    if (imageBase64) {
-      let completion;
-      try {
-        completion = await callVision();
-      } catch (firstErr) {
-        console.warn('[video-prompt] Vision first attempt failed, retrying:', firstErr?.message);
-        completion = await callVision();
-      }
-      responseText = completion.choices[0]?.message?.content?.trim() || '';
-    } else {
-      const response = await callText();
-      responseText = response.output_text?.trim() || '';
-    }
+    const response = await client.responses.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+      input: `${systemPrompt}\n\n${userPrompt}`,
+      temperature: 0.85,
+      max_output_tokens: maxTok,
+    });
+    const responseText = response.output_text?.trim() || '';
 
     if (!responseText) return res.status(502).json({ error: 'No response from AI' });
     return res.status(200).json({ text: responseText });

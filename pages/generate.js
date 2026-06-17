@@ -324,7 +324,6 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 // ── VideoPromptTab ─────────────────────────────────────────────────────────
 function VideoPromptTab({ isProUser, onUpgrade }) {
   const [input, setInput] = useState('');
-  const [image, setImage] = useState(null);
   const [vidDuration, setVidDuration] = useState('10 sec');
   const [style, setStyle] = useState('ugc');
   const [withVoiceover, setWithVoiceover] = useState(false);
@@ -339,33 +338,6 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
     { id: 'broll', label: '🎬 B-Roll', desc: 'No characters' },
     { id: 'animation', label: '✨ Animation', desc: 'Animated story' },
   ];
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result;
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 1024;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          const ratio = Math.min(MAX / w, MAX / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const resized = canvas.toDataURL('image/jpeg', 0.8);
-        setImage({ base64: resized.split(',')[1], mimeType: 'image/jpeg', name: file.name, preview: resized });
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
-  };
 
   const parseResult = (text) => {
     // Split on SCENE headers
@@ -399,7 +371,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
   };
 
   const generate = async () => {
-    if (!input.trim() && !image) { setErr('Describe your product, paste a script, or upload an image.'); return; }
+    if (!input.trim()) { setErr('Describe your product or paste your script.'); return; }
     if (!isProUser) { onUpgrade(); return; }
     setErr(''); setScenes([]); setNegativePrompt(''); setLoading(true);
     try {
@@ -410,8 +382,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
-          input: input.trim(), imageBase64: image?.base64 || null,
-          imageMimeType: image?.mimeType || null,
+          input: input.trim(),
           duration: vidDuration, style, withVoiceover,
         }),
       });
@@ -445,13 +416,13 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
       {/* Input card */}
       <div style={{ background: 'white', borderRadius: '20px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
         <label style={{ display: 'block', fontWeight: 700, color: '#222', marginBottom: '10px', fontSize: '0.92rem' }}>
-          Describe your product, idea, or paste a script
+          Your product info or script
         </label>
         <textarea
           value={input}
           onChange={e => setInput(e.target.value)}
           rows={4}
-          placeholder="e.g. ScriptSea — an AI tool that writes viral video scripts in seconds. Target: content creators aged 18-35. Tone: exciting, modern, FOMO-driven."
+          placeholder="Paste your script here, or describe your product…&#10;&#10;e.g. ScriptSea — an AI tool that writes viral video scripts in seconds. Target: content creators aged 18-35. Tone: exciting, modern."
           style={{
             width: '100%', padding: '14px 16px', borderRadius: '12px', border: '2px solid #e8e8e8',
             fontSize: '0.93rem', color: '#222', resize: 'vertical', outline: 'none',
@@ -460,28 +431,6 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           onFocus={e => e.target.style.borderColor = '#FF3366'}
           onBlur={e => e.target.style.borderColor = '#e8e8e8'}
         />
-
-        {/* Image upload */}
-        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <label style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
-            borderRadius: '50px', border: '1.5px dashed #ddd', cursor: 'pointer',
-            fontSize: '0.83rem', color: '#888', fontWeight: 500,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-            {image ? image.name : 'Upload product image'}
-            <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-          </label>
-          {image && (
-            <>
-              <img src={image.preview} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover' }} />
-              <button onClick={() => setImage(null)} style={{ background: 'none', border: 'none', color: '#FF3366', cursor: 'pointer', fontSize: '1rem' }}>×</button>
-            </>
-          )}
-        </div>
 
         {/* Settings */}
         <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
