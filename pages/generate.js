@@ -343,12 +343,24 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result;
-      setImage({ base64: dataUrl.split(',')[1], mimeType: file.type, name: file.name, preview: dataUrl });
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1024;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        const ratio = Math.min(MAX / w, MAX / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      setImage({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg', name: file.name, preview: dataUrl });
+      URL.revokeObjectURL(img.src);
     };
-    reader.readAsDataURL(file);
+    img.src = URL.createObjectURL(file);
   };
 
   const parseResult = (text) => {

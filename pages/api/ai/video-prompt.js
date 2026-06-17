@@ -118,7 +118,13 @@ After each scene's video prompt, add:
 
   const userPrompt = `INPUT:
 ${input?.trim() ? `"${input.trim()}"` : '[No text provided — base everything on the uploaded image]'}
-${imageBase64 ? '\n[An image is attached — analyze it carefully and use its exact visual details (colors, shapes, branding, materials) in every prompt.]' : ''}
+${imageBase64 ? `
+[PRODUCT IMAGE ATTACHED — this is the most important input. Before writing any prompts, study this image and identify:
+- What the product IS (type, category)
+- Its exact colors, shape, size, materials, textures
+- Any branding, logos, labels, packaging details
+- How it looks when held, placed on a surface, or in use
+Then EVERY scene prompt you write must describe THIS SPECIFIC product with those exact visual details — not a generic version of the product. The reader of your prompt has never seen the image, so your words must paint an exact picture of it.]` : ''}
 
 DURATION PER CLIP: ${duration}${withVoiceover ? ` (${numScenes} clips × ${duration} = ~${totalVideoSec}s total video)` : ''}
 ${styleConfig.rule(withVoiceover)}
