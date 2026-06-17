@@ -387,7 +387,10 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Generation failed');
+      if (!res.ok) {
+        if (data?.error === 'limit_reached') { onUpgrade(); return; }
+        throw new Error(data?.error || 'Generation failed');
+      }
       const { parsed, negPrompt } = parseResult(data.text || '');
       setScenes(parsed);
       setNegativePrompt(negPrompt);
