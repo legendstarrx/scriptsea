@@ -386,8 +386,8 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
         body: JSON.stringify({
           input: input.trim(),
           duration: vidDuration, style, withVoiceover,
-          charGender: charGender !== 'auto' ? charGender : undefined,
-          charAppearance: charAppearance !== 'auto' ? charAppearance : undefined,
+          charGender: style !== 'broll' && charGender !== 'auto' ? charGender : undefined,
+          charAppearance: style !== 'broll' && charAppearance !== 'auto' ? charAppearance : undefined,
         }),
       });
       const data = await res.json();
@@ -468,8 +468,8 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
             </div>
           </div>
 
-          {/* Character selector */}
-          <div style={{ padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Character selector (hidden for B-Roll) */}
+          {style !== 'broll' && <div style={{ padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <p style={{ margin: 0, fontSize: '0.7rem', color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Character (optional)</p>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {['auto', 'male', 'female'].map(g => (
@@ -494,7 +494,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Voiceover toggle */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0' }}>
