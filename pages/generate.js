@@ -472,9 +472,9 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           <div style={{ padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <p style={{ margin: 0, fontSize: '0.7rem', color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Character (optional)</p>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {['auto', 'male', 'female', 'mixed'].map(g => (
+              {['auto', 'male', 'female'].map(g => (
                 <button key={g} onClick={() => setCharGender(g)} style={{ ...pill(charGender === g), fontSize: '0.8rem', padding: '6px 14px' }}>
-                  {{ auto: 'Any gender', male: 'Male', female: 'Female', mixed: 'Mixed' }[g]}
+                  {{ auto: 'Any gender', male: 'Male', female: 'Female' }[g]}
                 </button>
               ))}
             </div>
