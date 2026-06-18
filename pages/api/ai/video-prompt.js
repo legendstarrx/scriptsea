@@ -67,14 +67,14 @@ YOUR PROCESS — follow this every time:
 
 STEP 1: READ the user's script/input deeply. Understand what it's about, who the audience is, what the tone is, and what cultural or religious context exists.
 
-STEP 2: DECIDE on ONE single character for the entire video. This is the SAME person in EVERY scene — same age, same face, same hair, same skin tone, same clothing, same style. They do not change between scenes. Think: if this were a real video, it's one creator filming themselves. Describe this character once based on what fits the script's content, audience, and cultural context.
+STEP 2: DECIDE on ONE single character for the entire video. Write a character description sentence — for example: "a 25-year-old Black woman with long braids, wearing a white oversized hoodie and gold hoop earrings" — based on what fits the script's content, audience, and cultural context.
 
 STEP 3: DECIDE on the visual world — what environments, lighting, and energy match this script. Each scene can be a different location or angle, but the overall mood and style stay consistent.
 
-STEP 4: Write each scene prompt featuring this ONE character in different moments that follow the script chronologically.
+STEP 4: Write each scene prompt. CRITICAL: copy-paste the EXACT character description from Step 2 into EVERY scene prompt word-for-word. AI video generators process each prompt independently — they have no memory of previous scenes. If you don't repeat the full description, the tool will generate a completely different person. This is called "consistent character" prompting.
 
 ABSOLUTE RULES:
-- ONE CHARACTER across ALL scenes. Same person. Same look. Same clothes. Never introduce a second person unless the script explicitly calls for it.
+- ONE CHARACTER across ALL scenes. The character description sentence MUST appear word-for-word in every scene prompt. Do not shorten it, do not paraphrase it, do not say "the same woman" — repeat the full description every time.
 - Every character detail must come from the script's content. Islamic script = character in full hijab and modest dress. Tech/gaming script = different look entirely. You derive it from the input, never from a template.
 - If the input has any religious context: get the dress code RIGHT. Islamic = full hijab covering all hair, loose modest clothing, no exposed skin beyond face and hands. Do not approximate this. Do not write "half hijab" or "loosely draped scarf."
 - Each scene is a different MOMENT in time (different action, different angle, different setting if needed) but the SAME character continuing the SAME story.
@@ -104,7 +104,7 @@ After each scene prompt, on its own line:
   const sceneFormat = Array.from({ length: numScenes }, (_, i) => {
     const n = i + 1;
     const vo = withVoiceover ? `\n🎙️ VOICEOVER — PART ${n} OF ${numScenes}\n[text]` : '';
-    return `SCENE ${n} — [name]\n[70-120 word prompt — same character, different moment]${vo}`;
+    return `SCENE ${n} — [name]\n[70-120 word prompt — repeat full character description, different moment/action]${vo}`;
   }).join('\n\n');
 
   const userPrompt = `READ THIS SCRIPT/INPUT CAREFULLY:

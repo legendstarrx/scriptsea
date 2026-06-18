@@ -527,6 +527,24 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
         </div>
       ))}
 
+      {/* Copy all prompts */}
+      {scenes.length > 0 && (
+        <button
+          onClick={() => {
+            const all = scenes.map((s, i) => `${s.title}\n${s.prompt}${s.voiceover ? `\n\nVOICEOVER (Part ${i + 1}):\n${s.voiceover}` : ''}`).join('\n\n---\n\n')
+              + (negativePrompt ? `\n\n---\n\nNEGATIVE PROMPT:\n${negativePrompt}` : '');
+            copyText(all, 'all');
+          }}
+          style={{
+            width: '100%', padding: '14px', background: copiedIdx === 'all' ? '#22c55e' : 'linear-gradient(135deg,#FF3366,#ff6b8a)',
+            color: 'white', border: 'none', borderRadius: '12px', fontSize: '0.92rem', fontWeight: 700,
+            cursor: 'pointer', boxShadow: '0 4px 14px rgba(255,51,102,0.2)',
+          }}
+        >
+          {copiedIdx === 'all' ? '✓ All Prompts Copied!' : 'Copy All Prompts'}
+        </button>
+      )}
+
       {/* Full combined voiceover script */}
       {scenes.length > 0 && scenes.some(s => s.voiceover) && (
         <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
