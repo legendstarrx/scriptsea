@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   }
 
   // ── Parse request ────────────────────────────────────────────────────────
-  const { input, duration = '10 sec', style = 'ugc', withVoiceover = false } = req.body || {};
+  const { input, duration = '10 sec', style = 'ugc', withVoiceover = false, charGender, charAppearance } = req.body || {};
   if (!input?.trim()) return res.status(400).json({ error: 'Please describe your product or paste your script.' });
 
   const clipSec = parseInt(duration) || 10;
@@ -92,12 +92,17 @@ PROMPT QUALITY RULES:
 - Camera movement goes near the END of each prompt (best for Kling/Veo/Runway compatibility).
 - End every prompt with: photorealistic, ultra HD, shallow depth of field, no watermark, no text, no subtitles, no distortion.`;
 
+  // Build character preference instruction
+  const charPref = (charGender || charAppearance)
+    ? `\nCHARACTER PREFERENCE (user selected): The character must be ${charGender ? `${charGender}` : 'any gender'}${charAppearance ? `, ${charAppearance}` : ''}. Respect this choice in your character description — but still derive clothing, style, and energy from the script content.`
+    : '';
+
   const styleNote = {
-    ugc: withVoiceoverHandheld
-      ? `UGC style WITH voiceover: the character is speaking directly to camera — mouth open and moving naturally mid-sentence, animated facial expressions matching the energy of what they're saying, direct eye contact with the lens.  phone camera, natural lighting (window light, outdoor, ring light). The viewer should feel like they're watching a real creator's video, not a stock clip.`
+    ugc: withVoiceover
+      ? `UGC style WITH voiceover: the character is speaking directly to camera — mouth open and moving naturally mid-sentence, animated facial expressions matching the energy of what they're saying, direct eye contact with the lens. Handheld phone camera, natural lighting (window light, outdoor, ring light). The viewer should feel like they're watching a real creator's video, not a stock clip.`
       : `UGC style WITHOUT voiceover (user will record their own voice over this footage):
 STRICT NO-TALKING RULE: The character's mouth MUST be CLOSED in every single scene. No speaking, no mouthing words, no open mouth, no talking gestures. The character is SILENT — they perform visual actions only.
-Instead of talking, the character: demonstrates the product with their hands, reacts with facial expressions (surprise, satisfaction, focus, excitement), scrolls a phone screen, types on a laptop, picks up and examines objects, gestures toward something, walks into frame, turns to reveal something. Every scene must have strong physical ACTION and MOVEMENT that tells the story visually — the user's voice narration will be layered on top later., natural lighting. Make it look like behind-the-scenes footage of a real person doing real things.`,
+Instead of talking, the character: demonstrates the product with their hands, reacts with facial expressions (surprise, satisfaction, focus, excitement), scrolls a phone screen, types on a laptop, picks up and examines objects, gestures toward something, walks into frame, turns to reveal something. Every scene must have strong physical ACTION and MOVEMENT that tells the story visually — the user's voice narration will be layered on top later. Handheld phone camera, natural lighting. Make it look like behind-the-scenes footage of a real person doing real things.`,
     broll: 'B-Roll style: ZERO people in frame. Only the product, environment, textures, surfaces, and atmosphere. Every frame should be beautiful enough to screenshot. Smooth cinematic camera movements — orbits, push-ins, macro details, slider moves. Premium lighting — golden hour, rim light, dramatic shadows.',
     animation: 'Animation style: specify the exact animation type that fits THIS content (3D Pixar / 2D flat / motion graphics / hand-drawn cel-shaded). Characters and world design must reflect the content theme and cultural context. Each scene advances a clear story beat. Rich colors, smooth motion, expressive characters.',
   }[style] || '';
@@ -122,7 +127,7 @@ After each scene prompt, on its own line:
   const userPrompt = `READ THIS SCRIPT/INPUT CAREFULLY:
 "${input.trim()}"
 
-${styleNote}
+${styleNote}${charPref}
 Clip duration: ${duration} | ${numScenes} clips = ~${totalVideoSec}s total video
 ${voiceoverBlock}
 
