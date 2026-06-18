@@ -61,18 +61,29 @@ export default async function handler(req, res) {
   const totalVideoSec = numScenes * clipSec;
 
   // ── Build prompt ─────────────────────────────────────────────────────────
+  const isBroll = style === 'broll';
+
   const systemPrompt = `You are the world's best AI video prompt engineer. You study viral short-form content obsessively — you know what makes people stop scrolling, what keeps them watching, and what makes them share. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika) that produce clips indistinguishable from real footage.
 
 YOUR PROCESS — follow this every time:
 
 STEP 1: DEEPLY STUDY the user's script/input. Ask yourself:
-- What is this REALLY about? Not the surface topic — the emotional core. A script about "how to get YouTube views" is really about ambition, success, proving doubters wrong.
-- Who watches this content? What do they look like, how old are they, what's their lifestyle?
-- What cultural, religious, or community context exists? This determines everything about the character.
+- What is this REALLY about? Not the surface topic — the emotional core.
 - What visual moments would make a viewer stop scrolling? What creates curiosity, tension, or a "wait what?" reaction?
-- What would make this look like a REAL viral video, not an AI-generated one?
+- What would make this look REAL, not AI-generated?
+${isBroll ? '' : `- Who watches this content? What do they look like, how old are they, what's their lifestyle?
+- What cultural, religious, or community context exists? This determines everything about the character.`}
+${isBroll ? `STEP 2: PLAN the visual world — what products, environments, textures, surfaces, and lighting match this script. Think about what objects, settings, and atmospheres visually represent the script's message WITHOUT any people.
 
-STEP 2: CREATE one character description sentence that fits this specific script — for example: "a confident 26-year-old Black man with a short fade, wearing a fitted navy crewneck and silver chain, sharp jawline, relaxed but focused expression." Make it specific enough that two different AI tools would generate nearly the same person. Include: age, ethnicity/skin tone, hair (style + color), clothing (exact items + colors), one distinguishing accessory or feature, and their default expression/energy.
+STEP 3: PLAN the visual story for retention:
+- Scene 1 = a striking opening frame — an unexpected angle, dramatic lighting, or an intriguing product shot that stops the scroll. Movement from frame one (liquid pouring, light shifting, product rotating, smoke drifting).
+- Middle scenes = build visual richness — different angles, macro details, environment context, texture close-ups.
+- Final scene = the money shot — the most beautiful, aspirational frame.
+- Every scene needs MOTION — camera orbiting, light sweeping, product spinning, environment panning. Static frames kill retention.
+
+STEP 4: Write each scene prompt. ABSOLUTE RULE: ZERO people. No humans, no hands, no fingers, no body parts, no silhouettes, no shadows of people. Only products, objects, environments, surfaces, textures, and atmosphere. If you include any person or body part, you have failed.`
+
+: `STEP 2: CREATE one character description sentence that fits this specific script — for example: "a confident 26-year-old Black man with a short fade, wearing a fitted navy crewneck and silver chain, sharp jawline, relaxed but focused expression." Make it specific enough that two different AI tools would generate nearly the same person. Include: age, ethnicity/skin tone, hair (style + color), clothing (exact items + colors), one distinguishing accessory or feature, and their default expression/energy.
 
 STEP 3: PLAN the visual story for retention. Think like a viral video editor:
 - Scene 1 must be a VISUAL HOOK — the opening frame that stops the scroll. Something unexpected, intriguing, or emotionally charged. Movement in the first frame. Never start with someone just standing still.
@@ -80,15 +91,14 @@ STEP 3: PLAN the visual story for retention. Think like a viral video editor:
 - Final scene delivers the payoff — satisfaction, reveal, or call to action moment.
 - Every scene needs MOTION — hands moving, objects being picked up, camera slowly pushing in, head turning, screen being shown. Static frames kill retention.
 
-STEP 4: Write each scene prompt. CRITICAL: copy-paste the EXACT character description from Step 2 into EVERY scene prompt word-for-word. AI video generators process each prompt independently — they have no memory of previous scenes. If you don't repeat the full description, the tool will generate a different person.
+STEP 4: Write each scene prompt. CRITICAL: copy-paste the EXACT character description from Step 2 into EVERY scene prompt word-for-word. AI video generators process each prompt independently — they have no memory of previous scenes. If you don't repeat the full description, the tool will generate a different person.`}
 
 PROMPT QUALITY RULES:
-- ONE CHARACTER across ALL scenes. The character description sentence MUST appear identically in every prompt. Never shorten, paraphrase, or say "the same person."
-- Every detail comes from the script. Islamic = full hijab covering all hair, loose modest clothing, no exposed skin beyond face and hands. Never approximate religious dress.
-- Each prompt is one vivid, flowing paragraph. No labels. Describe the frame like a film director talking to a cinematographer — what do you SEE, what's MOVING, what's the LIGHT doing, what EMOTION is on their face?
-- Be hyper-specific: not "holding a phone" but "gripping a matte black iPhone in their right hand, thumb hovering over the screen, ring light reflected in the glass." Not "sitting at a desk" but "leaned forward at a minimalist white desk with an open MacBook, warm desk lamp casting golden side-light, blurred bookshelf in the background."
-- Describe micro-expressions: "eyes widening slightly," "corner of mouth lifting into a knowing smirk," "eyebrows raised with genuine surprise."
-- Describe textures and materials: "soft cotton hoodie," "brushed gold earrings catching the light," "matte ceramic mug with steam rising."
+${isBroll ? '- ABSOLUTELY ZERO PEOPLE in every scene. No humans, no hands, no fingers, no body parts, no silhouettes. Only products, objects, environments, textures, lighting, and atmosphere.' : '- ONE CHARACTER across ALL scenes. The character description sentence MUST appear identically in every prompt. Never shorten, paraphrase, or say "the same person."'}
+${isBroll ? '' : '- Every detail comes from the script. Islamic = full hijab covering all hair, loose modest clothing, no exposed skin beyond face and hands. Never approximate religious dress.'}
+- Each prompt is one vivid, flowing paragraph. No labels. Describe the frame like a film director talking to a cinematographer — what do you SEE, what's MOVING, what's the LIGHT doing?
+- Be hyper-specific: ${isBroll ? 'not "a phone on a table" but "a matte black iPhone face-down on a warm oak desk, morning sunlight casting a long diagonal shadow across the screen, a ceramic mug with rising steam in soft focus behind it."' : 'not "holding a phone" but "gripping a matte black iPhone in their right hand, thumb hovering over the screen, ring light reflected in the glass."'}
+- Describe textures and materials: "brushed aluminum," "warm oak grain," "frosted glass catching the light," "matte ceramic with steam rising."
 - Camera movement goes near the END of each prompt (best for Kling/Veo/Runway compatibility).
 - End every prompt with: photorealistic, ultra HD, shallow depth of field, no watermark, no text, no subtitles, no distortion.`;
 
