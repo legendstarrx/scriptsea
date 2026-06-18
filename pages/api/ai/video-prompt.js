@@ -93,9 +93,15 @@ PROMPT QUALITY RULES:
 - End every prompt with: photorealistic, ultra HD, shallow depth of field, no watermark, no text, no subtitles, no distortion.`;
 
   // Build character preference instruction
-  const charPref = (charGender || charAppearance)
-    ? `\nCHARACTER PREFERENCE (user selected): The character must be ${charGender ? `${charGender}` : 'any gender'}${charAppearance ? `, ${charAppearance}` : ''}. Respect this choice in your character description — but still derive clothing, style, and energy from the script content.`
-    : '';
+  const isMixed = charGender === 'mixed' || charAppearance === 'mixed';
+  let charPref = '';
+  if (isMixed) {
+    const genderNote = charGender === 'mixed' ? 'Use a mix of male and female characters' : charGender ? `All characters should be ${charGender}` : '';
+    const appearNote = charAppearance === 'mixed' ? 'Use a diverse mix of ethnicities' : charAppearance ? `All characters should be ${charAppearance}` : '';
+    charPref = `\nCHARACTER PREFERENCE (user selected MIXED): Use DIFFERENT characters in different scenes — a diverse cast. ${genderNote}${genderNote && appearNote ? '. ' : ''}${appearNote}. Each scene still needs a full, detailed character description (since AI video tools process each prompt independently), but the characters can be different people. Derive clothing, style, and energy from the script content.`;
+  } else if (charGender || charAppearance) {
+    charPref = `\nCHARACTER PREFERENCE (user selected): The character must be ${charGender ? `${charGender}` : 'any gender'}${charAppearance ? `, ${charAppearance}` : ''}. Respect this choice in your character description — but still derive clothing, style, and energy from the script content.`;
+  }
 
   const styleNote = {
     ugc: withVoiceover
@@ -103,7 +109,9 @@ PROMPT QUALITY RULES:
       : `UGC style WITHOUT voiceover (user will record their own voice over this footage):
 STRICT NO-TALKING RULE: The character's mouth MUST be CLOSED in every single scene. No speaking, no mouthing words, no open mouth, no talking gestures. The character is SILENT — they perform visual actions only.
 Instead of talking, the character: demonstrates the product with their hands, reacts with facial expressions (surprise, satisfaction, focus, excitement), scrolls a phone screen, types on a laptop, picks up and examines objects, gestures toward something, walks into frame, turns to reveal something. Every scene must have strong physical ACTION and MOVEMENT that tells the story visually — the user's voice narration will be layered on top later. Choose camera style and lighting based on what the script calls for — not a default.`,
-    broll: 'B-Roll style: ZERO people in frame. Only the product, environment, textures, surfaces, and atmosphere. Every frame should be beautiful enough to screenshot. Smooth cinematic camera movements — orbits, push-ins, macro details, slider moves. Premium lighting — golden hour, rim light, dramatic shadows.',
+    broll: (charGender || charAppearance)
+      ? 'Lifestyle B-Roll style: cinematic shots that include people interacting with the product/environment naturally — NOT talking to camera, NOT UGC. Think: hands picking up a product, someone walking through a space, silhouettes, over-the-shoulder shots, candid lifestyle moments. Smooth cinematic camera movements. Premium lighting — golden hour, rim light, dramatic shadows. Describe each person fully in every prompt.'
+      : 'B-Roll style: ZERO people in frame. Only the product, environment, textures, surfaces, and atmosphere. Every frame should be beautiful enough to screenshot. Smooth cinematic camera movements — orbits, push-ins, macro details, slider moves. Premium lighting — golden hour, rim light, dramatic shadows.',
     animation: 'Animation style: specify the exact animation type that fits THIS content (3D Pixar / 2D flat / motion graphics / hand-drawn cel-shaded). Characters and world design must reflect the content theme and cultural context. Each scene advances a clear story beat. Rich colors, smooth motion, expressive characters.',
   }[style] || '';
 

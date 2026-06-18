@@ -468,34 +468,33 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
             </div>
           </div>
 
-          {/* Character selector (hidden for B-Roll) */}
-          {style !== 'broll' && (
-            <div style={{ padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <p style={{ margin: 0, fontSize: '0.7rem', color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Character (optional)</p>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {['auto', 'male', 'female'].map(g => (
-                  <button key={g} onClick={() => setCharGender(g)} style={{ ...pill(charGender === g), fontSize: '0.8rem', padding: '6px 14px' }}>
-                    {g === 'auto' ? 'Any gender' : g === 'male' ? 'Male' : 'Female'}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {[
-                  { id: 'auto', label: 'Any' },
-                  { id: 'black', label: 'Black' },
-                  { id: 'white', label: 'White' },
-                  { id: 'asian', label: 'Asian' },
-                  { id: 'latino', label: 'Latino' },
-                  { id: 'middle-eastern', label: 'Middle Eastern' },
-                  { id: 'south-asian', label: 'South Asian' },
-                ].map(a => (
-                  <button key={a.id} onClick={() => setCharAppearance(a.id)} style={{ ...pill(charAppearance === a.id), fontSize: '0.8rem', padding: '6px 12px' }}>
-                    {a.label}
-                  </button>
-                ))}
-              </div>
+          {/* Character selector */}
+          <div style={{ padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <p style={{ margin: 0, fontSize: '0.7rem', color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Character (optional)</p>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {['auto', 'male', 'female', 'mixed'].map(g => (
+                <button key={g} onClick={() => setCharGender(g)} style={{ ...pill(charGender === g), fontSize: '0.8rem', padding: '6px 14px' }}>
+                  {{ auto: 'Any gender', male: 'Male', female: 'Female', mixed: 'Mixed' }[g]}
+                </button>
+              ))}
             </div>
-          )}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { id: 'auto', label: 'Any' },
+                { id: 'black', label: 'Black' },
+                { id: 'white', label: 'White' },
+                { id: 'asian', label: 'Asian' },
+                { id: 'latino', label: 'Latino' },
+                { id: 'middle-eastern', label: 'Middle Eastern' },
+                { id: 'south-asian', label: 'South Asian' },
+                { id: 'mixed', label: 'Mixed' },
+              ].map(a => (
+                <button key={a.id} onClick={() => setCharAppearance(a.id)} style={{ ...pill(charAppearance === a.id), fontSize: '0.8rem', padding: '6px 12px' }}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Voiceover toggle */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0' }}>
