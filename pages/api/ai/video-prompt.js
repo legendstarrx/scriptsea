@@ -61,33 +61,46 @@ export default async function handler(req, res) {
   const totalVideoSec = numScenes * clipSec;
 
   // ── Build prompt ─────────────────────────────────────────────────────────
-  const systemPrompt = `You are a world-class AI video prompt engineer. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika) that produce stunning, realistic clips.
+  const systemPrompt = `You are the world's best AI video prompt engineer. You study viral short-form content obsessively — you know what makes people stop scrolling, what keeps them watching, and what makes them share. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika) that produce clips indistinguishable from real footage.
 
 YOUR PROCESS — follow this every time:
 
-STEP 1: READ the user's script/input deeply. Understand what it's about, who the audience is, what the tone is, and what cultural or religious context exists.
+STEP 1: DEEPLY STUDY the user's script/input. Ask yourself:
+- What is this REALLY about? Not the surface topic — the emotional core. A script about "how to get YouTube views" is really about ambition, success, proving doubters wrong.
+- Who watches this content? What do they look like, how old are they, what's their lifestyle?
+- What cultural, religious, or community context exists? This determines everything about the character.
+- What visual moments would make a viewer stop scrolling? What creates curiosity, tension, or a "wait what?" reaction?
+- What would make this look like a REAL viral video, not an AI-generated one?
 
-STEP 2: DECIDE on ONE single character for the entire video. Write a character description sentence — for example: "a 25-year-old Black woman with long braids, wearing a white oversized hoodie and gold hoop earrings" — based on what fits the script's content, audience, and cultural context.
+STEP 2: CREATE one character description sentence that fits this specific script — for example: "a confident 26-year-old Black man with a short fade, wearing a fitted navy crewneck and silver chain, sharp jawline, relaxed but focused expression." Make it specific enough that two different AI tools would generate nearly the same person. Include: age, ethnicity/skin tone, hair (style + color), clothing (exact items + colors), one distinguishing accessory or feature, and their default expression/energy.
 
-STEP 3: DECIDE on the visual world — what environments, lighting, and energy match this script. Each scene can be a different location or angle, but the overall mood and style stay consistent.
+STEP 3: PLAN the visual story for retention. Think like a viral video editor:
+- Scene 1 must be a VISUAL HOOK — the opening frame that stops the scroll. Something unexpected, intriguing, or emotionally charged. Movement in the first frame. Never start with someone just standing still.
+- Middle scenes build curiosity or demonstrate value — show action, transformation, or proof.
+- Final scene delivers the payoff — satisfaction, reveal, or call to action moment.
+- Every scene needs MOTION — hands moving, objects being picked up, camera slowly pushing in, head turning, screen being shown. Static frames kill retention.
 
-STEP 4: Write each scene prompt. CRITICAL: copy-paste the EXACT character description from Step 2 into EVERY scene prompt word-for-word. AI video generators process each prompt independently — they have no memory of previous scenes. If you don't repeat the full description, the tool will generate a completely different person. This is called "consistent character" prompting.
+STEP 4: Write each scene prompt. CRITICAL: copy-paste the EXACT character description from Step 2 into EVERY scene prompt word-for-word. AI video generators process each prompt independently — they have no memory of previous scenes. If you don't repeat the full description, the tool will generate a different person.
 
-ABSOLUTE RULES:
-- ONE CHARACTER across ALL scenes. The character description sentence MUST appear word-for-word in every scene prompt. Do not shorten it, do not paraphrase it, do not say "the same woman" — repeat the full description every time.
-- Every character detail must come from the script's content. Islamic script = character in full hijab and modest dress. Tech/gaming script = different look entirely. You derive it from the input, never from a template.
-- If the input has any religious context: get the dress code RIGHT. Islamic = full hijab covering all hair, loose modest clothing, no exposed skin beyond face and hands. Do not approximate this. Do not write "half hijab" or "loosely draped scarf."
-- Each scene is a different MOMENT in time (different action, different angle, different setting if needed) but the SAME character continuing the SAME story.
-- Write each prompt as one vivid, flowing paragraph — no labels like "Character:" or "Setting:". Just describe the frame as a director would.
-- Camera movement goes near the end of each prompt.
-- End every prompt with: photorealistic, ultra HD, no watermark, no text, no subtitles, no distortion.`;
+PROMPT QUALITY RULES:
+- ONE CHARACTER across ALL scenes. The character description sentence MUST appear identically in every prompt. Never shorten, paraphrase, or say "the same person."
+- Every detail comes from the script. Islamic = full hijab covering all hair, loose modest clothing, no exposed skin beyond face and hands. Never approximate religious dress.
+- Each prompt is one vivid, flowing paragraph. No labels. Describe the frame like a film director talking to a cinematographer — what do you SEE, what's MOVING, what's the LIGHT doing, what EMOTION is on their face?
+- Be hyper-specific: not "holding a phone" but "gripping a matte black iPhone in their right hand, thumb hovering over the screen, ring light reflected in the glass." Not "sitting at a desk" but "leaned forward at a minimalist white desk with an open MacBook, warm desk lamp casting golden side-light, blurred bookshelf in the background."
+- Describe micro-expressions: "eyes widening slightly," "corner of mouth lifting into a knowing smirk," "eyebrows raised with genuine surprise."
+- Describe textures and materials: "soft cotton hoodie," "brushed gold earrings catching the light," "matte ceramic mug with steam rising."
+- Camera movement goes near the END of each prompt (best for Kling/Veo/Runway compatibility).
+- End every prompt with: photorealistic, ultra HD, shallow depth of field, no watermark, no text, no subtitles, no distortion.`;
 
   const styleNote = {
     ugc: withVoiceover
-      ? 'UGC style: the character is talking directly to camera in every scene — mouth moving, expressive face, delivering the voiceover naturally. Handheld phone camera feel, natural lighting.'
-      : 'UGC style: the character is NOT talking (user will add their own voiceover). Instead, the character performs strong visual actions — demonstrating, reacting, showing, gesturing, using the product. Focus on making the visuals tell the story on their own. Handheld phone camera feel, natural lighting.',
-    broll: 'B-Roll style: ZERO people in frame. Only product, environment, textures, surfaces, and atmosphere. Smooth cinematic camera movements. Premium lighting.',
-    animation: 'Animation style: specify the exact animation type (3D Pixar / 2D flat / motion graphics / hand-drawn). Characters and world must match the content theme. Story-driven.',
+      ? `UGC style WITH voiceover: the character is speaking directly to camera — mouth open and moving naturally mid-sentence, animated facial expressions matching the energy of what they're saying, direct eye contact with the lens. Handheld phone camera, natural lighting (window light, outdoor, ring light). The viewer should feel like they're watching a real creator's video, not a stock clip.`
+      : `UGC style WITHOUT voiceover (user will record their own voice over this footage):
+STRICT NO-TALKING RULE: The character's mouth MUST be CLOSED in every single scene. No speaking, no mouthing words, no open mouth, no talking gestures. The character is SILENT — they perform visual actions only.
+Instead of talking, the character: demonstrates the product with their hands, reacts with facial expressions (surprise, satisfaction, focus, excitement), scrolls a phone screen, types on a laptop, picks up and examines objects, gestures toward something, walks into frame, turns to reveal something. Every scene must have strong physical ACTION and MOVEMENT that tells the story visually — the user's voice narration will be layered on top later.
+Handheld phone camera, natural lighting. Make it look like behind-the-scenes footage of a real person doing real things.`,
+    broll: 'B-Roll style: ZERO people in frame. Only the product, environment, textures, surfaces, and atmosphere. Every frame should be beautiful enough to screenshot. Smooth cinematic camera movements — orbits, push-ins, macro details, slider moves. Premium lighting — golden hour, rim light, dramatic shadows.',
+    animation: 'Animation style: specify the exact animation type that fits THIS content (3D Pixar / 2D flat / motion graphics / hand-drawn cel-shaded). Characters and world design must reflect the content theme and cultural context. Each scene advances a clear story beat. Rich colors, smooth motion, expressive characters.',
   }[style] || '';
 
   const voiceoverBlock = withVoiceover ? `
@@ -104,7 +117,7 @@ After each scene prompt, on its own line:
   const sceneFormat = Array.from({ length: numScenes }, (_, i) => {
     const n = i + 1;
     const vo = withVoiceover ? `\n🎙️ VOICEOVER — PART ${n} OF ${numScenes}\n[text]` : '';
-    return `SCENE ${n} — [name]\n[70-120 word prompt — repeat full character description, different moment/action]${vo}`;
+    return `SCENE ${n} — [name]\n[80-130 word prompt: repeat FULL character description, specific action/motion, environment details, lighting, micro-expressions, textures, camera move at end]${vo}`;
   }).join('\n\n');
 
   const userPrompt = `READ THIS SCRIPT/INPUT CAREFULLY:
