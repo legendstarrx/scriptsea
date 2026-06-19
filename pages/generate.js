@@ -480,6 +480,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
                   { id: '2d-flat', label: '2D Flat' },
                   { id: '3d-realistic', label: 'Realistic 3D' },
                   { id: 'motion-graphics', label: 'Motion Graphics' },
+                  { id: 'stick-figure', label: 'Stick Figure' },
                 ].map(a => (
                   <button key={a.id} onClick={() => setAnimStyle(a.id)} style={{ ...pill(animStyle === a.id), fontSize: '0.8rem', padding: '6px 14px' }}>
                     {a.label}
