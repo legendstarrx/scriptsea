@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   }
 
   // ── Parse request ────────────────────────────────────────────────────────
-  const { input, duration = '10 sec', style = 'ugc', withVoiceover = false, charGender, charAppearance } = req.body || {};
+  const { input, duration = '10 sec', style = 'ugc', withVoiceover = false, charGender, charAppearance, animStyle } = req.body || {};
   if (!input?.trim()) return res.status(400).json({ error: 'Please describe your product or paste your script.' });
 
   const clipSec = parseInt(duration) || 10;
@@ -120,7 +120,7 @@ ${isBroll ? '' : '- Every detail comes from the script. Islamic = full hijab cov
 STRICT NO-TALKING RULE: The character's mouth MUST be CLOSED in every single scene. No speaking, no mouthing words, no open mouth, no talking gestures. The character is SILENT — they perform visual actions only.
 Instead of talking, the character: demonstrates the product with their hands, reacts with facial expressions (surprise, satisfaction, focus, excitement), scrolls a phone screen, types on a laptop, picks up and examines objects, gestures toward something, walks into frame, turns to reveal something. Every scene must have strong physical ACTION and MOVEMENT that tells the story visually — the user's voice narration will be layered on top later. Choose camera style and lighting based on what the script calls for — not a default.`,
     broll: 'B-Roll style: ZERO people in frame. No characters, no hands, no body parts. Only the product, environment, textures, surfaces, and atmosphere. Every frame should be beautiful enough to screenshot. Smooth cinematic camera movements — orbits, push-ins, macro details, slider moves. Premium lighting — golden hour, rim light, dramatic shadows.',
-    animation: 'Animation style: specify the exact animation type that fits THIS content (3D Pixar / 2D flat / motion graphics / hand-drawn cel-shaded). Characters and world design must reflect the content theme and cultural context. Each scene advances a clear story beat. Rich colors, smooth motion, expressive characters.',
+    animation: `Animation style: ${{ '3d-pixar': '3D Pixar-style animation — rounded, polished characters with expressive eyes, rich textures, cinematic lighting like a Pixar/Disney film.', '2d-flat': '2D flat illustration style — clean vector shapes, bold colors, simple but expressive character designs, smooth tweened motion.', '3d-realistic': 'Realistic 3D CGI animation — photorealistic textures and lighting but with clearly animated/rendered characters and environments. Think high-end commercial CGI.', 'motion-graphics': 'Motion graphics style — kinetic typography, animated icons, data visualizations, abstract shapes, and infographic-style animations. Clean, modern, professional.' }[animStyle] || '3D Pixar-style animation.'} Characters and world design must reflect the content theme and cultural context. Each scene advances a clear story beat.`,
   }[style] || '';
 
   const voiceoverBlock = withVoiceover ? `

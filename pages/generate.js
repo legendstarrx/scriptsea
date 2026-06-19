@@ -328,6 +328,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
   const [style, setStyle] = useState('ugc');
   const [charGender, setCharGender] = useState('auto');
   const [charAppearance, setCharAppearance] = useState('auto');
+  const [animStyle, setAnimStyle] = useState('3d-pixar');
   const [withVoiceover, setWithVoiceover] = useState(false);
   const [scenes, setScenes] = useState([]); // parsed scene objects
   const [negativePrompt, setNegativePrompt] = useState('');
@@ -388,6 +389,7 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           duration: vidDuration, style, withVoiceover,
           charGender: style !== 'broll' && charGender !== 'auto' ? charGender : undefined,
           charAppearance: style !== 'broll' && charAppearance !== 'auto' ? charAppearance : undefined,
+          animStyle: style === 'animation' ? animStyle : undefined,
         }),
       });
       const data = await res.json();
@@ -467,6 +469,25 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
               ))}
             </div>
           </div>
+
+          {/* Animation type selector */}
+          {style === 'animation' && (
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: '0.7rem', color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Animation type</p>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {[
+                  { id: '3d-pixar', label: '3D Pixar' },
+                  { id: '2d-flat', label: '2D Flat' },
+                  { id: '3d-realistic', label: 'Realistic 3D' },
+                  { id: 'motion-graphics', label: 'Motion Graphics' },
+                ].map(a => (
+                  <button key={a.id} onClick={() => setAnimStyle(a.id)} style={{ ...pill(animStyle === a.id), fontSize: '0.8rem', padding: '6px 14px' }}>
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Character selector (hidden for B-Roll) */}
           {style !== 'broll' && <div style={{ padding: '14px 16px', background: '#fafafa', borderRadius: '12px', border: '1.5px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -559,22 +580,36 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
         </div>
       ))}
 
-      {/* Copy all prompts */}
+      {/* Copy all + Regenerate */}
       {scenes.length > 0 && (
-        <button
-          onClick={() => {
-            const all = scenes.map((s, i) => `${s.title}\n${s.prompt}${s.voiceover ? `\n\nVOICEOVER (Part ${i + 1}):\n${s.voiceover}` : ''}`).join('\n\n---\n\n')
-              + (negativePrompt ? `\n\n---\n\nNEGATIVE PROMPT:\n${negativePrompt}` : '');
-            copyText(all, 'all');
-          }}
-          style={{
-            width: '100%', padding: '14px', background: copiedIdx === 'all' ? '#22c55e' : 'linear-gradient(135deg,#FF3366,#ff6b8a)',
-            color: 'white', border: 'none', borderRadius: '12px', fontSize: '0.92rem', fontWeight: 700,
-            cursor: 'pointer', boxShadow: '0 4px 14px rgba(255,51,102,0.2)',
-          }}
-        >
-          {copiedIdx === 'all' ? '✓ All Prompts Copied!' : 'Copy All Prompts'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => {
+              const all = scenes.map((s, i) => `${s.title}\n${s.prompt}${s.voiceover ? `\n\nVOICEOVER (Part ${i + 1}):\n${s.voiceover}` : ''}`).join('\n\n---\n\n')
+                + (negativePrompt ? `\n\n---\n\nNEGATIVE PROMPT:\n${negativePrompt}` : '');
+              copyText(all, 'all');
+            }}
+            style={{
+              flex: 1, padding: '14px', background: copiedIdx === 'all' ? '#22c55e' : 'linear-gradient(135deg,#FF3366,#ff6b8a)',
+              color: 'white', border: 'none', borderRadius: '12px', fontSize: '0.92rem', fontWeight: 700,
+              cursor: 'pointer', boxShadow: '0 4px 14px rgba(255,51,102,0.2)',
+            }}
+          >
+            {copiedIdx === 'all' ? '✓ Copied!' : 'Copy All Prompts'}
+          </button>
+          <button
+            onClick={generate}
+            disabled={loading}
+            style={{
+              padding: '14px 24px', background: 'transparent', color: '#FF3366',
+              border: '2px solid #FF3366', borderRadius: '12px', fontSize: '0.92rem', fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1,
+              display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
+            }}
+          >
+            ↻ Regenerate
+          </button>
+        </div>
       )}
 
       {/* Full combined voiceover script */}
@@ -2617,8 +2652,21 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
                   borderTop: '1px solid #eee',
                   display: 'flex',
                   gap: '10px',
-                  justifyContent: 'flex-end'
+                  justifyContent: 'flex-end',
+                  alignItems: 'center'
                 }}>
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    style={{
+                      padding: '8px 18px', background: 'transparent', color: '#FF3366',
+                      border: '1.5px solid #FF3366', borderRadius: '20px', fontSize: '0.9rem',
+                      fontWeight: 600, cursor: isGenerating ? 'not-allowed' : 'pointer',
+                      opacity: isGenerating ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px',
+                    }}
+                  >
+                    ↻ Regenerate
+                  </button>
                   <div style={{ position: 'relative' }}>
                     <button
                       onClick={() => {
