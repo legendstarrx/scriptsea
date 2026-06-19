@@ -86,9 +86,10 @@ STEP 4: Write each scene prompt. ABSOLUTE RULE: ZERO people. No humans, no hands
 
 PROMPT QUALITY RULES:
 - ZERO PEOPLE. If you include any person or body part, you have failed.
+- Each scene's visuals must represent what the script says at that timestamp.
 - Each prompt is one vivid paragraph. No labels.
 - Be hyper-specific about textures, materials, colors, and lighting.
-- Camera movement near the END of each prompt.
+- NO default zoom-ins on every scene. Vary camera: some static, some slow orbit, some with purpose-driven movement. Only zoom/push when the moment calls for it.
 - End every prompt with: photorealistic, ultra HD, shallow depth of field, no watermark, no text, no subtitles, no distortion.`;
   } else if (isAnim) {
     systemSteps = `THE ANIMATION STYLE FOR THIS VIDEO IS: ${animStyleDesc}
@@ -110,8 +111,10 @@ STEP 4: Write each scene prompt. CRITICAL: repeat the full animated character de
 
 PROMPT QUALITY RULES:
 - ONE ANIMATED CHARACTER across all scenes. Same design, same style, same outfit in every prompt.
+- Each scene's visuals must represent what the script says at that timestamp — not random animation.
 - Cultural/religious context still applies to animated characters.
 - Each prompt is one vivid paragraph describing an ANIMATED scene.
+- NO default zoom-ins. Vary camera: some static wide shots, some close-ups, some with subtle animated camera movement. Only use dramatic camera moves when the story moment calls for it.
 - Describe the animation world: colors, lighting style, background design, atmosphere — all in the chosen animation style.
 ${animStyle === 'stick-figure' ? '- End every prompt with: stick figure animation, white background, clean black lines, hand-drawn style, smooth animation, no watermark, no text.' : animStyle === 'motion-graphics' ? '- End every prompt with: motion graphics, clean vector design, smooth transitions, professional animation, no watermark, no text.' : animStyle === '2d-flat' ? '- End every prompt with: 2D flat illustration, bold colors, clean vector art, smooth animation, no watermark, no text, no distortion.' : animStyle === '3d-realistic' ? '- End every prompt with: realistic 3D CGI render, cinematic lighting, high-poly, detailed textures, no watermark, no text, no distortion.' : '- End every prompt with: 3D Pixar-style animation, soft lighting, vibrant colors, cinematic render, no watermark, no text, no distortion.'}`;
   } else {
@@ -127,22 +130,35 @@ STEP 4: Write each scene prompt. CRITICAL: copy-paste the EXACT character descri
 
 PROMPT QUALITY RULES:
 - ONE CHARACTER across ALL scenes. The character description sentence MUST appear identically in every prompt.
+- Each scene's visuals must represent what the script says at that timestamp. If the script talks about showing results, the character should be showing results. Match the content.
 - Every detail comes from the script. Islamic = full hijab covering all hair, loose modest clothing, no exposed skin beyond face and hands.
 - Each prompt is one vivid, flowing paragraph. No labels.
 - Be hyper-specific: not "holding a phone" but "gripping a matte black iPhone, thumb hovering over the screen, ring light reflected in the glass."
 - Describe micro-expressions, textures, materials.
-- Camera movement near the END of each prompt.
+- NO default zoom-ins on every scene. Vary the camera: some scenes static, some with subtle movement, some with intentional dramatic movement. Only zoom/push when that specific moment benefits from it.
 - End every prompt with: photorealistic, ultra HD, shallow depth of field, no watermark, no text, no subtitles, no distortion.`;
   }
 
-  const systemPrompt = `You are the world's best AI video prompt engineer. You study viral short-form content obsessively — you know what makes people stop scrolling, what keeps them watching, and what makes them share. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika).
+  const noVoiceoverRule = !withVoiceover ? `
+STRICT RULE — NO VOICEOVER:
+The user did NOT select voiceover. Do NOT generate any voiceover text, narration, dialogue, or spoken words. Output ONLY the video prompts and negative prompt. No 🎙️ sections. No VOICEOVER sections. No script text. ONLY visual scene prompts.` : '';
+
+  const systemPrompt = `You are the world's best AI video prompt engineer. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika) that produce stunning clips.
+${noVoiceoverRule}
+
+UNIVERSAL RULES (apply to ALL styles — UGC, B-Roll, and Animation):
+
+1. MATCH THE SCRIPT: Read the user's script/input line by line. Each scene prompt must visually represent what the script says at that point in time. Scene 1 covers the beginning of the script, Scene 2 covers the next part, and so on. The visuals must match the words — if the script talks about growth, show growth. If it talks about struggle, show struggle. Do not create random unrelated visuals.
+
+2. NO UNNECESSARY CAMERA MOVEMENTS: Do NOT default to zoom-ins, push-ins, or dollys on every scene. Only use a camera movement when it genuinely serves that specific moment (e.g., a reveal, a dramatic beat, showing scale). Many scenes are better with a STATIC or SLOW camera. Vary the camera approach — some scenes static, some with subtle movement, some with intentional dramatic movement. Never add "camera slowly pushes in" to every prompt.
+
+3. RETENTION THROUGH CONTENT, NOT GIMMICKS: Retention comes from visuals that match compelling content — not from camera tricks on every frame. The script's message is what hooks people. Your job is to visualize that message as vividly as possible.
+
+${isBroll ? '' : '4. CULTURAL/RELIGIOUS CONTEXT: If the script has any religious or cultural context, respect it in every detail. Islamic = full hijab, modest dress. Never approximate.'}
 
 YOUR PROCESS:
 
-STEP 1: DEEPLY STUDY the user's script/input. Ask yourself:
-- What is this REALLY about? The emotional core.
-- What visual moments would stop scrolling?
-${isBroll ? '' : '- What cultural, religious, or community context exists?'}
+STEP 1: DEEPLY STUDY the user's script/input. Break it into ${numScenes} chronological parts. Each part becomes one scene. The visuals for each scene must match what that part of the script is saying.
 
 ${systemSteps}`;
 
