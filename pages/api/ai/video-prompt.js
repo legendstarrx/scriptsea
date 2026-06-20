@@ -107,10 +107,11 @@ STEP 3: PLAN the animated visual story for retention:
 - Final scene = payoff moment with emotional impact.
 - Every scene needs ANIMATED MOTION — character gestures, objects moving, camera panning through the animated world.
 
-STEP 4: Write each scene prompt. CRITICAL: repeat the full animated character description in EVERY prompt. Start or include the animation style name in each prompt so the AI tool knows to render animation, not live-action.
+STEP 4: Write each scene prompt based on what the script says at that point. If the character appears, copy-paste their FULL animated design description — never say "the same character." Not every scene needs the character — some may be animated environment shots, object close-ups, or atmospheric scenes. Include the animation style name in each prompt.
 
 PROMPT QUALITY RULES:
-- ONE ANIMATED CHARACTER across all scenes. Same design, same style, same outfit in every prompt.
+- When the character appears, their FULL animated design description must be written out every time. Never reference previous scenes.
+- Not every scene needs the character — animated establishing shots, object animations, and world-building scenes are powerful. Let the script decide.
 - Each scene's visuals must represent what the script says at that timestamp — not random animation.
 - Cultural/religious context still applies to animated characters.
 - Each prompt is one vivid paragraph describing an ANIMATED scene.
@@ -126,11 +127,12 @@ STEP 3: PLAN the visual story for retention:
 - Final scene delivers the payoff — satisfaction, reveal, or call to action moment.
 - Every scene needs MOTION — hands moving, objects being picked up, camera pushing in, head turning.
 
-STEP 4: Write each scene prompt. CRITICAL: copy-paste the EXACT character description from Step 2 into EVERY scene prompt word-for-word. AI video generators have no memory between scenes.
+STEP 4: Write each scene prompt based on what the script says at that point. If the character appears in a scene, copy-paste their FULL description from Step 2 — never say "the same character" or shorten it. Some scenes may not need the character at all (establishing shots, product close-ups, environment). Let the script's content at each timestamp decide.
 
 PROMPT QUALITY RULES:
-- ONE CHARACTER across ALL scenes. The character description sentence MUST appear identically in every prompt.
-- Each scene's visuals must represent what the script says at that timestamp. If the script talks about showing results, the character should be showing results. Match the content.
+- When the character appears, their FULL description must be written out every time. Never reference previous scenes.
+- Not every scene needs the character — use establishing shots, product close-ups, or environment shots where the script calls for it.
+- Each scene's visuals must represent what the script says at that timestamp.
 - Every detail comes from the script. Islamic = full hijab covering all hair, loose modest clothing, no exposed skin beyond face and hands.
 - Each prompt is one vivid, flowing paragraph. No labels.
 - Be hyper-specific: not "holding a phone" but "gripping a matte black iPhone, thumb hovering over the screen, ring light reflected in the glass."
@@ -151,6 +153,10 @@ UNIVERSAL RULES (apply to ALL styles — UGC, B-Roll, and Animation):
 1. MATCH THE SCRIPT: Read the user's script/input line by line. Each scene prompt must visually represent what the script says at that point in time. Scene 1 covers the beginning of the script, Scene 2 covers the next part, and so on. The visuals must match the words — if the script talks about growth, show growth. If it talks about struggle, show struggle. Do not create random unrelated visuals.
 
 2. NO UNNECESSARY CAMERA MOVEMENTS: Do NOT default to zoom-ins, push-ins, or dollys on every scene. Only use a camera movement when it genuinely serves that specific moment (e.g., a reveal, a dramatic beat, showing scale). Many scenes are better with a STATIC or SLOW camera. Vary the camera approach — some scenes static, some with subtle movement, some with intentional dramatic movement. Never add "camera slowly pushes in" to every prompt.
+
+3. NEVER SAY "the same character" or "the same person" or "same as before" — AI video tools process each prompt INDEPENDENTLY with ZERO memory. If a character appears in a scene, you MUST write their FULL description again from scratch (age, appearance, clothing, accessories — every detail). "The same character" means NOTHING to an AI video generator. Repeat the full description or the tool will generate a completely different person.
+
+4. NOT EVERY SCENE NEEDS A CHARACTER: You are telling a visual STORY based on the script. Some scenes may be establishing shots (a city skyline, a marketplace, a room), product close-ups, environment shots, or abstract visuals — with NO character in frame. Only include the character in a scene when the script's content at that timestamp calls for it. If the script says "she left her home and walked to the marketplace," the first scene might show the home/door without anyone, the next might show her walking, the next might show the marketplace. Think like a film director — not every frame needs the main character.
 
 3. RETENTION THROUGH CONTENT, NOT GIMMICKS: Retention comes from visuals that match compelling content — not from camera tricks on every frame. The script's message is what hooks people. Your job is to visualize that message as vividly as possible.
 
