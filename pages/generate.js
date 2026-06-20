@@ -818,22 +818,20 @@ export default function Generate() {
         .trim();
 
       // Split into sections
-      const sections = cleanScript.split(/(?=Hook|Intro|Body|Conclusion|CTA|Trending)/);
-      
+      const sections = cleanScript.split(/(?=Script|Hook|Intro|Body|Conclusion|CTA|Trending)/);
+
       let yPos = 75;
       doc.setFontSize(12);
       doc.setFont(undefined, 'normal');
 
       sections.forEach(section => {
         if (section.trim()) {
-          // Check if we need a new page
           if (yPos > 250) {
             doc.addPage();
-            yPos = 20; // Reset Y position for new page
+            yPos = 20;
           }
 
-          // Add section title in bold
-          const sectionTitle = section.match(/^(Hook|Intro|Body|Conclusion|CTA|Trending)/)?.[0];
+          const sectionTitle = section.match(/^(Script|Hook|Intro|Body|Conclusion|CTA|Trending)/)?.[0];
           if (sectionTitle) {
             doc.setFont(undefined, 'bold');
             doc.text(sectionTitle, 20, yPos);
@@ -841,18 +839,16 @@ export default function Generate() {
             doc.setFont(undefined, 'normal');
           }
 
-          // Add section content
-          const content = section.replace(/^(Hook|Intro|Body|Conclusion|CTA|Trending)/, '').trim();
+          const content = section.replace(/^(Script|Hook|Intro|Body|Conclusion|CTA|Trending)/, '').trim();
           const splitText = doc.splitTextToSize(content, 170);
-          
-          // Check if content will fit on current page
+
           if (yPos + (splitText.length * 7) > 250) {
             doc.addPage();
             yPos = 20;
           }
-          
+
           doc.text(splitText, 20, yPos);
-          yPos += (splitText.length * 7) + 10; // Add spacing between sections
+          yPos += (splitText.length * 7) + 10;
         }
       });
       
@@ -889,8 +885,7 @@ export default function Generate() {
         .replace(/\s+/g, ' ') // Replace multiple spaces with single space
         .trim();
 
-      // Split into sections, with fallback for empty content
-      const sections = cleanScript ? cleanScript.split(/(?=Hook|Intro|Body|Conclusion|CTA|Trending)/) : [];
+      const sections = cleanScript ? cleanScript.split(/(?=Script|Hook|Intro|Body|Conclusion|CTA|Trending)/) : [];
 
       const doc = new Document({
         sections: [{
@@ -957,8 +952,8 @@ export default function Generate() {
             ...sections.map(section => {
               if (!section?.trim()) return null;
               
-              const sectionTitle = section.match(/^(Hook|Intro|Body|Conclusion|CTA|Trending)/)?.[0] || '';
-              const sectionContent = section.replace(/^(Hook|Intro|Body|Conclusion|CTA|Trending)/, '').trim();
+              const sectionTitle = section.match(/^(Script|Hook|Intro|Body|Conclusion|CTA|Trending)/)?.[0] || '';
+              const sectionContent = section.replace(/^(Script|Hook|Intro|Body|Conclusion|CTA|Trending)/, '').trim();
               
               if (!sectionContent) return null;
 
@@ -1124,7 +1119,7 @@ export default function Generate() {
   };
 
   const normalizeTitleSection = (rawText = '') => {
-    const sectionRegex = /(#{1,2}\s*(?:Viral|Advertisement)\s+Title\s+Options[\s\S]*?)(?=\n#{1,2}\s*(?:Hook|Intro|Body|Conclusion|CTA|Visual Elements|Audio Elements)\b|$)/i;
+    const sectionRegex = /(#{1,2}\s*(?:Viral|Advertisement)\s+Title\s+Options[\s\S]*?)(?=\n#{1,2}\s*(?:Script|Hook|Intro|Body|Conclusion|CTA|Visual Elements|Audio Elements)\b|$)/i;
     const match = rawText.match(sectionRegex);
     if (!match) return rawText;
 
@@ -1352,11 +1347,29 @@ Match their energy level, sentence rhythm, signature transitions, and natural ca
     const prompt = `You are a professional scriptwriter who has written viral content that has generated over 500 million views. You write scripts that sound FULLY HUMAN — no AI tells, no filler openers, no generic structure.
 
 HARD RULES — violating any of these is a failure:
-1. NEVER start with "yo", "hey", "alright", "okay so", "so today", "in this video", "welcome back", or any warm-up phrase. Start COLD with the hook itself.
-2. NEVER use generic AI phrases like "picture this", "imagine a world", "but here's the thing", "let's dive in", "buckle up".
-3. WORD COUNT: The script (Hook + Body + CTA combined) must be EXACTLY ${targetWords} words. Count carefully. A ${duration} script at normal speaking pace = ${targetWords} words.
-4. No filler. Every single sentence must earn its place. If a sentence doesn't hook, inform, or advance — cut it.
-5. Write in first person, active voice, spoken English. Not written English. Short sentences. Real contractions. How a human actually talks.
+1. NEVER start with "yo", "hey", "alright", "okay so", "so today", "in this video", "welcome back", or any warm-up phrase. Start COLD — the very first words ARE the hook.
+2. NEVER use generic AI phrases like "picture this", "imagine a world", "but here's the thing", "let's dive in", "buckle up", "here's the kicker", "the truth is".
+3. WORD COUNT: The entire script must be EXACTLY ${targetWords} words. Count carefully. A ${duration} script at normal speaking pace = ${targetWords} words.
+4. No filler. Every single sentence must earn its place. If removing a sentence doesn't hurt the script, it shouldn't be there.
+5. Write in spoken English. Not written English. Short sentences. Real contractions. How a human actually talks out loud. Simple language that anyone in the world — even a 5-year-old — can understand. No big words. No academic language. No corporate speak.
+6. NO CALL TO ACTION. Do NOT end with "follow", "subscribe", "like", "comment", "share", "check the link", "hit the button" or any CTA. The script ends at the payoff — the last line should leave impact, not beg for engagement.
+7. Do NOT label sections as "Hook" or "Body" in the output. Just write the script as one continuous flow of spoken words.
+
+THE HOOK (first 1-2 sentences):
+This is the most important part. The hook must be so strong that it is physically impossible to scroll past. Study what works on viral videos:
+- A shocking fact or counterintuitive statement ("If a shark circles you, don't swim away.")
+- A bold claim that creates instant curiosity
+- A pattern interrupt — something unexpected that breaks the viewer's autopilot scrolling
+- NOT a question. Statements hook harder than questions.
+- The hook alone should make someone think "wait, what?" or "I need to hear this"
+
+THE BODY (everything after the hook):
+- Every 10-15 seconds, introduce NEW information, a twist, or a shift. Never let the viewer feel like they know what's coming next.
+- Build tension and curiosity. Each sentence should make the NEXT sentence feel necessary.
+- Use specific details, numbers, and examples — not vague generalities.
+- Make complex things feel simple. Explain like you're talking to a friend who's smart but knows nothing about this topic.
+- The body should feel like a story unfolding, not a lecture. Even educational content should have narrative tension.
+- End with a powerful final line that delivers the payoff — the "oh damn" moment. This is the last thing they hear. Make it land.
 
 ASSIGNMENT:
 Topic: "${effectiveTopic}"
@@ -1374,35 +1387,28 @@ ${toneDir}
 ${refVideoSection}
 ${creatorSection}
 ${scriptType === 'ad' ? `
-AD STRUCTURE:
-Hook → Stop the scroll with the problem or a shocking result (not a question).
-Problem → Make them feel understood in 1–2 sentences.
-Solution → Introduce it through demonstration, not description.
-Proof → One specific, believable result or detail.
-Urgency → Create genuine FOMO without fake scarcity.
-CTA → One clear action. Make it feel like the obvious next step.` : `
-VIRAL STRUCTURE:
-Hook → The first sentence must make stopping feel impossible. Use a statement, not a question.
-Build → Layer in intrigue, tension, or new information every 10–15 seconds.
-Peak → The moment everything clicks. The "oh damn" point.
-Payoff → Deliver exactly what the hook promised. Don't undersell it.
-CTA → One natural ask that feels like a continuation of the story.`}
+AD STRUCTURE (do NOT label these sections in the output — just flow naturally):
+- Stop the scroll with the problem or a shocking result (not a question).
+- Make them feel understood in 1–2 sentences.
+- Introduce the solution through demonstration, not description.
+- One specific, believable result or detail as proof.
+- End with impact — NOT a call to action.` : `
+VIRAL STRUCTURE (do NOT label these sections in the output — just flow naturally):
+- Open with a hook that makes stopping impossible. Statement, not question.
+- Layer in intrigue, tension, or new information every 10–15 seconds.
+- Build to the peak — the moment everything clicks.
+- Deliver the payoff. The last line should hit hard and stick in their mind.
+- Do NOT add a CTA at the end.`}
 
-OUTPUT FORMAT — use these exact section headers, nothing else:
+OUTPUT FORMAT:
 
 # ${scriptType === 'ad' ? 'Advertisement Title Options' : 'Viral Title Options'}
 Title 1: <title>
 Title 2: <title>
 Title 3: <title>
 
-## Hook
-[First spoken words — no warm-up, maximum impact]
-
-## Body
-[Main content — this is the bulk of the script. Keep the word count target in mind for the TOTAL script]
-
-## CTA
-[One natural call to action that feels like a continuation of the story, not an interruption]
+## Script
+[The entire script as one continuous flow of spoken words. No section labels like "Hook" or "Body". Just the script from first word to last. Start with the hook, flow into the body, end with the payoff. No CTA.]
 `;
 
     return prompt;
@@ -2595,7 +2601,7 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
                           .trim();
                         
                         cleanText = cleanText
-                          .replace(/(Viral Title Options|Hook|Intro|Body|Conclusion|CTA)/g, '\n\n$1\n')
+                          .replace(/(Viral Title Options|Script|Hook|Intro|Body|Conclusion|CTA)/g, '\n\n$1\n')
                           .replace(/(Title \d+:)/g, '\n$1\n');
                         
                         await navigator.clipboard.writeText(cleanText);
