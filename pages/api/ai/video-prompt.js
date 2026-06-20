@@ -56,8 +56,12 @@ export default async function handler(req, res) {
 
   const clipSec = parseInt(duration) || 10;
   const inputWords = input.trim().split(/\s+/).filter(Boolean).length;
-  const numScenes = inputWords > 15 ? Math.max(2, Math.ceil((inputWords / 2.5) / clipSec)) : 3;
-  const wordsPerScene = Math.round(clipSec * 2.5);
+  // More clips = more visual changes = better retention. Aim for ~3-5 sec per visual change.
+  const secsPerChange = Math.min(clipSec, 5);
+  const numScenes = inputWords > 15
+    ? Math.max(3, Math.ceil((inputWords / 2.5) / secsPerChange))
+    : Math.max(3, Math.ceil((clipSec * 3) / secsPerChange));
+  const wordsPerScene = Math.round(secsPerChange * 2.5);
   const totalVideoSec = numScenes * clipSec;
 
   // ── Build prompt ─────────────────────────────────────────────────────────
@@ -158,13 +162,17 @@ UNIVERSAL RULES (apply to ALL styles — UGC, B-Roll, and Animation):
 
 4. NOT EVERY SCENE NEEDS A CHARACTER: You are telling a visual STORY based on the script. Some scenes may be establishing shots (a city skyline, a marketplace, a room), product close-ups, environment shots, or abstract visuals — with NO character in frame. Only include the character in a scene when the script's content at that timestamp calls for it. If the script says "she left her home and walked to the marketplace," the first scene might show the home/door without anyone, the next might show her walking, the next might show the marketplace. Think like a film director — not every frame needs the main character.
 
-3. RETENTION THROUGH CONTENT, NOT GIMMICKS: Retention comes from visuals that match compelling content — not from camera tricks on every frame. The script's message is what hooks people. Your job is to visualize that message as vividly as possible.
+5. PACING AND VISUAL CHANGES FOR RETENTION: This is how viral videos work — the visuals CHANGE frequently. A viewer should never stare at the same static frame for more than 3-5 seconds. Think like a real video editor cutting a viral clip:
+- THE HOOK (first 2-3 seconds): Must be the most visually striking, unexpected, or curiosity-triggering moment. Something that makes a scroller STOP. This is NOT a gentle opening — it's a pattern interrupt. A close-up of something intriguing, a dramatic action mid-motion, an emotional expression, a surprising visual.
+- EVERY SCENE = A DIFFERENT VISUAL: Each scene prompt must show a noticeably different shot — different angle, different framing, different setting, different action. If Scene 1 is a close-up of hands, Scene 2 should be a wide shot or a different angle. If Scene 3 is indoors, Scene 4 could be outdoors. NEVER have two consecutive scenes that look the same.
+- MATCH THE SCRIPT'S ENERGY: When the script is intense, the visuals should be intense (close-ups, fast action, dramatic lighting). When the script is reflective, the visuals should breathe (wide shots, soft light, slow motion). The visual pacing follows the script's emotional arc.
+- SHOW, DON'T TELL: If the script says "I struggled for months," don't just show someone sitting — show dark lighting, cluttered desk, head in hands, empty coffee cups. Visualize the MEANING, not just the literal words. Make a 5-year-old understand the story just from watching without sound.
 
-${isBroll ? '' : '4. CULTURAL/RELIGIOUS CONTEXT: If the script has any religious or cultural context, respect it in every detail. Islamic = full hijab, modest dress. Never approximate.'}
+${isBroll ? '' : '6. CULTURAL/RELIGIOUS CONTEXT: If the script has any religious or cultural context, respect it in every detail. Islamic = full hijab, modest dress. Never approximate.'}
 
 YOUR PROCESS:
 
-STEP 1: DEEPLY STUDY the user's script/input. Break it into ${numScenes} chronological parts. Each part becomes one scene. The visuals for each scene must match what that part of the script is saying.
+STEP 1: DEEPLY STUDY the user's script/input. Break it into ${numScenes} chronological moments — each moment is ~${secsPerChange} seconds of visual. The first 1-2 moments are the HOOK (most striking visuals). The rest follow the script's story. Each moment must look DIFFERENT from the previous one — different angle, framing, setting, or action. A viewer should feel visual variety every few seconds, like a real edited video.
 
 ${systemSteps}`;
 
