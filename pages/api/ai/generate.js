@@ -1,15 +1,15 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
-const client = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const client = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
 export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!client) return res.status(500).json({ error: 'OPENAI_API_KEY is not configured' });
+  if (!client) return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' });
   if (!supabaseAdmin) return res.status(500).json({ error: 'Server not configured' });
 
   const { prompt, temperature = 0.9, maxTokens: requestedTokens = 2048 } = req.body || {};
@@ -32,7 +32,6 @@ export default async function handler(req, res) {
     .eq('id', user.id)
     .maybeSingle();
 
-  // Create profile on-the-fly if it doesn't exist yet
   if (!profile) {
     const { data: created } = await supabaseAdmin
       .from('profiles')
@@ -56,7 +55,6 @@ export default async function handler(req, res) {
       });
     }
   } else {
-    // Starter: 1 free script only
     if (scriptsGenerated >= 1) {
       return res.status(403).json({
         error: 'limit_reached',
@@ -67,25 +65,18 @@ export default async function handler(req, res) {
 
   // ── 4. Generate ───────────────────────────────────────────────────────────
   const maxTokens = Math.min(Number(requestedTokens) || 2048, 8000);
-  const preferredModel = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
-  const fallbackModel = 'gpt-4o-mini';
 
-  let response;
-  try {
-    response = await client.responses.create({ model: preferredModel, input: prompt, temperature, max_output_tokens: maxTokens });
-  } catch (modelErr) {
-    const msg = String(modelErr?.message || '');
-    if (preferredModel !== fallbackModel && (msg.includes('model') || msg.includes('not found'))) {
-      response = await client.responses.create({ model: fallbackModel, input: prompt, temperature, max_output_tokens: maxTokens });
-    } else {
-      throw modelErr;
-    }
-  }
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6-20250514',
+    max_tokens: maxTokens,
+    temperature: Math.min(temperature, 1.0),
+    messages: [{ role: 'user', content: prompt }],
+  });
 
-  const text = response.output_text?.trim();
-  if (!text) return res.status(502).json({ error: 'No text returned from OpenAI' });
+  const text = response.content?.[0]?.text?.trim();
+  if (!text) return res.status(502).json({ error: 'No text returned from AI' });
 
-  // ── 5. Decrement usage — direct update, no RPC needed ────────────────────
+  // ── 5. Decrement usage ────────────────────────────────────────────────────
   if (isPro) {
     await supabaseAdmin
       .from('profiles')
@@ -95,7 +86,6 @@ export default async function handler(req, res) {
       })
       .eq('id', user.id);
   } else {
-    // Mark free script as used
     await supabaseAdmin
       .from('profiles')
       .update({ scripts_generated: 1 })

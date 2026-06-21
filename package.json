@@ -10,6 +10,7 @@
     "lint:fix": "next lint --fix"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
     "@google/generative-ai": "^0.24.0",
     "@supabase/supabase-js": "^2.106.1",
     "@vercel/analytics": "^1.1.1",

@@ -1,15 +1,15 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
-const client = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const client = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
 export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!client) return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
+  if (!client) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
   if (!supabaseAdmin) return res.status(500).json({ error: 'Server not configured' });
 
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
@@ -235,13 +235,14 @@ ${sceneFormat}`;
   const maxTok = Math.min(1200 + numScenes * 400, 8000);
 
   try {
-    const response = await client.responses.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
-      input: `${systemPrompt}\n\n${userPrompt}`,
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6-20250514',
+      max_tokens: maxTok,
       temperature: 0.82,
-      max_output_tokens: maxTok,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
     });
-    const responseText = response.output_text?.trim() || '';
+    const responseText = response.content?.[0]?.text?.trim() || '';
     if (!responseText) return res.status(502).json({ error: 'No response from AI' });
 
     // ── Deduct usage ───────────────────────────────────────────────────────
