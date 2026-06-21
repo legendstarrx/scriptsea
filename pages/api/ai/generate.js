@@ -66,31 +66,36 @@ export default async function handler(req, res) {
   // ── 4. Generate ───────────────────────────────────────────────────────────
   const maxTokens = Math.min(Number(requestedTokens) || 2048, 8000);
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6-20250514',
-    max_tokens: maxTokens,
-    temperature: Math.min(temperature, 1.0),
-    messages: [{ role: 'user', content: prompt }],
-  });
+  try {
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens,
+      temperature: Math.min(temperature, 1.0),
+      messages: [{ role: 'user', content: prompt }],
+    });
 
-  const text = response.content?.[0]?.text?.trim();
-  if (!text) return res.status(502).json({ error: 'No text returned from AI' });
+    const text = response.content?.[0]?.text?.trim();
+    if (!text) return res.status(502).json({ error: 'No text returned from AI' });
 
-  // ── 5. Decrement usage ────────────────────────────────────────────────────
-  if (isPro) {
-    await supabaseAdmin
-      .from('profiles')
-      .update({
-        scripts_remaining: Math.max(scriptsRemaining - 1, 0),
-        scripts_generated: scriptsGenerated + 1,
-      })
-      .eq('id', user.id);
-  } else {
-    await supabaseAdmin
-      .from('profiles')
-      .update({ scripts_generated: 1 })
-      .eq('id', user.id);
+    // ── 5. Decrement usage ──────────────────────────────────────────────────
+    if (isPro) {
+      await supabaseAdmin
+        .from('profiles')
+        .update({
+          scripts_remaining: Math.max(scriptsRemaining - 1, 0),
+          scripts_generated: scriptsGenerated + 1,
+        })
+        .eq('id', user.id);
+    } else {
+      await supabaseAdmin
+        .from('profiles')
+        .update({ scripts_generated: 1 })
+        .eq('id', user.id);
+    }
+
+    return res.status(200).json({ text });
+  } catch (err) {
+    console.error('[generate] Claude API error:', err?.status, err?.message);
+    return res.status(500).json({ error: err?.message || 'Generation failed. Please try again.' });
   }
-
-  return res.status(200).json({ text });
 }
