@@ -56,11 +56,11 @@ export default async function handler(req, res) {
 
   const clipSec = parseInt(duration) || 10;
   const inputWords = input.trim().split(/\s+/).filter(Boolean).length;
-  // Tighter pacing = more scenes = better retention. Animation needs even more cuts for storytelling.
-  const secsPerChange = style === 'animation' ? 2.5 : 3;
+  // ~5 seconds per visual change — enough variety without overwhelming
+  const secsPerChange = 5;
   const numScenes = inputWords > 15
-    ? Math.max(4, Math.ceil((inputWords / 2.5) / secsPerChange))
-    : Math.max(4, Math.ceil((clipSec * 3) / secsPerChange));
+    ? Math.max(3, Math.min(Math.ceil((inputWords / 2.5) / secsPerChange), 8))
+    : Math.max(3, Math.min(Math.ceil((clipSec * 3) / secsPerChange), 6));
   const wordsPerScene = Math.round(secsPerChange * 2.5);
   const totalVideoSec = numScenes * clipSec;
 
