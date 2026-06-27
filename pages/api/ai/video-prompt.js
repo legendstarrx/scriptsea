@@ -56,13 +56,16 @@ export default async function handler(req, res) {
 
   const clipSec = parseInt(duration) || 10;
   const inputWords = input.trim().split(/\s+/).filter(Boolean).length;
-  // ~5 seconds per visual change — enough variety without overwhelming
-  const secsPerChange = 5;
+  // ~3 seconds per visual change — enough clips for good retention
+  const secsPerChange = 3;
   const numScenes = inputWords > 15
-    ? Math.max(3, Math.min(Math.ceil((inputWords / 2.5) / secsPerChange), 8))
-    : Math.max(3, Math.min(Math.ceil((clipSec * 3) / secsPerChange), 6));
+    ? Math.max(8, Math.min(Math.ceil((inputWords / 2.5) / secsPerChange), 25))
+    : Math.max(6, Math.min(Math.ceil((clipSec * 3) / secsPerChange), 12));
   const wordsPerScene = Math.round(secsPerChange * 2.5);
   const totalVideoSec = numScenes * clipSec;
+
+  // Unique seed per request to prevent identical characters across concurrent users
+  const uniqueSeed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   // ── Build prompt ─────────────────────────────────────────────────────────
   const isAnim = style === 'animation';
@@ -100,7 +103,7 @@ PROMPT QUALITY RULES:
 
 EVERY prompt you write MUST describe an ANIMATED scene in this exact style. You are NOT writing live-action/photorealistic prompts. You are writing animation prompts.
 
-STEP 2: DESIGN one animated character that fits this script. Describe them IN the animation style:
+STEP 2: DESIGN one animated character that fits this script. UNIQUENESS SEED: ${uniqueSeed} — use this to make your character design SURPRISING and DISTINCT. Avoid defaulting to the most obvious animated character choices. Describe them IN the animation style:
 ${animStyle === 'stick-figure' ? '- A stick figure character with specific distinguishing features (hat, glasses, hair shape, clothing outline). Keep it simple — stick figures should LOOK like stick figures.' : animStyle === 'motion-graphics' ? '- A simplified iconic character or avatar that fits motion graphics style. Not detailed — clean, geometric, professional.' : `- Describe the character's design in ${animStyle === '3d-pixar' ? 'Pixar style (rounded features, oversized expressive eyes, stylized proportions)' : animStyle === '2d-flat' ? '2D flat style (clean shapes, bold outlines, flat colors, simple features)' : 'realistic 3D CGI style (detailed model, realistic proportions, high-poly)'}.`}
 - Include: what they look like, what they wear, their expression, any cultural/religious context from the script (Islamic = animated character still wears hijab and modest dress).
 - This character description must be REPEATED in every scene prompt for consistency.
@@ -123,7 +126,7 @@ PROMPT QUALITY RULES:
 - Describe the animation world: colors, lighting style, background design, atmosphere — all in the chosen animation style.
 ${animStyle === 'stick-figure' ? '- End every prompt with: stick figure animation, white background, clean black lines, hand-drawn style, smooth animation, no watermark, no text.' : animStyle === 'motion-graphics' ? '- End every prompt with: motion graphics, clean vector design, smooth transitions, professional animation, no watermark, no text.' : animStyle === '2d-flat' ? '- End every prompt with: 2D flat illustration, bold colors, clean vector art, smooth animation, no watermark, no text, no distortion.' : animStyle === '3d-realistic' ? '- End every prompt with: realistic 3D CGI render, cinematic lighting, high-poly, detailed textures, no watermark, no text, no distortion.' : '- End every prompt with: 3D Pixar-style animation, soft lighting, vibrant colors, cinematic render, no watermark, no text, no distortion.'}`;
   } else {
-    systemSteps = `STEP 2: CREATE one character description sentence that fits this specific script — for example: "a confident 26-year-old Black man with a short fade, wearing a fitted navy crewneck and silver chain, sharp jawline, relaxed but focused expression." Make it specific enough that two different AI tools would generate nearly the same person. Include: age, ethnicity/skin tone, hair (style + color), clothing (exact items + colors), one distinguishing accessory or feature, and their default expression/energy.
+    systemSteps = `STEP 2: CREATE one character description sentence that fits this specific script. UNIQUENESS SEED: ${uniqueSeed} — use this to make your character choices SURPRISING and DISTINCT. Do NOT default to the most common or obvious appearance. Vary age, hairstyle, clothing style, accessories, and energy in unexpected ways. Example: "a confident 26-year-old Black man with a short fade, wearing a fitted navy crewneck and silver chain, sharp jawline, relaxed but focused expression." Make it specific enough that two different AI tools would generate nearly the same person. Include: age, ethnicity/skin tone, hair (style + color), clothing (exact items + colors), one distinguishing accessory or feature, and their default expression/energy.
 
 STEP 3: PLAN the visual story for retention:
 - Scene 1 must be a VISUAL HOOK — stops the scroll. Movement in the first frame. Never start static.
@@ -149,7 +152,7 @@ PROMPT QUALITY RULES:
 STRICT RULE — NO VOICEOVER:
 The user did NOT select voiceover. Do NOT generate any voiceover text, narration, dialogue, or spoken words. Output ONLY the video prompts and negative prompt. No 🎙️ sections. No VOICEOVER sections. No script text. ONLY visual scene prompts.` : '';
 
-  const systemPrompt = `You are the world's best AI video prompt engineer. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika) that produce stunning clips.
+  const systemPrompt = `You are the world's best AI video prompt engineer. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika, Higgsfield) that produce stunning clips.
 ${noVoiceoverRule}
 
 UNIVERSAL RULES (apply to ALL styles — UGC, B-Roll, and Animation):
@@ -232,7 +235,7 @@ OUTPUT (exactly this format, nothing else):
 ${sceneFormat}`;
 
   // ── Generate ─────────────────────────────────────────────────────────────
-  const maxTok = Math.min(1200 + numScenes * 400, 8000);
+  const maxTok = Math.min(1200 + numScenes * 400, 16000);
 
   try {
     const response = await client.messages.create({

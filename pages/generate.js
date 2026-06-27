@@ -322,7 +322,7 @@ const generateWithOpenAI = async (prompt, options = {}) => {
 };
 
 // ── VideoPromptTab ─────────────────────────────────────────────────────────
-function VideoPromptTab({ isProUser, onUpgrade }) {
+function VideoPromptTab({ isProUser, onUpgrade, initialInput }) {
   const [input, setInput] = useState('');
   const [vidDuration, setVidDuration] = useState('10 sec');
   const [style, setStyle] = useState('ugc');
@@ -335,6 +335,13 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [copiedIdx, setCopiedIdx] = useState(null);
+
+  useEffect(() => {
+    if (initialInput) {
+      const clean = initialInput.replace(/-\d+$/, '');
+      setInput(clean);
+    }
+  }, [initialInput]);
 
   const STYLES = [
     { id: 'ugc', label: '🎥 UGC / Viral', desc: 'Person on camera' },
@@ -652,6 +659,26 @@ function VideoPromptTab({ isProUser, onUpgrade }) {
           💡 Paste the video prompt directly into Kling, Veo, SeedDance, Hailuo, Runway or Pika. Each prompt is ready to use as-is.
         </div>
       )}
+
+      {/* Open in Higgsfield CTA */}
+      {scenes.length > 0 && (
+        <a
+          href="https://higgsfield.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+            padding: '16px', background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+            color: 'white', borderRadius: '14px', textDecoration: 'none',
+            fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)', transition: 'transform 0.15s',
+          }}
+        >
+          <span style={{ fontSize: '1.2rem' }}>🚀</span>
+          Open in Higgsfield to Generate Videos
+          <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>→</span>
+        </a>
+      )}
     </div>
   );
 }
@@ -697,6 +724,7 @@ export default function Generate() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [activeTab, setActiveTab] = useState('script');
+  const [videoPromptInitialInput, setVideoPromptInitialInput] = useState('');
 
   const fetchServerPlan = useCallback(async () => {
     if (!supabase) return null;
@@ -1899,7 +1927,7 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
 
             {/* ── VIDEO PROMPT TAB ─────────────────────────────────────────── */}
             {activeTab === 'video-prompt' && (
-              <VideoPromptTab isProUser={isProUser} onUpgrade={() => setShowSubscriptionModal(true)} />
+              <VideoPromptTab isProUser={isProUser} onUpgrade={() => setShowSubscriptionModal(true)} initialInput={videoPromptInitialInput} />
             )}
 
             {/* ── SCRIPT GENERATOR TAB ─────────────────────────────────────── */}
@@ -2751,13 +2779,46 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
                   </div>
                 </div>
 
-                {/* Generate Another Button */}
+                {/* Generate Video Prompts from Script */}
                 <div style={{
                   marginTop: '30px',
                   paddingTop: '30px',
                   borderTop: '1px solid #eee',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  alignItems: 'center',
                 }}>
+                  <button
+                    onClick={() => {
+                      const tempDiv = document.createElement('div');
+                      tempDiv.innerHTML = generatedScript;
+                      const styleTags = tempDiv.getElementsByTagName('style');
+                      while (styleTags.length > 0) styleTags[0].parentNode.removeChild(styleTags[0]);
+                      const clean = tempDiv.textContent.replace(/\s+/g, ' ').trim();
+                      setVideoPromptInitialInput(clean + '-' + Date.now());
+                      setActiveTab('video-prompt');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    style={{
+                      padding: '14px 28px',
+                      background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '14px',
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    ✦ Generate Video Prompts from this Script →
+                  </button>
                   <button
                     onClick={handleGenerateAnother}
                     style={{

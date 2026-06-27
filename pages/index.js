@@ -48,7 +48,7 @@ export default function Home() {
               fontSize: 'clamp(1rem, 2.2vw, 1.18rem)', color: '#555', lineHeight: 1.7,
               maxWidth: '620px', margin: '0 auto 32px',
             }}>
-              Type your idea. Get a viral script. Transform it into AI video prompts ready for Kling, Veo, Runway, and more. Two tools, one click each. That's the entire workflow.
+              Type your idea. Get a viral script. Transform it into AI video prompts ready for Kling, Veo, Runway, Higgsfield, and more. Two tools, one click each. That's the entire workflow.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
@@ -85,7 +85,7 @@ export default function Home() {
                 },
                 {
                   step: '03', icon: '✦', title: 'Generate Video Prompts',
-                  desc: 'One click transforms your script into scene-by-scene AI video prompts. Paste into Kling, Veo, Runway, or Pika — done.',
+                  desc: 'One click transforms your script into scene-by-scene AI video prompts. Paste into Kling, Veo, Runway, Higgsfield, or Pika — done.',
                 },
               ].map((s, i) => (
                 <div key={i} style={{ ...card, position: 'relative', paddingTop: '40px' }}>
@@ -147,7 +147,7 @@ export default function Home() {
                   Turn Any Script into AI Video Clips
                 </h3>
                 <ul style={{ color: '#555', lineHeight: 2, fontSize: '0.93rem', paddingLeft: '18px', margin: 0 }}>
-                  <li>Scene-by-scene prompts for Kling, Veo, Runway, Pika & more</li>
+                  <li>Scene-by-scene prompts for Kling, Veo, Runway, Higgsfield, Pika & more</li>
                   <li>Consistent character across every clip — same person, same look</li>
                   <li>Choose UGC, B-Roll, or Animation (3D Pixar, 2D, Stick Figure)</li>
                   <li>Optional voiceover scripts with hook → body → CTA</li>
@@ -171,7 +171,7 @@ export default function Home() {
                 { icon: '⚡', title: 'Seconds, Not Hours', desc: 'What used to take 2 hours of writing and prompt engineering now takes 60 seconds flat.' },
                 { icon: '🧠', title: 'AI That Actually Understands', desc: 'Reads your script, understands the culture, religion, tone, and audience — then writes prompts that match.' },
                 { icon: '🎯', title: 'Built for Virality', desc: 'Every script and prompt is designed around retention — hooks that stop scrolling, visuals that keep watching.' },
-                { icon: '🔄', title: 'Script → Prompt → Video', desc: 'The only platform that connects all three steps. No more copying between ChatGPT and your video tool.' },
+                { icon: '🔄', title: 'Script → Prompt → Video', desc: 'The only platform that connects all three steps. Generate prompts and open directly in Higgsfield or any AI video tool.' },
                 { icon: '🌍', title: 'Any Niche, Any Culture', desc: 'Islamic content, gaming, fitness, fashion, tech, education — ScriptSea adapts to your world, not the other way around.' },
                 { icon: '🚀', title: 'The Future Is Now', desc: 'AI video generation is exploding. The creators who move first will dominate. ScriptSea is your unfair advantage.' },
               ].map((f, i) => (
@@ -217,7 +217,7 @@ export default function Home() {
               {[
                 { q: 'What is ScriptSea?', a: 'ScriptSea is an AI-powered platform that generates viral video scripts and transforms them into ready-to-paste prompts for AI video generators like Kling, Veo, Runway, SeedDance, Hailuo, and Pika.' },
                 { q: 'How is this different from ChatGPT?', a: 'ChatGPT is a general chatbot. ScriptSea is purpose-built for viral content — every script follows proven retention formulas, and the video prompt engine understands consistent characters, cultural context, camera movements, and what makes AI video tools produce realistic results.' },
-                { q: 'What AI video tools do the prompts work with?', a: 'Kling, Google Veo, Runway Gen-3, SeedDance, Hailuo/Minimax, and Pika. The prompts are structured to work across all of them — just paste and generate.' },
+                { q: 'What AI video tools do the prompts work with?', a: 'Kling, Google Veo, Runway Gen-3, Higgsfield, SeedDance, Hailuo/Minimax, and Pika. The prompts are structured to work across all of them — just paste and generate.' },
                 { q: 'Do I need to know prompt engineering?', a: 'No. That is literally the point. You type your idea or paste your script, and ScriptSea handles all the prompt engineering — character consistency, camera movements, lighting, style, cultural context, everything.' },
                 { q: 'Can I try it for free?', a: 'Yes. Sign up and get 1 free script generation. Upgrade to Pro for unlimited access to both the script generator and video prompt engine.' },
                 { q: 'What makes the scripts "viral"?', a: 'Every script is built around hook-first writing, exact word counts for your video duration, and retention patterns analyzed from millions of viral videos. No filler, no fluff — every word earns its place.' },
