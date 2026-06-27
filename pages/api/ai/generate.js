@@ -55,10 +55,10 @@ export default async function handler(req, res) {
       });
     }
   } else {
-    if (scriptsGenerated >= 1) {
+    if (scriptsGenerated >= 3) {
       return res.status(403).json({
         error: 'limit_reached',
-        message: "You've used your free script. Upgrade to Pro to keep generating.",
+        message: "You've used your 3 free scripts. Upgrade to Pro to keep generating.",
       });
     }
   }

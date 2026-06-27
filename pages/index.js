@@ -60,7 +60,7 @@ export default function Home() {
               }}>
                 Start Creating Free <span style={{ fontSize: '1.3rem' }}>→</span>
               </button>
-              <p style={{ fontSize: '0.82rem', color: '#999' }}>No credit card required. 1 free script included.</p>
+              <p style={{ fontSize: '0.82rem', color: '#999' }}>No credit card required. 3 free scripts included.</p>
             </div>
           </div>
         </section>
@@ -219,7 +219,7 @@ export default function Home() {
                 { q: 'How is this different from ChatGPT?', a: 'ChatGPT is a general chatbot. ScriptSea is purpose-built for viral content — every script follows proven retention formulas, and the video prompt engine understands consistent characters, cultural context, camera movements, and what makes AI video tools produce realistic results.' },
                 { q: 'What AI video tools do the prompts work with?', a: 'Kling, Google Veo, Runway Gen-3, Higgsfield, SeedDance, Hailuo/Minimax, and Pika. The prompts are structured to work across all of them — just paste and generate.' },
                 { q: 'Do I need to know prompt engineering?', a: 'No. That is literally the point. You type your idea or paste your script, and ScriptSea handles all the prompt engineering — character consistency, camera movements, lighting, style, cultural context, everything.' },
-                { q: 'Can I try it for free?', a: 'Yes. Sign up and get 1 free script generation. Upgrade to Pro for unlimited access to both the script generator and video prompt engine.' },
+                { q: 'Can I try it for free?', a: 'Yes. Sign up and get 3 free script generations. Upgrade to Pro for unlimited access to both the script generator and video prompt engine.' },
                 { q: 'What makes the scripts "viral"?', a: 'Every script is built around hook-first writing, exact word counts for your video duration, and retention patterns analyzed from millions of viral videos. No filler, no fluff — every word earns its place.' },
               ].map((faq, i) => (
                 <div key={i} onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{
