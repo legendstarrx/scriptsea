@@ -1430,10 +1430,8 @@ VIRAL STRUCTURE (do NOT label these sections in the output — just flow natural
 
 OUTPUT FORMAT:
 
-# ${scriptType === 'ad' ? 'Advertisement Title Options' : 'Viral Title Options'}
-Title 1: <title>
-Title 2: <title>
-Title 3: <title>
+# Title
+<one viral title for this video>
 
 ## Script
 [The entire script as one continuous flow of spoken words. No section labels like "Hook" or "Body". Just the script from first word to last. Start with the hook, flow into the body, end with the payoff. No CTA.]
