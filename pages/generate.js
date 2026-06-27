@@ -2796,7 +2796,9 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
                       tempDiv.innerHTML = generatedScript;
                       const styleTags = tempDiv.getElementsByTagName('style');
                       while (styleTags.length > 0) styleTags[0].parentNode.removeChild(styleTags[0]);
-                      const clean = tempDiv.textContent.replace(/\s+/g, ' ').trim();
+                      let clean = tempDiv.textContent.replace(/\s+/g, ' ').trim();
+                      const scriptMatch = clean.match(/Script\s+([\s\S]+)/i);
+                      if (scriptMatch) clean = scriptMatch[1].trim();
                       setVideoPromptInitialInput(clean + '-' + Date.now());
                       setActiveTab('video-prompt');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
