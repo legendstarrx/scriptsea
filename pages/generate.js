@@ -578,6 +578,23 @@ function VideoPromptTab({ isProUser, onUpgrade, initialInput }) {
             {scene.prompt}
           </div>
 
+          {/* Generate on Higgsfield */}
+          {scene.prompt && (
+            <a
+              href={`https://higgsfield.ai/generate?prompt=${encodeURIComponent(scene.prompt)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px',
+                padding: '7px 16px', background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+                color: 'white', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600,
+                textDecoration: 'none', cursor: 'pointer', transition: 'opacity 0.15s',
+              }}
+            >
+              🚀 Generate on Higgsfield →
+            </a>
+          )}
+
           {/* Voiceover */}
           {scene.voiceover && (
             <div style={{ marginTop: '12px', padding: '16px', background: '#fff5f7', borderRadius: '12px', border: '1px solid #ffd6e0' }}>
