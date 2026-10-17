@@ -1,5 +1,6 @@
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 const SUPPORT_EMAIL = 'support@scriptsea.com';
 const LAST_UPDATED = 'May 2025';
@@ -7,6 +8,7 @@ const LAST_UPDATED = 'May 2025';
 export default function PrivacyPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SEO title="Privacy Policy | ScriptSea" description="How ScriptSea collects, uses and protects your data." path="/privacy" />
       <Navigation />
       <main style={{
         flex: 1,

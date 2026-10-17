@@ -12,6 +12,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
+import SEO from '../components/SEO';
 
 const WHATSAPP = 'https://wa.me/447474762495';
 const RETRY_INTERVAL_MS = 4000;
@@ -141,6 +142,7 @@ export default function PaymentSuccess() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={bg}>
+      <SEO title="Payment Successful | ScriptSea" description="Your ScriptSea Pro plan is being activated." path="/payment-success" noindex />
       <div style={card}>
 
         {stage === 'confirmed' ? (

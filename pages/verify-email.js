@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function VerifyEmail() {
   const router = useRouter();
@@ -90,6 +91,7 @@ export default function VerifyEmail() {
         display: 'flex',
         flexDirection: 'column'
       }}>
+        <SEO title="Verify Your Email | ScriptSea" description="Verify your email to start using ScriptSea." path="/verify-email" noindex />
         <Navigation />
         <main style={{
           flex: 1,
@@ -130,6 +132,7 @@ export default function VerifyEmail() {
       display: 'flex',
       flexDirection: 'column'
     }}>
+      <SEO title="Verify Your Email | ScriptSea" description="Verify your email to start using ScriptSea." path="/verify-email" noindex />
       <Navigation />
       <main style={{
         flex: 1,

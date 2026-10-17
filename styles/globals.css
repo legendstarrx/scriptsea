@@ -232,3 +232,8 @@ input:focus, textarea:focus, select:focus {
 a:not([class]) {
   transition: color 0.15s ease;
 }
+
+/* Navigation: hide the Pricing link on narrow phones so the header never overflows */
+@media (max-width: 480px) {
+  .nav-pricing { display: none; }
+}

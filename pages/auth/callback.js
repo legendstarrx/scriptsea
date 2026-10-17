@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import SEO from '../../components/SEO';
 
 export default function AuthCallbackPage() {
   const [message, setMessage] = useState('Completing sign-in…');
@@ -65,6 +66,7 @@ export default function AuthCallbackPage() {
       background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)',
       padding: '1rem',
     }}>
+      <SEO title="Signing You In | ScriptSea" description="Completing sign in." path="/auth/callback" noindex />
       <div style={{
         width: '100%',
         maxWidth: '400px',

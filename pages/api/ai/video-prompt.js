@@ -152,7 +152,7 @@ PROMPT QUALITY RULES:
 STRICT RULE — NO VOICEOVER:
 The user did NOT select voiceover. Do NOT generate any voiceover text, narration, dialogue, or spoken words. Output ONLY the video prompts and negative prompt. No 🎙️ sections. No VOICEOVER sections. No script text. ONLY visual scene prompts.` : '';
 
-  const systemPrompt = `You are the world's best AI video prompt engineer. You write prompts for AI video tools (Veo, Kling, SeedDance, Hailuo, Runway, Pika, Higgsfield) that produce stunning clips.
+  const systemPrompt = `You are the world's best AI video prompt engineer. You write prompts for AI video tools (Seedance, Kling, Veo, Sora, Wan, Hailuo, Higgsfield) that produce stunning clips.
 ${noVoiceoverRule}
 
 UNIVERSAL RULES (apply to ALL styles — UGC, B-Roll, and Animation):

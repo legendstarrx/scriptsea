@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import SEO from '../components/SEO';
 
 const validatePassword = (password) => ({
   length: password.length >= 8,
@@ -106,6 +107,7 @@ export default function Register() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SEO title="Create Your Free Account | ScriptSea" description="Sign up free and get 3 AI scripts. No credit card needed." path="/register" noindex />
       <Navigation />
       <main
         style={{

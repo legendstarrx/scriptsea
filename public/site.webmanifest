@@ -1,14 +1,15 @@
 {
-  "name": "ScriptSea",
+  "name": "ScriptSea - AI Script Generator & AI Video Prompt Generator",
   "short_name": "ScriptSea",
-  "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    }
-  ],
-  "theme_color": "#FF3366",
+  "description": "Write viral video scripts and AI video prompts for Seedance, Kling, Veo and Sora in seconds.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "theme_color": "#FF3366",
+  "icons": [
+    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }

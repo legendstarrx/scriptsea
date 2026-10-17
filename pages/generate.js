@@ -1,6 +1,7 @@
 import { saveAs } from 'file-saver';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
@@ -673,7 +674,7 @@ function VideoPromptTab({ isProUser, onUpgrade, initialInput }) {
 
       {scenes.length > 0 && (
         <div style={{ padding: '14px 16px', background: '#f0fff4', border: '1px solid #bbf7d0', borderRadius: '12px', fontSize: '0.8rem', color: '#166534' }}>
-          💡 Paste the video prompt directly into Kling, Veo, SeedDance, Hailuo, Runway or Pika. Each prompt is ready to use as-is.
+          💡 Paste each prompt straight into Seedance, Kling, Veo, Sora, Wan or Hailuo. Ready to use as-is.
         </div>
       )}
 
@@ -1514,7 +1515,7 @@ OUTPUT FORMAT:
   };
 
   const buildVideoPromptRequest = (script) => {
-    return `You are an expert AI video director. Convert this script into a series of detailed AI video generation prompts optimized for tools like Runway, Kling, Sora, and Pika.
+    return `You are an expert AI video director. Convert this script into a series of detailed AI video generation prompts optimized for tools like Seedance, Kling, Veo, and Sora.
 
 SCRIPT:
 ${script}
@@ -1820,6 +1821,8 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
   }
 
   return (
+    <>
+    <SEO title="Create | ScriptSea" description="Write viral scripts and AI video prompts." path="/generate" noindex />
     <ProtectedRoute>
       <div style={{
         minHeight: '100vh',
@@ -2875,5 +2878,6 @@ SCENE 2 (3-8s): Wide shot of a young creator sitting at a desk surrounded by mul
         userProfile={userProfile}
       />
     </ProtectedRoute>
+    </>
   );
 } 

@@ -1,15 +1,39 @@
 import React from 'react';
+import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { useRouter } from 'next/router';
+import SEO from '../components/SEO';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import { organizationJsonLd, websiteJsonLd, softwareJsonLd, faqJsonLd } from '../lib/seo';
+
+const TITLE = 'ScriptSea: AI Script Generator & AI Video Prompt Generator';
+const DESCRIPTION =
+  'Free AI script generator for TikTok, Reels and YouTube. Get a viral script in seconds, then turn it into ready-to-paste video prompts for Seedance, Kling, Veo and Sora.';
+
+// Models with a dedicated page link to it; the rest are shown as plain chips.
+const MODELS = [
+  { name: 'Seedance 2.0', href: '/seedance-prompt-generator' },
+  { name: 'Kling 3.0', href: '/kling-prompt-generator' },
+  { name: 'Veo 3.1', href: '/veo-prompt-generator' },
+  { name: 'Sora 2', href: '/sora-prompt-generator' },
+  { name: 'Wan' },
+  { name: 'Hailuo' },
+  { name: 'Higgsfield' },
+];
+
+const FAQS = [
+  { q: 'What is ScriptSea?', a: 'ScriptSea is an AI script generator and AI video prompt generator. You type an idea, it writes a viral video script, then turns that script into scene-by-scene prompts for AI video models like Seedance, Kling, Veo and Sora.' },
+  { q: 'How is this different from ChatGPT?', a: 'ChatGPT is a general chatbot. You have to tell it what to do, then fix what it gives you. ScriptSea is built only for video. Scripts open with a hook and fit your video length to the word. Video prompts keep the same character in every scene and use camera and light the way video models understand.' },
+  { q: 'Which AI video models do the prompts work with?', a: 'Seedance 2.0, Kling 3.0, Veo 3.1, Sora 2, Wan, Hailuo and tools like Higgsfield. The prompts are detailed, plain-English scene descriptions, so they work in any text-to-video model. Just paste and generate.' },
+  { q: 'Do I need to know prompt engineering?', a: 'No. That is the whole point. Type your idea or paste your script, and ScriptSea handles the character, camera, lighting, style and pacing.' },
+  { q: 'Can I try it for free?', a: 'Yes. You get 3 free scripts when you sign up, no card needed. After that, Pro is $4.99 a week for 15 scripts or $19.99 a month for 60. Scripts and video prompts use the same allowance.' },
+  { q: 'What makes the scripts go viral?', a: 'Every script opens with a hook, fits your video length to the word, and cuts anything that does not keep people watching. It is written the way people talk, not the way people write.' },
+  { q: 'What can I make with it?', a: 'TikToks, Instagram Reels, YouTube Shorts, long YouTube videos up to 60 minutes, UGC ads, product videos and faceless channels with fully AI-generated visuals.' },
+];
 
 export default function Home() {
   useAuthRedirect();
-  const router = useRouter();
   const [openFaq, setOpenFaq] = React.useState(null);
-
-  const go = () => router.push('/register');
 
   const card = {
     background: '#fff', borderRadius: '20px', padding: '32px',
@@ -18,6 +42,17 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SEO
+        title={TITLE}
+        description={DESCRIPTION}
+        path="/"
+        jsonLd={[
+          organizationJsonLd,
+          websiteJsonLd,
+          softwareJsonLd({ name: 'ScriptSea', description: DESCRIPTION, path: '/' }),
+          faqJsonLd(FAQS),
+        ]}
+      />
       <Navigation />
 
       <main style={{ flex: '1', paddingTop: '37px', display: 'flex', flexDirection: 'column' }}>
@@ -33,7 +68,7 @@ export default function Home() {
               display: 'inline-block', background: '#FFE5EC', color: '#FF3366',
               padding: '6px 18px', borderRadius: '50px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '24px',
             }}>
-              The Only Tool You Need to Go Viral
+              AI Script Generator + AI Video Prompt Generator
             </div>
 
             <h1 style={{
@@ -46,21 +81,41 @@ export default function Home() {
 
             <p style={{
               fontSize: 'clamp(1rem, 2.2vw, 1.18rem)', color: '#555', lineHeight: 1.7,
-              maxWidth: '620px', margin: '0 auto 32px',
+              maxWidth: '640px', margin: '0 auto 32px',
             }}>
-              Type your idea. Get a viral script. Transform it into AI video prompts ready for Kling, Veo, Runway, Higgsfield, and more. Two tools, one click each. That's the entire workflow.
+              Type an idea. Get a script with a hook people can&apos;t scroll past. Then turn it into ready-to-paste prompts for Seedance, Kling, Veo and Sora. No writing. No prompt skills. Just post.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-              <button onClick={go} style={{
-                background: 'linear-gradient(135deg,#FF3366,#ff6b8a)', color: 'white', border: 'none',
+              <Link href="/register" style={{
+                background: 'linear-gradient(135deg,#FF3366,#ff6b8a)', color: 'white', textDecoration: 'none',
                 padding: '16px 40px', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 700,
-                cursor: 'pointer', boxShadow: '0 8px 30px rgba(255,51,102,0.3)',
+                boxShadow: '0 8px 30px rgba(255,51,102,0.3)',
                 display: 'flex', alignItems: 'center', gap: '10px', transition: 'transform 0.15s',
               }}>
-                Start Creating Free <span style={{ fontSize: '1.3rem' }}>→</span>
-              </button>
-              <p style={{ fontSize: '0.82rem', color: '#999' }}>No credit card required. 3 free scripts included.</p>
+                Write My First Script Free <span style={{ fontSize: '1.3rem' }}>→</span>
+              </Link>
+              <p style={{ fontSize: '0.82rem', color: '#999' }}>3 free scripts. No credit card. Sign up with Google in one click.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── MODELS STRIP ────────────────────────────────────────── */}
+        <section style={{ padding: '28px 1rem', background: '#fff', borderBottom: '1px solid #f3f3f3' }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+            <h2 style={{ fontSize: '0.82rem', color: '#999', fontWeight: 600, margin: '0 0 14px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Prompts ready for the models everyone&apos;s using
+            </h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+              {MODELS.map((m) => {
+                const chip = {
+                  background: '#FFE5EC', color: '#FF3366', padding: '7px 16px', borderRadius: '50px',
+                  fontSize: '0.9rem', fontWeight: 700, textDecoration: 'none',
+                };
+                return m.href
+                  ? <Link key={m.name} href={m.href} style={chip}>{m.name}</Link>
+                  : <span key={m.name} style={chip}>{m.name}</span>;
+              })}
             </div>
           </div>
         </section>
@@ -77,15 +132,15 @@ export default function Home() {
               {[
                 {
                   step: '01', icon: '💡', title: 'Type Your Idea',
-                  desc: 'Describe your product, paste a reference video link, or just type what you want to talk about. ScriptSea takes it from there.',
+                  desc: 'A product, a story, a tip. One line is enough. Or paste a YouTube or TikTok link and match its style.',
                 },
                 {
                   step: '02', icon: '🎬', title: 'Get a Viral Script',
-                  desc: 'AI writes a hook-first, retention-optimized script with exact word counts. Every word is designed to keep viewers watching.',
+                  desc: 'Hook first. No filler. The exact word count for your video length. Sounds like a person, not a robot.',
                 },
                 {
-                  step: '03', icon: '✦', title: 'Generate Video Prompts',
-                  desc: 'One click transforms your script into scene-by-scene AI video prompts. Paste into Kling, Veo, Runway, Higgsfield, or Pika — done.',
+                  step: '03', icon: '✦', title: 'Get Your Video Prompts',
+                  desc: 'One click turns the script into scene-by-scene prompts. Paste into Seedance, Kling, Veo or Sora and hit generate.',
                 },
               ].map((s, i) => (
                 <div key={i} style={{ ...card, position: 'relative', paddingTop: '40px' }}>
@@ -125,12 +180,15 @@ export default function Home() {
                   AI Scripts That Actually Go Viral
                 </h3>
                 <ul style={{ color: '#555', lineHeight: 2, fontSize: '0.93rem', paddingLeft: '18px', margin: 0 }}>
-                  <li>Hook-first writing — stops the scroll in the first line</li>
-                  <li>Exact word counts matched to your video duration</li>
-                  <li>Paste a reference video link — AI matches the style</li>
-                  <li>Works for products, brands, personal content, anything</li>
-                  <li>Export to PDF or Word with one click</li>
+                  <li>Stops the scroll in the first line</li>
+                  <li>Exact word count for 15 seconds up to 60 minutes</li>
+                  <li>Paste a video link and match its style</li>
+                  <li>Products, brands, stories, faceless channels, anything</li>
+                  <li>Export to PDF or Word in one click</li>
                 </ul>
+                <Link href="/ai-script-generator" style={{ display: 'inline-block', marginTop: '16px', color: '#FF3366', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none' }}>
+                  See the AI script generator →
+                </Link>
               </div>
 
               {/* Video Prompt Generator */}
@@ -147,12 +205,15 @@ export default function Home() {
                   Turn Any Script into AI Video Clips
                 </h3>
                 <ul style={{ color: '#555', lineHeight: 2, fontSize: '0.93rem', paddingLeft: '18px', margin: 0 }}>
-                  <li>Scene-by-scene prompts for Kling, Veo, Runway, Higgsfield, Pika & more</li>
-                  <li>Consistent character across every clip — same person, same look</li>
-                  <li>Choose UGC, B-Roll, or Animation (3D Pixar, 2D, Stick Figure)</li>
-                  <li>Optional voiceover scripts with hook → body → CTA</li>
-                  <li>Pick your character's gender and appearance</li>
+                  <li>Scene-by-scene prompts for Seedance, Kling, Veo, Sora, Wan & Hailuo</li>
+                  <li>Same character in every clip. Same face, same look</li>
+                  <li>UGC, B-Roll, or Animation (3D Pixar, Realistic 3D, 2D, Stick Figure)</li>
+                  <li>Optional voiceover with hook, body and close</li>
+                  <li>Open any scene on Higgsfield in one click</li>
                 </ul>
+                <Link href="/ai-video-prompt-generator" style={{ display: 'inline-block', marginTop: '16px', color: '#FF3366', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none' }}>
+                  See the AI video prompt generator →
+                </Link>
               </div>
             </div>
           </div>
@@ -163,17 +224,17 @@ export default function Home() {
           <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
             <p style={{ color: '#FF3366', fontWeight: 700, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Why ScriptSea</p>
             <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 800, color: '#111', marginBottom: '48px' }}>
-              This Is the Future of Content Creation
+              Why Creators Switch to ScriptSea
             </h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', textAlign: 'left' }}>
               {[
-                { icon: '⚡', title: 'Seconds, Not Hours', desc: 'What used to take 2 hours of writing and prompt engineering now takes 60 seconds flat.' },
-                { icon: '🧠', title: 'AI That Actually Understands', desc: 'Reads your script, understands the culture, religion, tone, and audience — then writes prompts that match.' },
-                { icon: '🎯', title: 'Built for Virality', desc: 'Every script and prompt is designed around retention — hooks that stop scrolling, visuals that keep watching.' },
-                { icon: '🔄', title: 'Script → Prompt → Video', desc: 'The only platform that connects all three steps. Generate prompts and open directly in Higgsfield or any AI video tool.' },
-                { icon: '🌍', title: 'Any Niche, Any Culture', desc: 'Islamic content, gaming, fitness, fashion, tech, education — ScriptSea adapts to your world, not the other way around.' },
-                { icon: '🚀', title: 'The Future Is Now', desc: 'AI video generation is exploding. The creators who move first will dominate. ScriptSea is your unfair advantage.' },
+                { icon: '⚡', title: '60 Seconds, Not 2 Hours', desc: 'Writing a script and every prompt by hand takes hours. Here it takes a minute. Spend the time posting.' },
+                { icon: '🧠', title: 'It Actually Reads Your Script', desc: 'Every scene matches what the script says at that moment. Culture, religion, tone and audience included.' },
+                { icon: '🎯', title: 'Made to Be Watched', desc: 'Hooks that stop the scroll. Fast cuts right where viewers usually leave. Nothing that makes people swipe.' },
+                { icon: '🧍', title: 'Same Face in Every Scene', desc: 'Video models forget your character between clips. Our prompts describe them in full every time, so they never change.' },
+                { icon: '🔄', title: 'Script to Video in One Place', desc: 'Write the script, get the prompts, open any scene on Higgsfield. No juggling five tabs and three chatbots.' },
+                { icon: '🌍', title: 'Any Niche, Any Culture', desc: 'Islamic content, gaming, fitness, fashion, tech, education, product ads. It fits your world, not the other way around.' },
               ].map((f, i) => (
                 <div key={i} style={{ padding: '24px', background: '#fafafa', borderRadius: '16px' }}>
                   <div style={{ fontSize: '1.4rem', marginBottom: '10px' }}>{f.icon}</div>
@@ -195,7 +256,7 @@ export default function Home() {
               {[
                 { num: '30s', label: 'Script in seconds' },
                 { num: '1-Click', label: 'Script to video prompts' },
-                { num: '6+', label: 'AI video tools supported' },
+                { num: '6+', label: 'Top AI video models' },
                 { num: '∞', label: 'Niches & languages' },
               ].map((s, i) => (
                 <div key={i} style={{ textAlign: 'center', minWidth: '120px' }}>
@@ -214,14 +275,7 @@ export default function Home() {
               Questions? We Got You.
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[
-                { q: 'What is ScriptSea?', a: 'ScriptSea is an AI-powered platform that generates viral video scripts and transforms them into ready-to-paste prompts for AI video generators like Kling, Veo, Runway, SeedDance, Hailuo, and Pika.' },
-                { q: 'How is this different from ChatGPT?', a: 'ChatGPT is a general chatbot. ScriptSea is purpose-built for viral content — every script follows proven retention formulas, and the video prompt engine understands consistent characters, cultural context, camera movements, and what makes AI video tools produce realistic results.' },
-                { q: 'What AI video tools do the prompts work with?', a: 'Kling, Google Veo, Runway Gen-3, Higgsfield, SeedDance, Hailuo/Minimax, and Pika. The prompts are structured to work across all of them — just paste and generate.' },
-                { q: 'Do I need to know prompt engineering?', a: 'No. That is literally the point. You type your idea or paste your script, and ScriptSea handles all the prompt engineering — character consistency, camera movements, lighting, style, cultural context, everything.' },
-                { q: 'Can I try it for free?', a: 'Yes. Sign up and get 3 free script generations. Upgrade to Pro for unlimited access to both the script generator and video prompt engine.' },
-                { q: 'What makes the scripts "viral"?', a: 'Every script is built around hook-first writing, exact word counts for your video duration, and retention patterns analyzed from millions of viral videos. No filler, no fluff — every word earns its place.' },
-              ].map((faq, i) => (
+              {FAQS.map((faq, i) => (
                 <div key={i} onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{
                   background: 'white', borderRadius: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', cursor: 'pointer',
                 }}>
@@ -251,19 +305,19 @@ export default function Home() {
           <div style={{ maxWidth: '640px', margin: '0 auto' }}>
             <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 800, color: 'white', marginBottom: '16px', lineHeight: 1.2 }}>
               Stop Scripting. Stop Prompting.
-              <br />Start Creating.
+              <br />Start Posting.
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1.05rem', marginBottom: '32px', lineHeight: 1.6 }}>
-              The future of content is AI-generated video. The creators who move now will own the next era. ScriptSea is the bridge between your idea and a viral clip.
+              Right now, someone in your niche is posting the video you&apos;ve been planning for weeks. Make yours today. Your first 3 scripts are on us.
             </p>
-            <button onClick={go} style={{
-              background: 'white', color: '#FF3366', border: 'none',
+            <Link href="/register" style={{
+              background: 'white', color: '#FF3366', textDecoration: 'none', display: 'inline-block',
               padding: '16px 40px', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 700,
-              cursor: 'pointer', boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
               transition: 'transform 0.15s',
             }}>
-              Get Started Free →
-            </button>
+              Get My 3 Free Scripts →
+            </Link>
             <p style={{ marginTop: '12px', fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)' }}>
               No credit card required
             </p>

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import SEO from '../components/SEO';
 
 export default function Login() {
   useAuthRedirect();
@@ -61,6 +62,7 @@ export default function Login() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SEO title="Sign In | ScriptSea" description="Sign in to ScriptSea to write viral scripts and AI video prompts." path="/login" noindex />
       <Navigation />
       <main
         style={{

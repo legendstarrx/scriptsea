@@ -100,6 +100,15 @@ export default function Navigation() {
             </>
           ) : (
             <>
+              <Link href="/pricing" className="nav-pricing" style={{
+                textDecoration: 'none',
+                color: '#555',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                padding: '7px 4px',
+              }}>
+                Pricing
+              </Link>
               <Link href="/login" style={{
                 textDecoration: 'none',
                 color: '#555',

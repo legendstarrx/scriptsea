@@ -1,11 +1,13 @@
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 const WHATSAPP_NUMBER = '447474762495'; // international format without +
 
 export default function ContactPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SEO title="Contact ScriptSea | Support & Questions" description="Questions about ScriptSea, billing or your account? Email support@scriptsea.com and we reply within 24 hours." path="/contact" />
       <Navigation />
       <main style={{
         flex: 1,

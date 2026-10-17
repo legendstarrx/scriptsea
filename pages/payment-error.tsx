@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+import SEO from '../components/SEO';
 
 export default function PaymentError() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function PaymentError() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <SEO title="Payment Failed | ScriptSea" description="Your payment did not go through." path="/payment-error" noindex />
       <div className="bg-white p-8 rounded-lg shadow-md text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Payment Failed</h1>
         <p className="text-gray-600 mb-6">

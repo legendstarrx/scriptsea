@@ -1,9 +1,11 @@
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function RefundPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SEO title="Refund Policy | ScriptSea" description="ScriptSea refund policy: when you can get a refund and how to request one within 7 days of purchase." path="/refund" />
       <Navigation />
       <main style={{
         flex: 1,

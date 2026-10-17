@@ -101,18 +101,9 @@ function MyApp({ Component, pageProps }: CustomAppProps) {
       <ErrorBoundary>
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>ScriptSea - AI Script Generator</title>
-          <meta name="description" content="Generate professional scripts with AI" />
-          <link rel="icon" href="/favicon.ico" />
-          
-          {/* Cache control headers */}
-          <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-          <meta httpEquiv="Pragma" content="no-cache" />
-          <meta httpEquiv="Expires" content="0" />
-          
-          {/* Preconnect to critical domains */}
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+          {/* Fallbacks only — every page overrides these via components/SEO (same keys). */}
+          <title key="title">ScriptSea — AI Script Generator & AI Video Prompt Generator</title>
+          <meta key="description" name="description" content="Write viral video scripts and turn them into ready-to-paste AI video prompts for Seedance, Kling, Veo and Sora. Try 3 scripts free." />
         </Head>
         <AuthProvider>
           <div id="app-root" className="min-h-screen">

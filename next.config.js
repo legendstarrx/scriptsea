@@ -9,8 +9,22 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
   
-  async headers() {
+  async redirects() {
     return [
+      // Old standalone prompt page; the tool now lives inside /generate.
+      { source: '/video-prompt', destination: '/ai-video-prompt-generator', permanent: true },
+    ];
+  },
+
+  async headers() {
+    // App and account pages render a spinner on the server, so a meta robots tag
+    // may never reach crawlers. Send noindex as a header instead.
+    const privateRoutes = ['/generate', '/login', '/register', '/verify-email', '/payment-success', '/payment-error', '/auth/:path*'];
+    return [
+      ...privateRoutes.map((source) => ({
+        source,
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, follow' }],
+      })),
       {
         source: '/:path*',
         headers: [
@@ -67,38 +81,9 @@ const nextConfig = {
     ];
   },
 
-  webpack: (config, { dev, isServer }) => {
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        minSize: 20000,
-        maxSize: 244000,
-        minChunks: 1,
-        maxAsyncRequests: 30,
-        maxInitialRequests: 30,
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          framework: {
-            name: 'framework',
-            chunks: 'all',
-            test: /[\\/]node_modules[\\/]/,
-            priority: 40,
-            enforce: true,
-          },
-          lib: {
-            test: /[\\/]node_modules[\\/]/,
-            name(module) {
-              const packageName = module.context.match(
-                /[\\/]node_modules[\\/](.*?)([\\/]|$)/
-              )[1];
-              return `npm.${packageName.replace('@', '')}`;
-            },
-            priority: 30,
-          },
-        },
-      };
-    }
+  // No custom splitChunks: the old override forced every node_module (docx, jspdf, …)
+  // into one bundle loaded on every page. Next's default splits per page.
+  webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
