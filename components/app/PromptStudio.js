@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 import { PageHeader } from './AppShell';
 import { Alert, Badge, Button, Card, Chip, Icon, OptionCard, TextArea, Toggle, cx } from '../ui';
 import { generateVideoPrompts } from '../../lib/app/aiClient';
-import { allPromptsText, parseVideoPrompts } from '../../lib/app/videoPrompts';
+import { allPromptsText } from '../../lib/app/videoPrompts';
 
 const STYLES = [
   { id: 'ugc', title: 'UGC / Viral', desc: 'A real-looking person on camera', icon: 'user' },
@@ -24,19 +24,19 @@ const APPEARANCES = [
   { id: 'south-asian', label: 'South Asian' }, { id: 'mixed', label: 'Mixed' },
 ];
 const MODELS = ['Seedance', 'Kling', 'Veo', 'Sora', 'Wan', 'Hailuo'];
-// Clip lengths each model actually supports (Veo 3.1: 4/6/8s; Sora 2: 4/8/12s).
+// Max clip lengths per model (Veo 3.1: up to 8s; Sora 2: 4/8/12s). Must match lib/server/prompts/video.js.
 const TARGETS = [
-  { id: 'any', label: 'Any model', durations: ['8 sec', '10 sec', '15 sec'], hint: 'Universal prompts that work everywhere' },
-  { id: 'seedance', label: 'Seedance', durations: ['5 sec', '10 sec', '15 sec'], hint: 'One shot per prompt, concrete physical motion' },
-  { id: 'kling', label: 'Kling', durations: ['5 sec', '10 sec', '15 sec'], hint: 'Precise body motion, one camera move' },
-  { id: 'veo', label: 'Veo', durations: ['4 sec', '6 sec', '8 sec'], hint: 'Adds sound and spoken lines, Google’s prompt order' },
-  { id: 'sora', label: 'Sora', durations: ['4 sec', '8 sec', '12 sec'], hint: 'Storyboard format: camera, light, beats, sound' },
+  { id: 'any', label: 'Any model', durations: ['5 sec', '8 sec', '10 sec', '15 sec'], def: '10 sec', hint: 'Universal prompts with timed shots' },
+  { id: 'seedance', label: 'Seedance', durations: ['5 sec', '10 sec', '15 sec'], def: '10 sec', hint: 'Timed shots, concrete physical motion' },
+  { id: 'kling', label: 'Kling', durations: ['5 sec', '10 sec', '15 sec'], def: '10 sec', hint: 'Multi-shot format with precise body motion' },
+  { id: 'veo', label: 'Veo', durations: ['4 sec', '6 sec', '8 sec'], def: '8 sec', hint: 'Adds sound and the spoken line, in Google’s prompt order' },
+  { id: 'sora', label: 'Sora', durations: ['4 sec', '8 sec', '12 sec'], def: '8 sec', hint: 'Short, simple clips with light, palette and sound' },
 ];
 const LOADING_LINES = [
-  'Reading your script line by line…',
-  'Breaking it into scenes…',
-  'Writing the camera and the light…',
-  'Keeping your character the same in every shot…',
+  'Splitting your script into clips at natural breaks…',
+  'Timing every clip to the voiceover…',
+  'Directing the shots like a real creator video…',
+  'Keeping your character the same in every clip…',
 ];
 
 function SectionTitle({ step, children, hint }) {
@@ -140,11 +140,12 @@ function SceneCard({ scene, index, total }) {
       <Card className="mb-5 min-w-0 flex-1 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-[15px] font-semibold text-zinc-900">Scene {scene.number}{scene.name && <span className="font-normal text-zinc-500"> · {scene.name}</span>}</span>
+            <span className="text-[15px] font-semibold text-zinc-900">Clip {scene.number}{scene.name && <span className="font-normal text-zinc-500"> · {scene.name}</span>}</span>
             {scene.time && <Badge tone="zinc"><Icon name="clock" className="h-3 w-3" />{scene.time}</Badge>}
+            {scene.length && <Badge>Generate at {scene.length}s</Badge>}
           </div>
           <div className="flex gap-2">
-            <CopyButton text={scene.prompt + (scene.voiceover ? `\n\nVOICEOVER:\n${scene.voiceover}` : '')} />
+            <CopyButton text={scene.prompt} />
             <a
               href={`https://higgsfield.ai/generate?prompt=${encodeURIComponent(scene.prompt)}`}
               target="_blank"
@@ -159,7 +160,7 @@ function SceneCard({ scene, index, total }) {
         {scene.voiceover && (
           <div className="mt-4 rounded-2xl bg-brand-50/70 p-4 ring-1 ring-brand-100">
             <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600">
-              <Icon name="mic" className="h-3.5 w-3.5" /> Voiceover · part {index + 1} of {total}
+              <Icon name="mic" className="h-3.5 w-3.5" /> {scene.lineLabel || 'Voiceover'} · clip {index + 1} of {total}
             </p>
             <p className="mt-2 whitespace-pre-line text-[15px] leading-7 text-zinc-800">{scene.voiceover}</p>
           </div>
@@ -177,7 +178,7 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
   const pickTarget = (id) => {
     const t = TARGETS.find((x) => x.id === id) || TARGETS[0];
     setTarget(t.id);
-    if (!t.durations.includes(vidDuration)) setVidDuration(t.durations[1]);
+    if (!t.durations.includes(vidDuration)) setVidDuration(t.def);
   };
   const [style, setStyle] = useState('ugc');
   const [charGender, setCharGender] = useState('auto');
@@ -186,6 +187,8 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
   const [withVoiceover, setWithVoiceover] = useState(false);
   const [scenes, setScenes] = useState([]);
   const [negativePrompt, setNegativePrompt] = useState('');
+  const [tip, setTip] = useState('');
+  const [truncated, setTruncated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const outputRef = useRef(null);
@@ -202,17 +205,18 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
       requestAnimationFrame(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     }
     try {
-      const text = await generateVideoPrompts({
+      const result = await generateVideoPrompts({
         input: input.trim(),
         target, duration: vidDuration, style, withVoiceover,
         charGender: style !== 'broll' && charGender !== 'auto' ? charGender : undefined,
         charAppearance: style !== 'broll' && charAppearance !== 'auto' ? charAppearance : undefined,
         animStyle: style === 'animation' ? animStyle : undefined,
       });
-      const parsed = parseVideoPrompts(text);
-      setScenes(parsed.scenes);
-      setNegativePrompt(parsed.negativePrompt);
-      if (!parsed.scenes.length) setErr('We couldn’t read the scenes this time. Please try again.');
+      setScenes(result.scenes || []);
+      setNegativePrompt(result.negativePrompt || '');
+      setTip(result.tip || '');
+      setTruncated(Boolean(result.truncated));
+      if (!result.scenes?.length) setErr('We couldn’t build the clips this time. Please try again.');
       onGenerated?.();
     } catch (e) {
       if (e?.code === 'limit_reached') { onUpgrade(); return; }
@@ -288,17 +292,18 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
             </div>
 
             <div>
-              <SectionTitle step={style !== 'broll' ? '5' : '4'} hint="per clip">Clip length</SectionTitle>
+              <SectionTitle step={style !== 'broll' ? '5' : '4'}>Longest clip</SectionTitle>
               <div className="flex flex-wrap gap-2">
                 {targetInfo.durations.map((d) => <Chip key={d} active={vidDuration === d} onClick={() => setVidDuration(d)}>{d}</Chip>)}
               </div>
+              <p className="mt-2 text-[13px] text-zinc-500">We split your script at natural breaks so no clip runs longer than this.</p>
             </div>
 
             <Toggle
               checked={withVoiceover}
               onChange={setWithVoiceover}
-              label="Add a voiceover script"
-              desc="One continuous read, split across your clips"
+              label={style === 'ugc' ? 'Creator talks on camera' : 'Add a voiceover'}
+              desc={style === 'ugc' ? 'Off: they act silently and you add your own voice later' : 'The script is read over the visuals'}
             />
 
             {err && <Alert onClose={() => setErr('')}>{err}</Alert>}
@@ -315,8 +320,12 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
             <div className="animate-fade-up space-y-6">
               <Card className="flex flex-wrap items-center justify-between gap-3 p-4 sm:px-6">
                 <div>
-                  <p className="text-[15px] font-semibold text-zinc-900">{scenes.length} scenes ready</p>
-                  <p className="text-sm text-zinc-500">Paste each one into Seedance, Kling, Veo, Sora, Wan or Hailuo.</p>
+                  <p className="text-[15px] font-semibold text-zinc-900">
+                    {scenes.length} clip{scenes.length > 1 ? 's' : ''} ready
+                    {scenes[scenes.length - 1]?.time && <span className="font-normal text-zinc-500"> · about {Math.round(parseFloat(scenes[scenes.length - 1].time.split('-')[1]))}s of video</span>}
+                  </p>
+                  <p className="text-sm text-zinc-500">{tip || 'Paste each clip into your video tool and set the length shown.'}</p>
+                  {truncated && <p className="mt-1 text-sm text-amber-600">Your script was long, so we made clips for the first part. Paste the rest in for more.</p>}
                 </div>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" icon="refresh" onClick={generate}>Regenerate</Button>

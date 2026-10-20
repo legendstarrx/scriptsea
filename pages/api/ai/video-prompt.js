@@ -1,14 +1,14 @@
 import { claudeConfigured, generate, GenerationError } from '../../../lib/server/claude';
 import { refundCredit, requireUser, reserveCredit, sendUsageError } from '../../../lib/server/usage';
-import { buildVideoRequest } from '../../../lib/server/prompts/video';
+import { assembleScenes, buildVideoRequest } from '../../../lib/server/prompts/video';
 
 export const config = { maxDuration: 300 };
 
 /**
  * POST /api/ai/video-prompt
- * Body: { input, target, duration, style, withVoiceover, charGender, charAppearance, animStyle }
- * Pro only. Every request builds its own prompt from scratch: nothing is shared
- * between requests or users.
+ * Body: { input, target, duration (max clip length), style, withVoiceover, charGender, charAppearance, animStyle }
+ * Returns { scenes, negativePrompt, tip, truncated }. Pro only.
+ * Every request builds its own prompt from scratch: nothing is shared between users.
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -26,13 +26,17 @@ export default async function handler(req, res) {
     const user = await requireUser(req);
     ticket = await reserveCredit(user, { proOnly: true, proMessage: 'Video prompts are part of Pro.' });
 
-    const text = await generate({
+    const data = await generate({
       system: request.system,
       user: request.user,
+      schema: request.schema,
       effort: 'medium',
-      maxTokens: Math.min(8000 + request.numScenes * 900, 40000),
+      maxTokens: Math.min(10000 + request.plan.clips.length * 1500, 60000),
     });
-    return res.status(200).json({ text });
+
+    const result = assembleScenes({ data, plan: request.plan, ctx: request.ctx });
+    if (!result.scenes.length) throw new GenerationError('We couldn’t build the scenes this time. Please try again.');
+    return res.status(200).json(result);
   } catch (err) {
     if (ticket) await refundCredit(ticket);
     if (err instanceof GenerationError) {
