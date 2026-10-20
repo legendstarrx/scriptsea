@@ -171,6 +171,35 @@ function SceneCard({ scene, index, total }) {
             <p className="mt-2 whitespace-pre-line text-[15px] leading-7 text-zinc-800">{scene.voiceover}</p>
           </div>
         )}
+        {scene.overlays?.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <Icon name="image" className="h-3.5 w-3.5" /> B-roll to lay over this clip
+            </p>
+            {scene.overlays.map((ov, i) => (
+              <div key={i} className="rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-200/70">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="dark">Place at {ov.at}</Badge>
+                    <Badge tone="zinc">Generate at {ov.length}s, use {ov.seconds}s</Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <CopyButton text={ov.prompt} />
+                    <a
+                      href={`https://higgsfield.ai/generate?prompt=${encodeURIComponent(ov.prompt)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-semibold text-zinc-800 ring-1 ring-inset ring-zinc-200 transition hover:bg-zinc-100"
+                    >
+                      <Icon name="rocket" className="h-4 w-4" /> Higgsfield
+                    </a>
+                  </div>
+                </div>
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-zinc-600">{ov.prompt}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );
