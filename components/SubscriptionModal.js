@@ -9,6 +9,7 @@ const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}`;
 const PRO_FEATURES = [
   'Scripts from 15 seconds up to 60 minutes',
   'AI video prompts for Seedance, Kling, Veo & Sora',
+  'Ad scripts with 3 extra hooks to test',
   'Copy and export to PDF or Word',
   'Write in the style of top creators',
   'Priority support',

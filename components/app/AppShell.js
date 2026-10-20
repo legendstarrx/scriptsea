@@ -5,6 +5,7 @@ import { Badge, Icon, Modal, cx } from '../ui';
 
 const NAV = [
   { key: 'script', label: 'Script Writer', short: 'Script', icon: 'script' },
+  { key: 'ad', label: 'Ad Scripts', short: 'Ads', icon: 'megaphone', isNew: true },
   { key: 'video-prompt', label: 'Video Prompts', short: 'Prompts', icon: 'clapper', pro: true },
 ];
 
@@ -90,6 +91,7 @@ export default function AppShell({ activeTab, onTabChange, isPro, planLabel, usa
                 <Icon name={item.icon} className="h-5 w-5" />
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.pro && !isPro && <Badge tone="zinc" className="!px-2 text-[10px]">PRO</Badge>}
+                {item.isNew && <Badge className="!px-2 text-[10px]">NEW</Badge>}
               </button>
             );
           })}
@@ -139,7 +141,7 @@ export default function AppShell({ activeTab, onTabChange, isPro, planLabel, usa
 
       {/* ── Mobile bottom tabs ────────────────────────────────────────── */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/70 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Tools">
-        <div className="grid grid-cols-3">
+        <div className="grid grid-cols-4">
           {NAV.map((item) => {
             const active = activeTab === item.key;
             return (

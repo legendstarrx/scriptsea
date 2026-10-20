@@ -24,6 +24,14 @@ const APPEARANCES = [
   { id: 'south-asian', label: 'South Asian' }, { id: 'mixed', label: 'Mixed' },
 ];
 const MODELS = ['Seedance', 'Kling', 'Veo', 'Sora', 'Wan', 'Hailuo'];
+// Clip lengths each model actually supports (Veo 3.1: 4/6/8s; Sora 2: 4/8/12s).
+const TARGETS = [
+  { id: 'any', label: 'Any model', durations: ['8 sec', '10 sec', '15 sec'], hint: 'Universal prompts that work everywhere' },
+  { id: 'seedance', label: 'Seedance', durations: ['5 sec', '10 sec', '15 sec'], hint: 'One shot per prompt, concrete physical motion' },
+  { id: 'kling', label: 'Kling', durations: ['5 sec', '10 sec', '15 sec'], hint: 'Precise body motion, one camera move' },
+  { id: 'veo', label: 'Veo', durations: ['4 sec', '6 sec', '8 sec'], hint: 'Adds sound and spoken lines, Google’s prompt order' },
+  { id: 'sora', label: 'Sora', durations: ['4 sec', '8 sec', '12 sec'], hint: 'Storyboard format: camera, light, beats, sound' },
+];
 const LOADING_LINES = [
   'Reading your script line by line…',
   'Breaking it into scenes…',
@@ -132,7 +140,7 @@ function SceneCard({ scene, index, total }) {
       <Card className="mb-5 min-w-0 flex-1 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-[15px] font-semibold text-zinc-900">Scene {scene.number}</span>
+            <span className="text-[15px] font-semibold text-zinc-900">Scene {scene.number}{scene.name && <span className="font-normal text-zinc-500"> · {scene.name}</span>}</span>
             {scene.time && <Badge tone="zinc"><Icon name="clock" className="h-3 w-3" />{scene.time}</Badge>}
           </div>
           <div className="flex gap-2">
@@ -147,7 +155,7 @@ function SceneCard({ scene, index, total }) {
             </a>
           </div>
         </div>
-        <p className="mt-4 text-[15px] leading-7 text-zinc-700">{scene.prompt}</p>
+        <p className="mt-4 whitespace-pre-line text-[15px] leading-7 text-zinc-700">{scene.prompt}</p>
         {scene.voiceover && (
           <div className="mt-4 rounded-2xl bg-brand-50/70 p-4 ring-1 ring-brand-100">
             <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600">
@@ -163,7 +171,14 @@ function SceneCard({ scene, index, total }) {
 
 export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGenerated }) {
   const [input, setInput] = useState('');
+  const [target, setTarget] = useState('any');
   const [vidDuration, setVidDuration] = useState('10 sec');
+  const targetInfo = TARGETS.find((t) => t.id === target) || TARGETS[0];
+  const pickTarget = (id) => {
+    const t = TARGETS.find((x) => x.id === id) || TARGETS[0];
+    setTarget(t.id);
+    if (!t.durations.includes(vidDuration)) setVidDuration(t.durations[1]);
+  };
   const [style, setStyle] = useState('ugc');
   const [charGender, setCharGender] = useState('auto');
   const [charAppearance, setCharAppearance] = useState('auto');
@@ -189,7 +204,7 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
     try {
       const text = await generateVideoPrompts({
         input: input.trim(),
-        duration: vidDuration, style, withVoiceover,
+        target, duration: vidDuration, style, withVoiceover,
         charGender: style !== 'broll' && charGender !== 'auto' ? charGender : undefined,
         charAppearance: style !== 'broll' && charAppearance !== 'auto' ? charAppearance : undefined,
         animStyle: style === 'animation' ? animStyle : undefined,
@@ -265,9 +280,17 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
             )}
 
             <div>
-              <SectionTitle step={style !== 'broll' ? '4' : '3'} hint="per clip">Clip length</SectionTitle>
+              <SectionTitle step={style !== 'broll' ? '4' : '3'}>Video model</SectionTitle>
               <div className="flex flex-wrap gap-2">
-                {['8 sec', '10 sec', '15 sec'].map((d) => <Chip key={d} active={vidDuration === d} onClick={() => setVidDuration(d)}>{d}</Chip>)}
+                {TARGETS.map((t) => <Chip key={t.id} active={target === t.id} onClick={() => pickTarget(t.id)}>{t.label}</Chip>)}
+              </div>
+              <p className="mt-2 text-[13px] text-zinc-500">{targetInfo.hint}</p>
+            </div>
+
+            <div>
+              <SectionTitle step={style !== 'broll' ? '5' : '4'} hint="per clip">Clip length</SectionTitle>
+              <div className="flex flex-wrap gap-2">
+                {targetInfo.durations.map((d) => <Chip key={d} active={vidDuration === d} onClick={() => setVidDuration(d)}>{d}</Chip>)}
               </div>
             </div>
 

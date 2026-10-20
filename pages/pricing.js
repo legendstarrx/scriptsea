@@ -13,6 +13,7 @@ const DESCRIPTION =
 const PRO_FEATURES = [
   'Scripts from 15 seconds up to 60 minutes',
   'AI video prompts for Seedance, Kling, Veo & Sora',
+  'Ad scripts with 3 extra hooks to test',
   'All content formats and tones',
   'Creator style matching from any video link',
   'Export to PDF & Word',
@@ -23,7 +24,7 @@ const PRO_FEATURES = [
 const PLANS = [
   {
     name: 'Free', price: '$0', per: '', tagline: 'See it work on your own idea.',
-    features: ['3 free scripts', '15 and 30 second scripts', 'See exactly how it works', 'No credit card'],
+    features: ['3 free scripts or ad scripts', '15 and 30 second lengths', 'See exactly how it works', 'No credit card'],
     cta: 'Start Free',
   },
   {

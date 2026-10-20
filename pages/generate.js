@@ -13,8 +13,8 @@ import { getPlanLabel, hasProAccess } from '../utils/subscription';
 
 const FREE_SCRIPTS = 3;
 // URL value ⇄ internal tab key. The tab lives in the URL so a refresh keeps it.
-const TAB_FROM_QUERY = { prompts: 'video-prompt' };
-const QUERY_FROM_TAB = { 'video-prompt': 'prompts' };
+const TAB_FROM_QUERY = { prompts: 'video-prompt', ads: 'ad' };
+const QUERY_FROM_TAB = { 'video-prompt': 'prompts', ad: 'ads' };
 
 export default function Generate() {
   const router = useRouter();
@@ -209,6 +209,15 @@ export default function Generate() {
           {/* Both studios stay mounted so switching tabs never loses your work. */}
           <div hidden={activeTab !== 'script'}>
             <ScriptStudio
+              isProUser={isProUser}
+              onUpgrade={openUpgrade}
+              onSendToPrompts={sendToPrompts}
+              refreshUserProfile={refreshUsage}
+            />
+          </div>
+          <div hidden={activeTab !== 'ad'}>
+            <ScriptStudio
+              mode="ad"
               isProUser={isProUser}
               onUpgrade={openUpgrade}
               onSendToPrompts={sendToPrompts}
