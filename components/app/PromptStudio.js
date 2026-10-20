@@ -24,13 +24,16 @@ const APPEARANCES = [
   { id: 'south-asian', label: 'South Asian' }, { id: 'mixed', label: 'Mixed' },
 ];
 const MODELS = ['Seedance', 'Kling', 'Veo', 'Sora', 'Wan', 'Hailuo'];
-// Max clip lengths per model (Veo 3.1: up to 8s; Sora 2: 4/8/12s). Must match lib/server/prompts/video.js.
+// Clip lengths each model can generate. We time every clip to its script line
+// using only these, so there's no length to pick. Must match lib/server/prompts/video.js.
 const TARGETS = [
-  { id: 'any', label: 'Any model', durations: ['5 sec', '8 sec', '10 sec', '15 sec'], def: '10 sec', hint: 'Universal prompts with timed shots' },
-  { id: 'seedance', label: 'Seedance', durations: ['5 sec', '10 sec', '15 sec'], def: '10 sec', hint: 'Timed shots, concrete physical motion' },
-  { id: 'kling', label: 'Kling', durations: ['5 sec', '10 sec', '15 sec'], def: '10 sec', hint: 'Multi-shot format with precise body motion' },
-  { id: 'veo', label: 'Veo', durations: ['4 sec', '6 sec', '8 sec'], def: '8 sec', hint: 'Adds sound and the spoken line, in Google’s prompt order' },
-  { id: 'sora', label: 'Sora', durations: ['4 sec', '8 sec', '12 sec'], def: '8 sec', hint: 'Short, simple clips with light, palette and sound' },
+  { id: 'any', label: 'Any model', hint: 'Clips of 4-10 seconds, timed to your script' },
+  { id: 'seedance25', label: 'Seedance 2.5', hint: 'Clips up to 30 seconds, timed to your script' },
+  { id: 'seedance', label: 'Seedance 2.0', hint: 'Clips of 4-15 seconds, timed to your script' },
+  { id: 'kling', label: 'Kling 3.0', hint: 'Multi-shot clips of 3, 5, 8, 10 or 15 seconds' },
+  { id: 'omni', label: 'Omni Flash', hint: 'Clips of 4, 6, 8 or 10 seconds' },
+  { id: 'veo', label: 'Veo 3.1', hint: 'Clips of 4, 6 or 8 seconds, with sound and dialogue' },
+  { id: 'sora', label: 'Sora 2', hint: 'Clips of 4, 8 or 12 seconds, simple shots' },
 ];
 const LOADING_LINES = [
   'Splitting your script into clips at natural breaks…',
@@ -176,13 +179,7 @@ function SceneCard({ scene, index, total }) {
 export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGenerated }) {
   const [input, setInput] = useState('');
   const [target, setTarget] = useState('any');
-  const [vidDuration, setVidDuration] = useState('10 sec');
   const targetInfo = TARGETS.find((t) => t.id === target) || TARGETS[0];
-  const pickTarget = (id) => {
-    const t = TARGETS.find((x) => x.id === id) || TARGETS[0];
-    setTarget(t.id);
-    if (!t.durations.includes(vidDuration)) setVidDuration(t.def);
-  };
   const [style, setStyle] = useState('ugc');
   const [charGender, setCharGender] = useState('auto');
   const [charAppearance, setCharAppearance] = useState('auto');
@@ -210,7 +207,7 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
     try {
       const result = await generateVideoPrompts({
         input: input.trim(),
-        target, duration: vidDuration, style, withVoiceover,
+        target, style, withVoiceover,
         charGender: style !== 'broll' && charGender !== 'auto' ? charGender : undefined,
         charAppearance: style !== 'broll' && charAppearance !== 'auto' ? charAppearance : undefined,
         animStyle: style === 'animation' ? animStyle : undefined,
@@ -289,17 +286,11 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
             <div>
               <SectionTitle step={style !== 'broll' ? '4' : '3'}>Video model</SectionTitle>
               <div className="flex flex-wrap gap-2">
-                {TARGETS.map((t) => <Chip key={t.id} active={target === t.id} onClick={() => pickTarget(t.id)}>{t.label}</Chip>)}
+                {TARGETS.map((t) => <Chip key={t.id} active={target === t.id} onClick={() => setTarget(t.id)}>{t.label}</Chip>)}
               </div>
-              <p className="mt-2 text-[13px] text-zinc-500">{targetInfo.hint}</p>
-            </div>
-
-            <div>
-              <SectionTitle step={style !== 'broll' ? '5' : '4'}>Clip length</SectionTitle>
-              <div className="flex flex-wrap gap-2">
-                {targetInfo.durations.map((d) => <Chip key={d} active={vidDuration === d} onClick={() => setVidDuration(d)}>{d}</Chip>)}
-              </div>
-              <p className="mt-2 text-[13px] text-zinc-500">Every clip is exactly this long. We fit your script into each clip at natural breaks.</p>
+              <p className="mt-2 text-[13px] text-zinc-500">
+                {targetInfo.hint}. We pick each clip&apos;s length so the video matches your script second for second.
+              </p>
             </div>
 
             <Toggle
