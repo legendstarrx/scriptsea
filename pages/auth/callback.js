@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import SEO from '../../components/SEO';
+import { FullPageSpinner } from '../../components/ProtectedRoute';
 
 export default function AuthCallbackPage() {
   const [message, setMessage] = useState('Completing sign-in…');
@@ -58,52 +59,9 @@ export default function AuthCallbackPage() {
   }, []);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)',
-      padding: '1rem',
-    }}>
+    <>
       <SEO title="Signing You In | ScriptSea" description="Completing sign in." path="/auth/callback" noindex />
-      <div style={{
-        width: '100%',
-        maxWidth: '400px',
-        background: 'white',
-        borderRadius: '20px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-        padding: '2.5rem 2rem',
-        textAlign: 'center',
-      }}>
-        {/* Spinner */}
-        <div style={{ marginBottom: '20px' }}>
-          <svg
-            width="48" height="48" viewBox="0 0 48 48"
-            style={{ animation: 'spin 0.9s linear infinite' }}
-          >
-            <circle
-              cx="24" cy="24" r="20"
-              fill="none" stroke="#f3d5de" strokeWidth="4"
-            />
-            <path
-              d="M24 4 a20 20 0 0 1 20 20"
-              fill="none" stroke="#FF3366" strokeWidth="4" strokeLinecap="round"
-            />
-          </svg>
-        </div>
-
-        <p style={{ color: '#444', fontSize: '1rem', margin: 0, fontWeight: 500 }}>
-          {message}
-        </p>
-
-        <style>{`
-          @keyframes spin {
-            0%   { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    </div>
+      <FullPageSpinner label={message} />
+    </>
   );
 }

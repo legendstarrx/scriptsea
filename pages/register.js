@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
-import Navigation from '../components/Navigation';
-import Footer from '../components/Footer';
-import { useAuthRedirect } from '../hooks/useAuthRedirect';
+import { useAuthRedirect, safeNextPath } from '../hooks/useAuthRedirect';
 import SEO from '../components/SEO';
+import AuthLayout, { GoogleButton, OrDivider, PasswordInput } from '../components/auth/AuthLayout';
+import { Alert, Button, FieldLabel, Icon, TextInput, cx } from '../components/ui';
 
 const validatePassword = (password) => ({
   length: password.length >= 8,
@@ -14,28 +15,28 @@ const validatePassword = (password) => ({
   special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
 });
 
+const RULES = [
+  ['length', '8+ characters'],
+  ['uppercase', 'One uppercase'],
+  ['lowercase', 'One lowercase'],
+  ['number', 'One number'],
+  ['special', 'One symbol'],
+];
+
 export default function Register() {
   useAuthRedirect();
   const router = useRouter();
   const { signup, signInWithGoogle } = useAuth();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
+  const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState({
-    length: false,
-    uppercase: false,
-    lowercase: false,
-    number: false,
-    special: false
-  });
+  const [passwordValidation, setPasswordValidation] = useState(validatePassword(''));
+
+  const next = safeNextPath(router.query.next);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,7 +57,7 @@ export default function Register() {
         throw new Error('Please fill in all fields');
       }
       if (!Object.values(validatePassword(formData.password)).every(Boolean)) {
-        throw new Error('Please ensure your password meets all requirements');
+        throw new Error('Please make sure your password meets all the rules');
       }
       if (formData.password !== formData.confirmPassword) {
         throw new Error('Passwords do not match');
@@ -76,14 +77,15 @@ export default function Register() {
       }
 
       if (signupResult?.hasSession) {
-        setSuccess('Account created successfully! Redirecting...');
-        await router.replace('/generate');
+        setSuccess('Account created! Taking you in...');
+        await router.replace(next || '/generate');
       } else {
         setSuccess('Account created! Please verify your email to continue.');
         await router.replace('/verify-email');
       }
     } catch (err) {
       setError(err?.message || 'Failed to create account. Please try again.');
+      setSuccess('');
     } finally {
       setIsLoading(false);
     }
@@ -101,164 +103,86 @@ export default function Register() {
     }
   };
 
-  const showPasswordRules =
-    (isPasswordFocused || formData.password.length > 0) &&
-    !Object.values(passwordValidation).every(Boolean);
+  const showPasswordRules = isPasswordFocused || formData.password.length > 0;
+  const passwordsMismatch = formData.confirmPassword.length > 0 && formData.confirmPassword !== formData.password;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <>
       <SEO title="Create Your Free Account | ScriptSea" description="Sign up free and get 3 AI scripts. No credit card needed." path="/register" noindex />
-      <Navigation />
-      <main
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem',
-          paddingTop: 'calc(50px + 1rem)',
-          background: 'linear-gradient(135deg, #fff5f7 0%, #ffffff 100%)'
-        }}
+      <AuthLayout
+        title="Create your free account"
+        subtitle="3 free scripts. No credit card. Takes 20 seconds."
+        footer={
+          <>
+            Already have an account?{' '}
+            <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="font-semibold text-brand-600 hover:text-brand-700">
+              Sign in
+            </Link>
+          </>
+        }
       >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: '420px',
-            padding: '2.2rem',
-            background: 'white',
-            borderRadius: '16px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-            marginTop: '1rem'
-          }}
-        >
-          <h1 style={{ fontSize: '1.9rem', color: '#333', marginBottom: '1.4rem', textAlign: 'center' }}>
-            Create Your Account
-          </h1>
-
-          {(error || success) && (
-            <div
-              style={{
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '8px',
-                backgroundColor: error ? 'rgba(255, 51, 102, 0.1)' : 'rgba(72, 187, 120, 0.1)',
-                color: error ? '#FF3366' : '#48BB78',
-                border: `1px solid ${error ? '#FF3366' : '#48BB78'}`
-              }}
-            >
+        {(error || success) && (
+          <div className="mb-6">
+            <Alert tone={error ? 'error' : 'success'} onClose={error ? () => setError('') : undefined}>
               {error || success}
-            </div>
-          )}
+            </Alert>
+          </div>
+        )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <input
-              type="text"
-              name="fullName"
-              placeholder="Full Name"
-              required
-              value={formData.fullName}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              onFocus={() => setIsPasswordFocused(true)}
-              onBlur={() => setIsPasswordFocused(false)}
-              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
-            />
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
-            />
+        <GoogleButton onClick={handleGoogleSignIn} disabled={isLoadingAuth || isLoading}>Sign up with Google</GoogleButton>
+        <OrDivider />
 
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <FieldLabel htmlFor="fullName">Name</FieldLabel>
+            <TextInput id="fullName" name="fullName" autoComplete="name" placeholder="Your name"
+              value={formData.fullName} onChange={handleChange} required />
+          </div>
+          <div>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <TextInput id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com"
+              value={formData.email} onChange={handleChange} required />
+          </div>
+          <div>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <PasswordInput
+              id="password" name="password" autoComplete="new-password" placeholder="Create a password"
+              value={formData.password} onChange={handleChange}
+              onFocus={() => setIsPasswordFocused(true)} onBlur={() => setIsPasswordFocused(false)}
+              show={showPassword} onToggle={() => setShowPassword((s) => !s)} required
+            />
             {showPasswordRules && (
-              <div style={{ marginTop: '.2rem', padding: '.75rem', backgroundColor: '#f8f9ff', borderRadius: '8px', fontSize: '.8rem' }}>
-                <div style={{ color: passwordValidation.length ? '#48BB78' : '#666' }}>{passwordValidation.length ? '✓' : '○'} 8+ characters</div>
-                <div style={{ color: passwordValidation.uppercase ? '#48BB78' : '#666' }}>{passwordValidation.uppercase ? '✓' : '○'} Uppercase letter</div>
-                <div style={{ color: passwordValidation.lowercase ? '#48BB78' : '#666' }}>{passwordValidation.lowercase ? '✓' : '○'} Lowercase letter</div>
-                <div style={{ color: passwordValidation.number ? '#48BB78' : '#666' }}>{passwordValidation.number ? '✓' : '○'} Number</div>
-                <div style={{ color: passwordValidation.special ? '#48BB78' : '#666' }}>{passwordValidation.special ? '✓' : '○'} Special character</div>
-              </div>
+              <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {RULES.map(([key, label]) => (
+                  <li key={key} className={cx('flex items-center gap-1.5 text-[13px] transition',
+                    passwordValidation[key] ? 'text-emerald-600' : 'text-zinc-400')}>
+                    <Icon name={passwordValidation[key] ? 'check' : 'plus'}
+                      className={cx('h-3.5 w-3.5', !passwordValidation[key] && 'rotate-45')} />
+                    {label}
+                  </li>
+                ))}
+              </ul>
             )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#FF3366',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '500',
-                cursor: 'pointer',
-                opacity: isLoading ? 0.7 : 1
-              }}
-            >
-              {isLoading ? 'Creating account...' : 'Create account'}
-            </button>
-          </form>
-
-          <div style={{ display: 'flex', alignItems: 'center', margin: '1.2rem 0', gap: '1rem' }}>
-            <div style={{ flex: 1, height: '1px', background: '#eee' }} />
-            <span style={{ color: '#666', fontSize: '.875rem' }}>or</span>
-            <div style={{ flex: 1, height: '1px', background: '#eee' }} />
+          </div>
+          <div>
+            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
+            <PasswordInput
+              id="confirmPassword" name="confirmPassword" autoComplete="new-password" placeholder="Type it again"
+              value={formData.confirmPassword} onChange={handleChange}
+              show={showPassword} onToggle={() => setShowPassword((s) => !s)} required
+            />
+            {passwordsMismatch && <p className="mt-2 text-[13px] text-red-600">Passwords don&apos;t match yet.</p>}
           </div>
 
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isLoadingAuth}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: 'white',
-              color: '#333',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            <img src="/google.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
-            Continue with Google
-          </button>
-
-          <p style={{ marginTop: '1.2rem', textAlign: 'center', color: '#666', fontSize: '.875rem' }}>
-            Already have an account?{' '}
-            <a onClick={() => router.push('/login')} style={{ color: '#FF3366', cursor: 'pointer' }}>
-              Sign in
-            </a>
+          <Button type="submit" size="lg" className="w-full" loading={isLoading}>
+            Create free account
+          </Button>
+          <p className="text-center text-xs text-zinc-400">
+            By signing up you agree to our{' '}
+            <Link href="/privacy" className="underline hover:text-zinc-600">Privacy Policy</Link>.
           </p>
-        </div>
-      </main>
-      <Footer />
-    </div>
+        </form>
+      </AuthLayout>
+    </>
   );
 }

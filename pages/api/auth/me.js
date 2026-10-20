@@ -119,6 +119,13 @@ export default async function handler(req, res) {
 
   const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
   if (authError || !user) {
+    // A network/5xx failure talking to Supabase is NOT an invalid token. Answer
+    // 503 so the client keeps the user signed in instead of logging them out.
+    const status = Number(authError?.status);
+    const transient = authError && (!status || status >= 500 || status === 429 || authError.name === 'AuthRetryableFetchError');
+    if (transient) {
+      return res.status(503).json({ error: 'Auth service temporarily unavailable.' });
+    }
     return res.status(401).json({ error: 'Invalid or expired token.' });
   }
 

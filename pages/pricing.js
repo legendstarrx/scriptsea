@@ -23,7 +23,7 @@ const PRO_FEATURES = [
 const PLANS = [
   {
     name: 'Free', price: '$0', per: '', tagline: 'See it work on your own idea.',
-    features: ['3 scripts or video prompt sets', '15 and 30 second scripts', 'AI video prompts included', 'No credit card'],
+    features: ['3 free scripts', '15 and 30 second scripts', 'See exactly how it works', 'No credit card'],
     cta: 'Start Free',
   },
   {
@@ -39,7 +39,7 @@ const PLANS = [
 ];
 
 const FAQS = [
-  { q: 'What counts as one script?', a: 'Each generation counts as one, whether it is a script or a set of video prompts. Both use the same allowance.' },
+  { q: 'What counts as one script?', a: 'On Pro, each generation counts as one, whether it is a script or a set of video prompts. Both use the same allowance.' },
   { q: 'Can I cancel?', a: 'Yes. Email support@scriptsea.com and we will cancel your plan. If something went wrong, you can ask for a refund within 7 days of purchase, as explained in our refund policy.' },
   { q: 'Do I need a card for the free plan?', a: 'No. Sign up with Google or email and you get 3 free scripts straight away.' },
   { q: 'Which plan should I pick?', a: 'If you post a few times a week, Weekly is enough. If you post daily or test lots of ad hooks, Monthly gives you 4 times the scripts for the best price.' },

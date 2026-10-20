@@ -26,7 +26,7 @@ const FAQS = [
   { q: 'How is this different from ChatGPT?', a: 'ChatGPT is a general chatbot. You have to tell it what to do, then fix what it gives you. ScriptSea is built only for video. Scripts open with a hook and fit your video length to the word. Video prompts keep the same character in every scene and use camera and light the way video models understand.' },
   { q: 'Which AI video models do the prompts work with?', a: 'Seedance 2.0, Kling 3.0, Veo 3.1, Sora 2, Wan, Hailuo and tools like Higgsfield. The prompts are detailed, plain-English scene descriptions, so they work in any text-to-video model. Just paste and generate.' },
   { q: 'Do I need to know prompt engineering?', a: 'No. That is the whole point. Type your idea or paste your script, and ScriptSea handles the character, camera, lighting, style and pacing.' },
-  { q: 'Can I try it for free?', a: 'Yes. You get 3 free scripts when you sign up, no card needed. After that, Pro is $4.99 a week for 15 scripts or $19.99 a month for 60. Scripts and video prompts use the same allowance.' },
+  { q: 'Can I try it for free?', a: 'Yes. You get 3 free scripts when you sign up, no card needed. After that, Pro is $4.99 a week for 15 scripts or $19.99 a month for 60, and unlocks video prompts too.' },
   { q: 'What makes the scripts go viral?', a: 'Every script opens with a hook, fits your video length to the word, and cuts anything that does not keep people watching. It is written the way people talk, not the way people write.' },
   { q: 'What can I make with it?', a: 'TikToks, Instagram Reels, YouTube Shorts, long YouTube videos up to 60 minutes, UGC ads, product videos and faceless channels with fully AI-generated visuals.' },
 ];

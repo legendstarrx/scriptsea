@@ -71,6 +71,9 @@ function mapUser(u) {
 
 // ---------------------------------------------------------------------------
 // Server-side profile fetch — uses admin key (no RLS issues)
+// Returns the profile row, { __unauthorized: true } on 401/403, or null when
+// the request failed for any other reason (network, 5xx). Only a confirmed
+// 401/403 may ever lead to signing the user out.
 // ---------------------------------------------------------------------------
 
 async function fetchProfileFromServer(accessToken) {
@@ -88,20 +91,45 @@ async function fetchProfileFromServer(accessToken) {
   }
 }
 
+// Supabase keeps the session in localStorage under "sb-<project>-auth-token".
+// Used only as a fallback when the auth client is slow to answer on boot, so a
+// signed-in user is never treated as signed out just because of a slow network.
+function readStoredSessionUser() {
+  if (typeof window === 'undefined') return null;
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
+      const parsed = JSON.parse(localStorage.getItem(key) || 'null');
+      const stored = parsed?.currentSession || parsed;
+      if (stored?.user && stored?.refresh_token) return stored.user;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+// A refresh error means "this session is dead" only for 4xx auth errors.
+// Network failures (no status / 5xx / 429) must never sign anyone out.
+const isDeadSessionError = (err) =>
+  Boolean(err) && Number(err.status) >= 400 && Number(err.status) < 500 && Number(err.status) !== 429;
+
+const PROFILE_REFETCH_MS = 20000;
+
 // ---------------------------------------------------------------------------
 // Provider
 // ---------------------------------------------------------------------------
 
 export function AuthProvider({ children }) {
-  // Pre-populate from localStorage so returning users NEVER see shimmer on refresh
-  const [userProfile, setUserProfile] = useState(() => readCache());
+  // Starts empty on server AND client so hydration matches; the cached profile
+  // is applied right after mount (see below) so returning users see it instantly.
+  const [userProfile, setUserProfile] = useState(null);
   const [user, setUser]               = useState(null);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
 
-  const mounted   = useRef(true);
-  const bootDone  = useRef(false);
-  const syncing   = useRef(false);
+  const mounted         = useRef(true);
+  const profileInFlight = useRef(null);
+  const lastProfileAt   = useRef(0);
 
   // Apply a fresh profile to state + cache
   const applyProfile = useCallback((mapped) => {
@@ -117,64 +145,94 @@ export function AuthProvider({ children }) {
     setUserProfile(null);
   }, []);
 
-  const forceSignOutLocal = useCallback(async () => {
+  // Sign out THIS browser only. Never `signOut()` with the default global scope
+  // from automatic code paths — that revokes the user's sessions on every device.
+  const signOutLocal = useCallback(async () => {
     clearSession();
     setLoading(false);
     try {
-      await supabase?.auth?.signOut();
+      await supabase?.auth?.signOut({ scope: 'local' });
     } catch {
       // local state is already cleared
     }
   }, [clearSession]);
 
-  // Fetch profile from /api/auth/me and apply it
-  const syncProfile = useCallback(async (supabaseUser) => {
-    if (!supabaseUser) {
-      clearSession();
-      return;
-    }
-    if (syncing.current) return;
-    syncing.current = true;
+  /**
+   * Load the profile for an access token. On a 401 it refreshes the session once
+   * and retries; it only signs out when the session is confirmed dead. Calls
+   * are de-duplicated, and event-driven calls are throttled.
+   */
+  const loadProfile = useCallback(async (accessToken, { force = false } = {}) => {
+    if (!accessToken) return null;
+    if (profileInFlight.current) return profileInFlight.current;
+    if (!force && Date.now() - lastProfileAt.current < PROFILE_REFETCH_MS) return null;
 
-    setUser(mapUser(supabaseUser));
+    const run = (async () => {
+      let row = await fetchProfileFromServer(accessToken);
 
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) {
-        syncing.current = false;
-        return;
-      }
-
-      const row = await fetchProfileFromServer(token);
       if (row?.__unauthorized) {
-        await forceSignOutLocal();
-        syncing.current = false;
-        return;
+        // Most likely the access token expired while the tab was idle.
+        const { data, error: refreshError } = await supabase.auth.refreshSession();
+        if (data?.session?.access_token) {
+          row = await fetchProfileFromServer(data.session.access_token);
+          if (row?.__unauthorized) {
+            await signOutLocal(); // brand-new token still rejected → session is invalid
+            return null;
+          }
+        } else if (isDeadSessionError(refreshError)) {
+          await signOutLocal();
+          return null;
+        } else {
+          return null; // network trouble — keep the user signed in
+        }
       }
+
       if (row && mounted.current) {
-        applyProfile(mapProfile(row));
+        lastProfileAt.current = Date.now();
+        const mapped = mapProfile(row);
+        applyProfile(mapped);
+        return mapped;
       }
-    } catch (_e) {
-      // Non-critical — cache is still set, UI is not broken
+      return null;
+    })();
+
+    profileInFlight.current = run;
+    try {
+      return await run;
     } finally {
-      syncing.current = false;
+      profileInFlight.current = null;
     }
-  }, [applyProfile, clearSession, forceSignOutLocal]);
+  }, [applyProfile, signOutLocal]);
+
+  // Show the cached profile immediately after hydration.
+  useEffect(() => {
+    const cached = readCache();
+    if (cached) setUserProfile((current) => current ?? cached);
+  }, []);
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
   useEffect(() => {
     mounted.current = true;
+    let settled = false;
 
-    // Safety net: loading can NEVER stay true longer than 5 seconds
+    const settle = (sessionUser) => {
+      if (!mounted.current) return;
+      settled = true;
+      if (sessionUser) setUser(mapUser(sessionUser));
+      setLoading(false);
+    };
+
+    // If the auth client is slow (e.g. another tab is refreshing the token),
+    // fall back to the stored session instead of treating the user as signed out.
     const safetyTimer = setTimeout(() => {
-      if (mounted.current) setLoading(false);
-    }, 5000);
+      if (!settled) settle(readStoredSessionUser());
+    }, 6000);
 
     const boot = async () => {
       try {
         if (!supabase) {
           setError(new Error('Supabase is not configured.'));
+          settle(null);
           return;
         }
 
@@ -183,73 +241,43 @@ export function AuthProvider({ children }) {
         if (!mounted.current) return;
 
         if (session?.user) {
-          setUser(mapUser(session.user));
-
-          // Fetch authoritative profile from server (uses admin key — no RLS issues)
-          const row = await fetchProfileFromServer(session.access_token);
-          if (row?.__unauthorized) {
-            await forceSignOutLocal();
-            return;
-          }
-          if (row && mounted.current) {
-            applyProfile(mapProfile(row));
-          }
+          // Unblock the UI right away; the profile loads in the background.
+          settle(session.user);
+          loadProfile(session.access_token, { force: true }).catch(() => {});
         } else {
           clearSession();
+          settle(null);
         }
       } catch (err) {
         if (mounted.current) setError(err);
+        settle(readStoredSessionUser());
       } finally {
         clearTimeout(safetyTimer);
-        if (mounted.current) {
-          setLoading(false);
-          bootDone.current = true;
-        }
       }
     };
 
     boot();
 
-    // Auth state change listener — handles sign-in, sign-out, token refresh
+    // Supabase warns against awaiting work inside this callback: it runs while
+    // the auth lock is held, so awaiting here can freeze every other auth call.
+    // Keep it synchronous and defer any network work with setTimeout.
     const { data: listener } = supabase
-      ? supabase.auth.onAuthStateChange(async (event, session) => {
+      ? supabase.auth.onAuthStateChange((event, session) => {
           if (!mounted.current) return;
+          if (event === 'INITIAL_SESSION') return; // handled by boot()
 
-          // INITIAL_SESSION is handled by boot() above — skip it to avoid race
-          if (event === 'INITIAL_SESSION') return;
-
-          // Token refresh — silently update the user/profile, never sign out
-          if (event === 'TOKEN_REFRESHED') {
-            if (session?.user) {
-              setUser(mapUser(session.user));
-              // Background refresh of profile — don't block anything
-              fetchProfileFromServer(session.access_token)
-                .then(async (row) => {
-                  if (row?.__unauthorized) {
-                    await forceSignOutLocal();
-                    return;
-                  }
-                  if (row && mounted.current) applyProfile(mapProfile(row));
-                })
-                .catch(() => {});
-            }
-            return; // Don't touch loading state
+          if (event === 'SIGNED_OUT') {
+            clearSession();
+            setLoading(false);
+            return;
           }
 
           if (session?.user) {
             setUser(mapUser(session.user));
-            const row = await fetchProfileFromServer(session.access_token);
-            if (row?.__unauthorized) {
-              await forceSignOutLocal();
-              return;
-            }
-            if (row && mounted.current) applyProfile(mapProfile(row));
-          } else if (event === 'SIGNED_OUT') {
-            // Only clear on an explicit sign-out, not on unknown events
-            clearSession();
+            setLoading(false);
+            const token = session.access_token;
+            setTimeout(() => { loadProfile(token).catch(() => {}); }, 0);
           }
-
-          if (mounted.current) setLoading(false);
         })
       : { data: { subscription: { unsubscribe: () => {} } } };
 
@@ -258,7 +286,13 @@ export function AuthProvider({ children }) {
       clearTimeout(safetyTimer);
       listener.subscription.unsubscribe();
     };
-  }, [applyProfile, clearSession, forceSignOutLocal]);
+  }, [clearSession, loadProfile]);
+
+  // Fresh token for an explicit, user-triggered refresh.
+  const currentToken = async () => {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token || null;
+  };
 
   // ── Auth actions ───────────────────────────────────────────────────────────
 
@@ -282,12 +316,8 @@ export function AuthProvider({ children }) {
 
     if (data?.user && data?.session) {
       setUser(mapUser(data.user));
-      const row = await fetchProfileFromServer(data.session.access_token);
-      if (row?.__unauthorized) {
-        await forceSignOutLocal();
-        return null;
-      }
-      if (row) applyProfile(mapProfile(row));
+      setLoading(false);
+      await loadProfile(data.session.access_token, { force: true });
     }
 
     return mapUser(data?.user || null);
@@ -301,9 +331,8 @@ export function AuthProvider({ children }) {
   };
 
   /**
-   * Sign out — clears local state IMMEDIATELY, then attempts network sign-out
-   * with a 5-second timeout. Even if the network is down, the user is signed
-   * out locally right away.
+   * Sign out — clears local state IMMEDIATELY, then signs out this browser with
+   * a 5-second timeout. Other devices stay signed in.
    */
   const logout = async () => {
     clearSession();
@@ -311,7 +340,7 @@ export function AuthProvider({ children }) {
 
     if (supabase) {
       await Promise.race([
-        supabase.auth.signOut(),
+        supabase.auth.signOut({ scope: 'local' }),
         new Promise((resolve) => setTimeout(resolve, 5000)),
       ]).catch(() => { /* ignore — already cleared locally */ });
     }
@@ -329,63 +358,32 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   };
 
+  const refreshUserProfile = async () => {
+    const token = await currentToken();
+    if (!token) return userProfile;
+    const mapped = await loadProfile(token, { force: true });
+    return mapped || userProfile;
+  };
+
   const updateUserProfile = async (_data) => {
     // Profile updates go through Supabase dashboard or a dedicated API route.
     // Just refresh from server to pick up any changes.
     await refreshUserProfile();
   };
 
-  const updateSubscription = async (userId, plan) => {
-    // This is now handled server-side via webhooks.
-    // Refresh profile to pick up any DB changes.
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
-    if (token) {
-      const row = await fetchProfileFromServer(token);
-      if (row?.__unauthorized) {
-        await forceSignOutLocal();
-        return;
-      }
-      if (row) applyProfile(mapProfile(row));
-    }
+  const updateSubscription = async (_userId, _plan) => {
+    // Handled server-side via webhooks — refresh to pick up DB changes.
+    await refreshUserProfile();
   };
 
   const decrementScriptsRemaining = async (_userId) => {
     // Decrement is handled server-side. Just refresh the profile to get the latest count.
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
-    if (!token) return (userProfile?.scriptsRemaining ?? 0);
-
-    const row = await fetchProfileFromServer(token);
-    if (row?.__unauthorized) {
-      await forceSignOutLocal();
-      return 0;
-    }
-    if (row) applyProfile(mapProfile(row));
-    return row?.scripts_remaining ?? Math.max((userProfile?.scriptsRemaining ?? 0) - 1, 0);
-  };
-
-  const refreshUserProfile = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
-    if (!token) return userProfile;
-
-    const row = await fetchProfileFromServer(token);
-    if (row?.__unauthorized) {
-      await forceSignOutLocal();
-      return null;
-    }
-    if (!row) return userProfile;
-
-    const mapped = mapProfile(row);
-    applyProfile(mapped);
-    return mapped;
+    const mapped = await refreshUserProfile();
+    return mapped?.scriptsRemaining ?? Math.max((userProfile?.scriptsRemaining ?? 0) - 1, 0);
   };
 
   const deleteUserAccount = async () => {
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    const token = sessionData?.session?.access_token;
+    const token = await currentToken();
     if (!token) throw new Error('You are not signed in.');
 
     const res = await fetch('/api/account/delete', {
@@ -397,29 +395,21 @@ export function AuthProvider({ children }) {
 
     clearSession();
     setLoading(false);
-    try { await supabase.auth.signOut(); } catch (_e) { /* ignore */ }
+    try { await supabase.auth.signOut({ scope: 'local' }); } catch (_e) { /* ignore */ }
     return true;
   };
 
-  const checkEmailVerification = async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) return false;
+  const checkEmailVerification = useCallback(async () => {
+    const { data, error: userError } = await supabase.auth.getUser();
+    if (userError) return false;
     const verified = Boolean(data?.user?.email_confirmed_at);
     if (verified) {
-      // Re-fetch profile to get updated email_verified from server
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
-      if (token) {
-        const row = await fetchProfileFromServer(token);
-        if (row?.__unauthorized) {
-          await forceSignOutLocal();
-          return false;
-        }
-        if (row) applyProfile(mapProfile(row));
-      }
+      if (token) await loadProfile(token, { force: true });
     }
     return verified;
-  };
+  }, [loadProfile]);
 
   const resendVerificationEmail = async () => {
     if (!user?.email) throw new Error('No user logged in');

@@ -237,3 +237,10 @@ a:not([class]) {
 @media (max-width: 480px) {
   .nav-pricing { display: none; }
 }
+
+/* App: indeterminate loading bar */
+@keyframes ss-bar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.ss-bar { animation: ss-bar 1.1s ease-in-out infinite; }

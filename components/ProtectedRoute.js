@@ -4,59 +4,16 @@ import { useAuth } from '../context/AuthContext';
 
 const publicPages = ['/pricing', '/privacy', '/login', '/register', '/auth/callback'];
 
-function FullPageSpinner() {
+export function FullPageSpinner({ label }) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#ffffff',
-        zIndex: 9999,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '16px',
-          animation: 'fadeIn 0.2s ease',
-        }}
-      >
-        {/* ScriptSea logo mark */}
-        <span
-          style={{
-            fontSize: '1.6rem',
-            fontWeight: '800',
-            background: 'linear-gradient(135deg, #FF3366 0%, #FF1A53 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          ScriptSea
-        </span>
-
-        {/* Animated ring */}
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            border: '3px solid #FFE5EC',
-            borderTopColor: '#FF3366',
-            animation: 'spin 0.7s linear infinite',
-          }}
-        />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white font-sans">
+      <div className="flex flex-col items-center gap-4 animate-fade-up">
+        <img src="/favicon.svg" alt="" width={48} height={48} className="h-12 w-12 rounded-2xl shadow-brand" />
+        <div className="h-1 w-28 overflow-hidden rounded-full bg-brand-100">
+          <div className="ss-bar h-full w-2/5 rounded-full bg-brand-500" />
+        </div>
+        {label && <p className="text-sm text-zinc-500">{label}</p>}
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      `}</style>
     </div>
   );
 }
@@ -64,22 +21,16 @@ function FullPageSpinner() {
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const isPublic = publicPages.includes(router.pathname);
 
   useEffect(() => {
-    if (!router.isReady) return;
-    if (!loading && !user && !publicPages.includes(router.pathname)) {
-      router.replace('/login');
-    }
-  }, [user, loading, router]);
+    if (!router.isReady || loading || user || isPublic) return;
+    // Send them back here after they sign in.
+    const next = encodeURIComponent(router.asPath);
+    router.replace(`/login?next=${next}`);
+  }, [user, loading, router, isPublic]);
 
-  // While auth is resolving, show a branded full-page spinner.
-  if (loading) return <FullPageSpinner />;
-
-  // Allow public pages without authentication.
-  if (publicPages.includes(router.pathname)) return children;
-
-  // If no user after loading completes, show spinner while redirect fires.
-  if (!user) return <FullPageSpinner />;
-
+  if (isPublic) return children;
+  if (loading || !user) return <FullPageSpinner />;
   return children;
 }
