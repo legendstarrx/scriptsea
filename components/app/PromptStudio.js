@@ -145,7 +145,7 @@ function SceneCard({ scene, index, total }) {
             {scene.length && <Badge>Generate at {scene.length}s</Badge>}
           </div>
           <div className="flex gap-2">
-            <CopyButton text={scene.prompt} />
+            <CopyButton text={scene.prompt + (scene.voiceover ? `\n\n${(scene.lineLabel || 'Voiceover').toUpperCase()}:\n${scene.voiceover}` : '')} />
             <a
               href={`https://higgsfield.ai/generate?prompt=${encodeURIComponent(scene.prompt)}`}
               target="_blank"
@@ -159,9 +159,12 @@ function SceneCard({ scene, index, total }) {
         <p className="mt-4 whitespace-pre-line text-[15px] leading-7 text-zinc-700">{scene.prompt}</p>
         {scene.voiceover && (
           <div className="mt-4 rounded-2xl bg-brand-50/70 p-4 ring-1 ring-brand-100">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600">
-              <Icon name="mic" className="h-3.5 w-3.5" /> {scene.lineLabel || 'Voiceover'} · clip {index + 1} of {total}
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600">
+                <Icon name="mic" className="h-3.5 w-3.5" /> {scene.lineLabel || 'Voiceover'} · clip {index + 1} of {total}
+              </p>
+              <CopyButton text={scene.voiceover} label="Copy line" variant="ghost" />
+            </div>
             <p className="mt-2 whitespace-pre-line text-[15px] leading-7 text-zinc-800">{scene.voiceover}</p>
           </div>
         )}
@@ -292,11 +295,11 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
             </div>
 
             <div>
-              <SectionTitle step={style !== 'broll' ? '5' : '4'}>Longest clip</SectionTitle>
+              <SectionTitle step={style !== 'broll' ? '5' : '4'}>Clip length</SectionTitle>
               <div className="flex flex-wrap gap-2">
                 {targetInfo.durations.map((d) => <Chip key={d} active={vidDuration === d} onClick={() => setVidDuration(d)}>{d}</Chip>)}
               </div>
-              <p className="mt-2 text-[13px] text-zinc-500">We split your script at natural breaks so no clip runs longer than this.</p>
+              <p className="mt-2 text-[13px] text-zinc-500">Every clip is exactly this long. We fit your script into each clip at natural breaks.</p>
             </div>
 
             <Toggle
