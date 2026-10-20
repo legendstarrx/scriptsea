@@ -33,10 +33,18 @@ export default async function handler(req, res) {
     const text = await generate({
       system: request.system,
       user: request.user,
+      tools: request.tools,
       // Long scripts are mostly output; medium keeps 60-minute scripts well inside the time limit.
       effort: request.longForm ? 'medium' : 'high',
       maxTokens: request.longForm ? 48000 : 16000,
     });
+    if (/^\s*SITE_UNREADABLE\s*$/.test(text)) {
+      await refundCredit(ticket);
+      ticket = null;
+      return res.status(422).json({
+        error: 'We couldn’t read that page (some sites block automatic reading). Add a short description of your product and try again. This one didn’t use a credit.',
+      });
+    }
     return res.status(200).json({ text });
   } catch (err) {
     if (ticket) await refundCredit(ticket);

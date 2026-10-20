@@ -9,6 +9,8 @@ import { countWords, exportScriptPDF, exportScriptWord, parseScript, readTime, s
 import { useSpeechInput } from '../../lib/app/useSpeechInput';
 
 const SHORT_LENGTHS = [{ val: '15 sec', label: '15s' }, { val: '30 sec', label: '30s' }, { val: '60 sec', label: '60s' }];
+// UGC story ads often run 90s-2min on Facebook and YouTube.
+const AD_LENGTHS = [...SHORT_LENGTHS, { val: '90 sec', label: '90s' }, { val: '2 min', label: '2 min' }];
 const LONG_LENGTHS = ['5 min', '10 min', '15 min', '20 min', '30 min', '45 min', '60 min'];
 const FREE_LENGTHS = ['15 sec', '30 sec'];
 const PLATFORMS = [
@@ -18,7 +20,7 @@ const PLATFORMS = [
   { id: 'facebook', label: 'Facebook', icon: 'facebook' },
 ];
 const TONES = [
-  { id: 'casual', label: 'Casual' }, { id: 'funny', label: 'Funny' }, { id: 'informative', label: 'Informative' },
+  { id: 'auto', label: 'Auto' }, { id: 'casual', label: 'Casual' }, { id: 'funny', label: 'Funny' }, { id: 'informative', label: 'Informative' },
   { id: 'inspirational', label: 'Inspirational' }, { id: 'bold', label: 'Bold' }, { id: 'creative', label: 'Creative' },
 ];
 const FORMATS = [
@@ -60,8 +62,9 @@ const MODE = {
     title: 'Ad Scripts',
     subtitle: 'UGC and video ads that sound like a real customer, built to sell.',
     cta: 'Write my ad',
-    empty: 'Describe what you sell and who it’s for. You’ll get the ad, three hooks to test, and the on-screen text.',
+    empty: 'Paste your product link (or describe it) and pick a length. You’ll get the ad, three hooks to test, and the on-screen text.',
     loading: [
+      'Reading your product and its reviews…',
       'Finding the pain that makes people stop…',
       'Matching the hook to how warm your audience is…',
       'Turning features into reasons to buy…',
@@ -168,13 +171,15 @@ export default function ScriptStudio({ mode = 'viral', isProUser, onUpgrade, onS
   const [videoInfo, setVideoInfo] = useState(null);
   const [isProcessingVideo, setIsProcessingVideo] = useState(false);
   // ad fields
+  const [productUrl, setProductUrl] = useState('');
   const [product, setProduct] = useState('');
   const [audience, setAudience] = useState('');
   const [proof, setProof] = useState('');
   const [angle, setAngle] = useState('auto');
   const [awareness, setAwareness] = useState('cold');
   // shared
-  const [selectedTone, setSelectedTone] = useState('casual');
+  const [selectedTone, setSelectedTone] = useState('auto');
+  const [showMore, setShowMore] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState(isAd ? 'tiktok' : 'youtube');
   const [duration, setDurationState] = useState(isProUser && !isAd ? '60 sec' : '30 sec');
   const durationTouched = useRef(false);
@@ -238,8 +243,8 @@ export default function ScriptStudio({ mode = 'viral', isProUser, onUpgrade, onS
   const handleGenerate = async () => {
     let settings;
     if (isAd) {
-      if (!product.trim()) { setError('Tell us what you’re selling.'); return; }
-      settings = { mode: 'ad', product, audience, proof, angle, awareness };
+      if (!product.trim() && !productUrl.trim()) { setError('Paste your product link or tell us what you’re selling.'); return; }
+      settings = { mode: 'ad', url: productUrl.trim(), product, audience, proof, angle, awareness };
     } else {
       // Use what the user typed, or fall back to the reference video's title
       let topic = videoTopic.trim();
@@ -312,7 +317,7 @@ export default function ScriptStudio({ mode = 'viral', isProUser, onUpgrade, onS
 
   const handleNew = () => {
     setVideoTopic(''); setViralReference(''); setVideoInfo(null);
-    setProduct(''); setAudience(''); setProof('');
+    setProductUrl(''); setProduct(''); setAudience(''); setProof('');
     setRawScript(''); setUsedSettings(null); setError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -348,121 +353,63 @@ export default function ScriptStudio({ mode = 'viral', isProUser, onUpgrade, onS
         <Card className="p-5 sm:p-6">
           <div className="space-y-7">
             {isAd ? (
-              <>
-                <div>
-                  <SectionTitle step={next()}>What are you selling?</SectionTitle>
-                  <div className="relative">
-                    <TextArea
-                      value={product}
-                      onChange={(e) => setProduct(e.target.value)}
-                      rows={4}
-                      placeholder={'Name it, what it does and why it’s better.\n\ne.g. GlowDrop vitamin C serum. Fades dark spots in about 2 weeks. $24, vegan, fragrance free.'}
-                      className="pb-12"
-                    />
-                    {micButton}
-                  </div>
+              <div>
+                <SectionTitle step={next()}>Your product</SectionTitle>
+                <div className="relative">
+                  <Icon name="link" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                  <TextInput
+                    value={productUrl}
+                    onChange={(e) => setProductUrl(e.target.value)}
+                    placeholder="Paste your product page link"
+                    className="pl-11"
+                    inputMode="url"
+                  />
                 </div>
-                <div>
-                  <SectionTitle step={next()} hint="optional">Who is it for?</SectionTitle>
-                  <TextInput value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. Women 25-40 who tried pricey serums that did nothing" />
+                <p className="mt-2 text-[13px] text-zinc-500">We read your page for the product, price, offer and real reviews.</p>
+                <div className="relative mt-3">
+                  <TextArea
+                    value={product}
+                    onChange={(e) => setProduct(e.target.value)}
+                    rows={3}
+                    placeholder={productUrl.trim()
+                      ? 'Anything to add? (optional)'
+                      : 'No link? Describe it: what it is, what it does, the price.\ne.g. GlowDrop vitamin C serum. Fades dark spots in about 2 weeks. $24.'}
+                    className="pb-12"
+                  />
+                  {micButton}
                 </div>
-                <div>
-                  <SectionTitle step={next()} hint="optional">Proof or offer</SectionTitle>
-                  <TextInput value={proof} onChange={(e) => setProof(e.target.value)} placeholder="e.g. 4.8 stars from 2,100 reviews, 20% off this week" />
-                  <p className="mt-2 text-[13px] text-zinc-400">We only use proof you give us. We never make up reviews or discounts.</p>
+              </div>
+            ) : (
+              <div>
+                <SectionTitle step={next()}>What&apos;s your video about?</SectionTitle>
+                <div className="relative">
+                  <TextArea
+                    value={videoTopic}
+                    onChange={(e) => setVideoTopic(e.target.value)}
+                    rows={4}
+                    placeholder="A product, a story, a tip… one line is enough."
+                    className="pb-12"
+                  />
+                  {micButton}
                 </div>
-                <div>
-                  <SectionTitle step={next()}>Ad angle</SectionTitle>
-                  <div className="flex flex-wrap gap-2">
-                    {AD_ANGLES.map((a) => <Chip key={a.id} active={angle === a.id} onClick={() => setAngle(a.id)}>{a.label}</Chip>)}
-                  </div>
-                </div>
-                <div>
-                  <SectionTitle step={next()}>Who&apos;s watching?</SectionTitle>
-                  <div className="grid grid-cols-3 gap-2">
-                    {AWARENESS.map((a) => (
-                      <button key={a.id} type="button" onClick={() => setAwareness(a.id)} aria-pressed={awareness === a.id}
-                        className={cx('rounded-2xl p-3 text-left transition',
-                          awareness === a.id ? 'bg-brand-50 ring-2 ring-brand-500' : 'bg-white ring-1 ring-zinc-200 hover:ring-zinc-300')}>
-                        <span className="block text-sm font-semibold text-zinc-900">{a.title}</span>
-                        <span className="mt-0.5 block text-[12px] leading-snug text-zinc-500">{a.desc}</span>
+                {!videoTopic && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {EXAMPLES.map((ex) => (
+                      <button key={ex} type="button" onClick={() => setVideoTopic(ex)}
+                        className="rounded-full bg-zinc-50 px-3 py-1.5 text-left text-[13px] text-zinc-600 ring-1 ring-zinc-200 transition hover:bg-white hover:text-zinc-900">
+                        {ex}
                       </button>
                     ))}
                   </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <SectionTitle step={next()}>What&apos;s your video about?</SectionTitle>
-                  <div className="relative">
-                    <TextArea
-                      value={videoTopic}
-                      onChange={(e) => setVideoTopic(e.target.value)}
-                      rows={4}
-                      placeholder="A product, a story, a tip… one line is enough."
-                      className="pb-12"
-                    />
-                    {micButton}
-                  </div>
-                  {!videoTopic && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {EXAMPLES.map((ex) => (
-                        <button key={ex} type="button" onClick={() => setVideoTopic(ex)}
-                          className="rounded-full bg-zinc-50 px-3 py-1.5 text-left text-[13px] text-zinc-600 ring-1 ring-zinc-200 transition hover:bg-white hover:text-zinc-900">
-                          {ex}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <SectionTitle step={next()}>Format</SectionTitle>
-                  <div className="flex flex-wrap gap-2">
-                    {FORMATS.map((f) => <Chip key={f.id} active={format === f.id} onClick={() => setFormat(f.id)}>{f.label}</Chip>)}
-                  </div>
-                </div>
-
-                <div>
-                  <SectionTitle step={next()} hint="optional">Copy the style of a video</SectionTitle>
-                  <div className="relative">
-                    <Icon name="link" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
-                    <TextInput
-                      value={viralReference}
-                      onChange={(e) => { setViralReference(e.target.value); if (!e.target.value) setVideoInfo(null); }}
-                      onBlur={(e) => { const v = e.target.value.trim(); if (looksLikeVideoLink(v)) processVideoLink(v); }}
-                      placeholder="Paste a YouTube or TikTok link"
-                      className="pl-11"
-                    />
-                  </div>
-                  {isProcessingVideo && (
-                    <p className="mt-2 flex items-center gap-2 text-sm text-zinc-500"><Icon name="refresh" className="h-4 w-4 animate-spin" /> Reading the video…</p>
-                  )}
-                  {videoInfo && !isProcessingVideo && (
-                    <div className="mt-3 flex items-center gap-3 rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200/70">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-700 ring-1 ring-zinc-200">
-                        <Icon name={videoInfo.platform === 'YouTube' ? 'youtube' : videoInfo.platform === 'TikTok' ? 'tiktok' : 'instagram'} className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-zinc-900">{videoInfo.title || `${videoInfo.platform} video`}</p>
-                        <p className="truncate text-xs text-zinc-500">{videoInfo.author ? `${videoInfo.author} · ` : ''}We&apos;ll match its hook and pacing</p>
-                      </div>
-                      <button type="button" onClick={() => { setViralReference(''); setVideoInfo(null); }}
-                        className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700" aria-label="Remove video">
-                        <Icon name="x" className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
+                )}
+              </div>
             )}
 
             <div>
               <SectionTitle step={next()}>How long?</SectionTitle>
               {!isAd && <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Short video</p>}
               <div className="flex flex-wrap gap-2">
-                {SHORT_LENGTHS.map(({ val, label }) => (
+                {(isAd ? AD_LENGTHS : SHORT_LENGTHS).map(({ val, label }) => (
                   <Chip key={val} active={duration === val} locked={!isProUser && !FREE_LENGTHS.includes(val)} onClick={() => setDuration(val)}>{label}</Chip>
                 ))}
               </div>
@@ -505,44 +452,129 @@ export default function ScriptStudio({ mode = 'viral', isProUser, onUpgrade, onS
               </div>
             </div>
 
-            <div>
-              <SectionTitle step={next()}>Tone</SectionTitle>
-              <div className="flex flex-wrap gap-2">
-                {TONES.map((t) => <Chip key={t.id} active={selectedTone === t.id} onClick={() => setSelectedTone(t.id)}>{t.label}</Chip>)}
-              </div>
-            </div>
+            {/* Optional settings: everything here defaults to Auto. */}
+            <div className="rounded-2xl ring-1 ring-zinc-200">
+              <button type="button" onClick={() => setShowMore((v) => !v)} aria-expanded={showMore}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left">
+                <span>
+                  <span className="block text-sm font-semibold text-zinc-900">More options</span>
+                  <span className="block text-[13px] text-zinc-500">
+                    {isAd ? 'Audience, proof, angle. All on Auto.' : 'Format, tone, a video to copy, creator style. All on Auto.'}
+                  </span>
+                </span>
+                <Icon name="chevronDown" className={cx('h-5 w-5 shrink-0 text-zinc-400 transition', showMore && 'rotate-180')} />
+              </button>
 
-            {!isAd && (
-              <div>
-                <FieldLabel right={!isProUser && <Badge><Icon name="crown" className="h-3 w-3" />PRO</Badge>}>
-                  Write like a creator <span className="font-normal text-zinc-400">optional</span>
-                </FieldLabel>
-                <div className="relative">
-                  <select
-                    value={selectedCreator}
-                    onChange={(e) => isProUser && setSelectedCreator(e.target.value)}
-                    disabled={!isProUser}
-                    className={cx(
-                      'h-12 w-full appearance-none rounded-2xl border-0 bg-white pl-4 pr-10 text-base text-zinc-900 ring-1 ring-inset transition focus:outline-none focus:ring-2 focus:ring-brand-400',
-                      selectedCreator ? 'ring-brand-400' : 'ring-zinc-200',
-                      !isProUser && 'cursor-not-allowed bg-zinc-50 text-zinc-400'
-                    )}
-                  >
-                    <option value="">No creator style</option>
-                    {(creatorStyles[selectedPlatform] || []).map((c) => (
-                      <option key={c.name} value={c.name}>{c.name} · {c.description}</option>
-                    ))}
-                  </select>
-                  <Icon name="chevronDown" className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                  {!isProUser && (
-                    <button type="button" onClick={onUpgrade} aria-label="Unlock creator styles"
-                      className="absolute inset-0 flex items-center justify-end rounded-2xl pr-11 text-sm font-semibold text-brand-600">
-                      Unlock
-                    </button>
+              {showMore && (
+                <div className="space-y-6 border-t border-zinc-100 px-4 pb-5 pt-5">
+                  {isAd ? (
+                    <>
+                      <div>
+                        <FieldLabel>Who is it for?</FieldLabel>
+                        <TextInput value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Auto: we work it out from your product" />
+                      </div>
+                      <div>
+                        <FieldLabel>Proof or offer</FieldLabel>
+                        <TextInput value={proof} onChange={(e) => setProof(e.target.value)} placeholder="e.g. 4.8 stars from 2,100 reviews, 20% off this week" />
+                        <p className="mt-2 text-[13px] text-zinc-400">We only use proof from you or your page. We never make up reviews or discounts.</p>
+                      </div>
+                      <div>
+                        <FieldLabel>Ad angle</FieldLabel>
+                        <div className="flex flex-wrap gap-2">
+                          {AD_ANGLES.map((a) => <Chip key={a.id} active={angle === a.id} onClick={() => setAngle(a.id)}>{a.label}</Chip>)}
+                        </div>
+                      </div>
+                      <div>
+                        <FieldLabel>Who&apos;s watching?</FieldLabel>
+                        <div className="grid grid-cols-3 gap-2">
+                          {AWARENESS.map((a) => (
+                            <button key={a.id} type="button" onClick={() => setAwareness(a.id)} aria-pressed={awareness === a.id}
+                              className={cx('rounded-2xl p-3 text-left transition',
+                                awareness === a.id ? 'bg-brand-50 ring-2 ring-brand-500' : 'bg-white ring-1 ring-zinc-200 hover:ring-zinc-300')}>
+                              <span className="block text-sm font-semibold text-zinc-900">{a.title}</span>
+                              <span className="mt-0.5 block text-[12px] leading-snug text-zinc-500">{a.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <FieldLabel>Format</FieldLabel>
+                        <div className="flex flex-wrap gap-2">
+                          {FORMATS.map((f) => <Chip key={f.id} active={format === f.id} onClick={() => setFormat(f.id)}>{f.label}</Chip>)}
+                        </div>
+                      </div>
+                      <div>
+                        <FieldLabel>Tone</FieldLabel>
+                        <div className="flex flex-wrap gap-2">
+                          {TONES.map((t) => <Chip key={t.id} active={selectedTone === t.id} onClick={() => setSelectedTone(t.id)}>{t.label}</Chip>)}
+                        </div>
+                      </div>
+                      <div>
+                        <FieldLabel>Copy the style of a video</FieldLabel>
+                        <div className="relative">
+                          <Icon name="link" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                          <TextInput
+                            value={viralReference}
+                            onChange={(e) => { setViralReference(e.target.value); if (!e.target.value) setVideoInfo(null); }}
+                            onBlur={(e) => { const v = e.target.value.trim(); if (looksLikeVideoLink(v)) processVideoLink(v); }}
+                            placeholder="Paste a YouTube or TikTok link"
+                            className="pl-11"
+                          />
+                        </div>
+                        {isProcessingVideo && (
+                          <p className="mt-2 flex items-center gap-2 text-sm text-zinc-500"><Icon name="refresh" className="h-4 w-4 animate-spin" /> Reading the video…</p>
+                        )}
+                        {videoInfo && !isProcessingVideo && (
+                          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-zinc-50 p-3 ring-1 ring-zinc-200/70">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-700 ring-1 ring-zinc-200">
+                              <Icon name={videoInfo.platform === 'YouTube' ? 'youtube' : videoInfo.platform === 'TikTok' ? 'tiktok' : 'instagram'} className="h-4 w-4" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-zinc-900">{videoInfo.title || `${videoInfo.platform} video`}</p>
+                              <p className="truncate text-xs text-zinc-500">{videoInfo.author ? `${videoInfo.author} · ` : ''}We&apos;ll match its hook and pacing</p>
+                            </div>
+                            <button type="button" onClick={() => { setViralReference(''); setVideoInfo(null); }}
+                              className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700" aria-label="Remove video">
+                              <Icon name="x" className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <FieldLabel right={!isProUser && <Badge><Icon name="crown" className="h-3 w-3" />PRO</Badge>}>Write like a creator</FieldLabel>
+                        <div className="relative">
+                          <select
+                            value={selectedCreator}
+                            onChange={(e) => isProUser && setSelectedCreator(e.target.value)}
+                            disabled={!isProUser}
+                            className={cx(
+                              'h-12 w-full appearance-none rounded-2xl border-0 bg-white pl-4 pr-10 text-base text-zinc-900 ring-1 ring-inset transition focus:outline-none focus:ring-2 focus:ring-brand-400',
+                              selectedCreator ? 'ring-brand-400' : 'ring-zinc-200',
+                              !isProUser && 'cursor-not-allowed bg-zinc-50 text-zinc-400'
+                            )}
+                          >
+                            <option value="">No creator style</option>
+                            {(creatorStyles[selectedPlatform] || []).map((c) => (
+                              <option key={c.name} value={c.name}>{c.name} · {c.description}</option>
+                            ))}
+                          </select>
+                          <Icon name="chevronDown" className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                          {!isProUser && (
+                            <button type="button" onClick={onUpgrade} aria-label="Unlock creator styles"
+                              className="absolute inset-0 flex items-center justify-end rounded-2xl pr-11 text-sm font-semibold text-brand-600">
+                              Unlock
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {error && <Alert onClose={() => setError('')}>{error}</Alert>}
 
@@ -639,6 +671,22 @@ export default function ScriptStudio({ mode = 'viral', isProUser, onUpgrade, onS
                       <p className="mt-3 inline-block rounded-xl bg-ink px-4 py-2.5 text-lg font-bold text-white">{script.overlay}</p>
                     </div>
                   )}
+                </Card>
+              )}
+
+              {script.facts?.length > 0 && (
+                <Card className="animate-fade-up p-6 sm:p-8">
+                  <h3 className="flex items-center gap-2 text-[15px] font-semibold text-zinc-900">
+                    <Icon name="shield" className="h-4 w-4 text-brand-500" /> What we used from your site
+                  </h3>
+                  <p className="mt-1 text-sm text-zinc-500">Check these before you run the ad. We only use facts from your page.</p>
+                  <ul className="mt-4 space-y-2">
+                    {script.facts.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-[15px] text-zinc-700">
+                        <Icon name="check" className="mt-1 h-4 w-4 shrink-0 text-emerald-500" /> {f}
+                      </li>
+                    ))}
+                  </ul>
                 </Card>
               )}
 

@@ -8,27 +8,27 @@ import { organizationJsonLd, websiteJsonLd, softwareJsonLd, faqJsonLd } from '..
 
 const TITLE = 'ScriptSea: AI Script Generator & AI Video Prompt Generator';
 const DESCRIPTION =
-  'Free AI script generator for TikTok, Reels and YouTube. Get a viral script in seconds, then turn it into ready-to-paste video prompts for Seedance, Kling, Veo and Sora.';
+  'Free AI script generator for TikTok, Reels and YouTube. Get viral scripts, or ads from just a product link, then video prompts for Seedance, Kling, Veo and Sora.';
 
 // Models with a dedicated page link to it; the rest are shown as plain chips.
 const MODELS = [
-  { name: 'Seedance 2.0', href: '/seedance-prompt-generator' },
+  { name: 'Seedance 2.5', href: '/seedance-prompt-generator' },
   { name: 'Kling 3.0', href: '/kling-prompt-generator' },
+  { name: 'Omni Flash' },
   { name: 'Veo 3.1', href: '/veo-prompt-generator' },
   { name: 'Sora 2', href: '/sora-prompt-generator' },
-  { name: 'Wan' },
-  { name: 'Hailuo' },
   { name: 'Higgsfield' },
 ];
 
 const FAQS = [
-  { q: 'What is ScriptSea?', a: 'ScriptSea is an AI script generator and AI video prompt generator. You type an idea, it writes a viral video script, then turns that script into scene-by-scene prompts for AI video models like Seedance, Kling, Veo and Sora.' },
+  { q: 'What is ScriptSea?', a: 'ScriptSea is an AI script generator, ad script writer and AI video prompt generator in one. Type an idea or paste a product link, get a viral script or an ad that sells, then turn it into clip-by-clip prompts for AI video models like Seedance, Kling, Omni Flash, Veo and Sora.' },
+  { q: 'Can it write an ad from just my website?', a: 'Yes. Paste your product page link and ScriptSea reads it for the product, price, offer and real reviews, then writes the ad, three extra hooks to test and the on-screen text. It shows you exactly which facts it used, and it never makes up reviews or discounts.' },
   { q: 'How is this different from ChatGPT?', a: 'ChatGPT is a general chatbot. You have to tell it what to do, then fix what it gives you. ScriptSea is built only for video. Scripts open with a hook and fit your video length to the word. Video prompts keep the same character in every scene and use camera and light the way video models understand.' },
-  { q: 'Which AI video models do the prompts work with?', a: 'Seedance 2.0, Kling 3.0, Veo 3.1, Sora 2, Wan, Hailuo and tools like Higgsfield. The prompts are detailed, plain-English scene descriptions, so they work in any text-to-video model. Just paste and generate.' },
+  { q: 'Which AI video models do the prompts work with?', a: 'Seedance 2.5 and 2.0, Kling 3.0, Omni Flash, Veo 3.1, Sora 2 and tools like Higgsfield. Pick your model and every clip is sized to the lengths it supports and timed to your voiceover. They also work in any other text-to-video model.' },
   { q: 'Do I need to know prompt engineering?', a: 'No. That is the whole point. Type your idea or paste your script, and ScriptSea handles the character, camera, lighting, style and pacing.' },
   { q: 'Can I try it for free?', a: 'Yes. You get 3 free scripts when you sign up, no card needed. After that, Pro is $4.99 a week for 15 scripts or $19.99 a month for 60, and unlocks video prompts too.' },
   { q: 'What makes the scripts go viral?', a: 'Every script opens with a hook, fits your video length to the word, and cuts anything that does not keep people watching. It is written the way people talk, not the way people write.' },
-  { q: 'What can I make with it?', a: 'TikToks, Instagram Reels, YouTube Shorts, long YouTube videos up to 60 minutes, UGC ads, product videos and faceless channels with fully AI-generated visuals.' },
+  { q: 'What can I make with it?', a: 'TikToks, Instagram Reels, YouTube Shorts, long YouTube videos up to 60 minutes, UGC and video ads up to 2 minutes, product videos and faceless channels with fully AI-generated visuals.' },
 ];
 
 export default function Home() {
@@ -68,7 +68,7 @@ export default function Home() {
               display: 'inline-block', background: '#FFE5EC', color: '#FF3366',
               padding: '6px 18px', borderRadius: '50px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '24px',
             }}>
-              AI Script Generator + AI Video Prompt Generator
+              AI Scripts · Ad Scripts · AI Video Prompts
             </div>
 
             <h1 style={{
@@ -83,7 +83,7 @@ export default function Home() {
               fontSize: 'clamp(1rem, 2.2vw, 1.18rem)', color: '#555', lineHeight: 1.7,
               maxWidth: '640px', margin: '0 auto 32px',
             }}>
-              Type an idea. Get a script with a hook people can&apos;t scroll past. Then turn it into ready-to-paste prompts for Seedance, Kling, Veo and Sora. No writing. No prompt skills. Just post.
+              Type one line, or just paste your product link. Get a script or an ad people can&apos;t scroll past, then video prompts timed to every word for Seedance, Kling, Veo and Sora. A creative strategist, copywriter and video director for less than a coffee a week.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
@@ -131,16 +131,16 @@ export default function Home() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px', textAlign: 'left' }}>
               {[
                 {
-                  step: '01', icon: '💡', title: 'Type Your Idea',
-                  desc: 'A product, a story, a tip. One line is enough. Or paste a YouTube or TikTok link and match its style.',
+                  step: '01', icon: '💡', title: 'Drop In an Idea or a Link',
+                  desc: 'One line about your video, or your product page link. That’s it. We work out the rest.',
                 },
                 {
-                  step: '02', icon: '🎬', title: 'Get a Viral Script',
-                  desc: 'Hook first. No filler. The exact word count for your video length. Sounds like a person, not a robot.',
+                  step: '02', icon: '🎬', title: 'Get a Script That Sells',
+                  desc: 'A viral script or an ad that converts. Hook first, no filler, the exact length, and it sounds like a real person.',
                 },
                 {
-                  step: '03', icon: '✦', title: 'Get Your Video Prompts',
-                  desc: 'One click turns the script into scene-by-scene prompts. Paste into Seedance, Kling, Veo or Sora and hit generate.',
+                  step: '03', icon: '✦', title: 'Get Prompts Timed to the Second',
+                  desc: 'One click turns it into clip-by-clip video prompts that match your voiceover exactly. Paste, generate, post.',
                 },
               ].map((s, i) => (
                 <div key={i} style={{ ...card, position: 'relative', paddingTop: '40px' }}>
@@ -163,9 +163,9 @@ export default function Home() {
         <section style={{ padding: 'clamp(3rem, 6vw, 5rem) 1rem', background: '#fafafa' }}>
           <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <p style={{ color: '#FF3366', fontWeight: 700, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Two Powerful Tools, One Platform</p>
+              <p style={{ color: '#FF3366', fontWeight: 700, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Three Tools, One Click Each</p>
               <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 800, color: '#111' }}>
-                Everything You Need to Go Viral
+                Your Whole Content Team in One Place
               </h2>
             </div>
 
@@ -181,9 +181,9 @@ export default function Home() {
                 </h3>
                 <ul style={{ color: '#555', lineHeight: 2, fontSize: '0.93rem', paddingLeft: '18px', margin: 0 }}>
                   <li>Stops the scroll in the first line</li>
-                  <li>Exact word count for 15 seconds up to 60 minutes</li>
-                  <li>Paste a video link and match its style</li>
-                  <li>Products, brands, stories, faceless channels, anything</li>
+                  <li>Exact length, 15 seconds up to 60 minutes</li>
+                  <li>One line is enough. Format and tone on auto</li>
+                  <li>Copy the style of any YouTube or TikTok video</li>
                   <li>Export to PDF or Word in one click</li>
                 </ul>
                 <Link href="/ai-script-generator" style={{ display: 'inline-block', marginTop: '16px', color: '#FF3366', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none' }}>
@@ -191,7 +191,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              {/* Video Prompt Generator */}
+              {/* Ad Scripts */}
               <div style={{ ...card, border: '2px solid #FF3366', position: 'relative', overflow: 'hidden' }}>
                 <div style={{
                   position: 'absolute', top: '16px', right: '16px', background: '#FF3366', color: 'white',
@@ -200,16 +200,37 @@ export default function Home() {
                 <div style={{
                   display: 'inline-block', background: '#FFE5EC', color: '#FF3366', padding: '4px 12px',
                   borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700, marginBottom: '16px',
-                }}>AI VIDEO PROMPTS</div>
+                }}>AD SCRIPTS</div>
                 <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#111', marginBottom: '12px' }}>
-                  Turn Any Script into AI Video Clips
+                  Paste a Link. Get an Ad That Sells.
                 </h3>
                 <ul style={{ color: '#555', lineHeight: 2, fontSize: '0.93rem', paddingLeft: '18px', margin: 0 }}>
-                  <li>Scene-by-scene prompts for Seedance, Kling, Veo, Sora, Wan & Hailuo</li>
-                  <li>Same character in every clip. Same face, same look</li>
-                  <li>UGC, B-Roll, or Animation (3D Pixar, Realistic 3D, 2D, Stick Figure)</li>
-                  <li>Optional voiceover with hook, body and close</li>
-                  <li>Open any scene on Higgsfield in one click</li>
+                  <li>We read your product page, price, offer and reviews</li>
+                  <li>UGC and video ads from 15 seconds to 2 minutes</li>
+                  <li>3 extra hooks to test, plus on-screen text</li>
+                  <li>Real proof only. Never made-up reviews</li>
+                  <li>Written like a creative strategist would</li>
+                </ul>
+                <Link href="/ugc-ad-script-generator" style={{ display: 'inline-block', marginTop: '16px', color: '#FF3366', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none' }}>
+                  See the ad script generator →
+                </Link>
+              </div>
+
+              {/* Video Prompt Generator */}
+              <div style={{ ...card, border: '2px solid #f0f0f0' }}>
+                <div style={{
+                  display: 'inline-block', background: '#FFE5EC', color: '#FF3366', padding: '4px 12px',
+                  borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700, marginBottom: '16px',
+                }}>AI VIDEO PROMPTS</div>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#111', marginBottom: '12px' }}>
+                  Turn Any Script into AI Video
+                </h3>
+                <ul style={{ color: '#555', lineHeight: 2, fontSize: '0.93rem', paddingLeft: '18px', margin: 0 }}>
+                  <li>Clips timed to your voiceover, second for second</li>
+                  <li>Talking clips plus B-roll, cut like a real editor</li>
+                  <li>Same character and look in every clip</li>
+                  <li>Built for Seedance, Kling, Omni Flash, Veo & Sora</li>
+                  <li>UGC, B-roll, or 5 animation styles</li>
                 </ul>
                 <Link href="/ai-video-prompt-generator" style={{ display: 'inline-block', marginTop: '16px', color: '#FF3366', fontWeight: 600, fontSize: '0.92rem', textDecoration: 'none' }}>
                   See the AI video prompt generator →
@@ -229,11 +250,11 @@ export default function Home() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', textAlign: 'left' }}>
               {[
-                { icon: '⚡', title: '60 Seconds, Not 2 Hours', desc: 'Writing a script and every prompt by hand takes hours. Here it takes a minute. Spend the time posting.' },
-                { icon: '🧠', title: 'It Actually Reads Your Script', desc: 'Every scene matches what the script says at that moment. Culture, religion, tone and audience included.' },
+                { icon: '⚡', title: '60 Seconds, Not 2 Hours', desc: 'Writing a script, an ad and every prompt by hand takes hours. Here it takes a minute. Spend the time posting.' },
+                { icon: '🧠', title: 'A Creative Strategist on Call', desc: 'Hooks, angles, proof, objections, calls to action. The thinking agencies charge thousands for, done in seconds.' },
+                { icon: '🔗', title: 'Just Paste Your Link', desc: 'No brief to write. Drop your product page and we pull the product, price, offer and real reviews for you.' },
                 { icon: '🎯', title: 'Made to Be Watched', desc: 'Hooks that stop the scroll. Fast cuts right where viewers usually leave. Nothing that makes people swipe.' },
-                { icon: '🧍', title: 'Same Face in Every Scene', desc: 'Video models forget your character between clips. Our prompts describe them in full every time, so they never change.' },
-                { icon: '🔄', title: 'Script to Video in One Place', desc: 'Write the script, get the prompts, open any scene on Higgsfield. No juggling five tabs and three chatbots.' },
+                { icon: '🧍', title: 'Same Face, Perfect Timing', desc: 'Every clip matches your voiceover to the second, with the same character, props and look all the way through.' },
                 { icon: '🌍', title: 'Any Niche, Any Culture', desc: 'Islamic content, gaming, fitness, fashion, tech, education, product ads. It fits your world, not the other way around.' },
               ].map((f, i) => (
                 <div key={i} style={{ padding: '24px', background: '#fafafa', borderRadius: '16px' }}>
@@ -254,9 +275,9 @@ export default function Home() {
             </h2>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(2rem, 5vw, 4rem)', flexWrap: 'wrap' }}>
               {[
-                { num: '30s', label: 'Script in seconds' },
+                { num: '1 Link', label: 'To a full ad' },
                 { num: '1-Click', label: 'Script to video prompts' },
-                { num: '6+', label: 'Top AI video models' },
+                { num: '7+', label: 'Top AI video models' },
                 { num: '∞', label: 'Niches & languages' },
               ].map((s, i) => (
                 <div key={i} style={{ textAlign: 'center', minWidth: '120px' }}>

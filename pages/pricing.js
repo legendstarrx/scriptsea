@@ -13,7 +13,8 @@ const DESCRIPTION =
 const PRO_FEATURES = [
   'Scripts from 15 seconds up to 60 minutes',
   'AI video prompts for Seedance, Kling, Veo & Sora',
-  'Ad scripts with 3 extra hooks to test',
+  'Ad scripts from just a product link, with 3 extra hooks to test',
+  'Ads up to 2 minutes',
   'All content formats and tones',
   'Creator style matching from any video link',
   'Export to PDF & Word',
