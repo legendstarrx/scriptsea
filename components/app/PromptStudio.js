@@ -7,7 +7,7 @@ import { allPromptsText } from '../../lib/app/videoPrompts';
 
 const STYLES = [
   { id: 'ugc', title: 'UGC / Viral', desc: 'A real-looking person on camera', icon: 'user' },
-  { id: 'broll', title: 'B-Roll', desc: 'No people. Just the visuals', icon: 'image' },
+  { id: 'broll', title: 'B-Roll', desc: 'Visuals that tell the story. Nobody talks to camera', icon: 'image' },
   { id: 'animation', title: 'Animation', desc: 'An animated story', icon: 'palette' },
 ];
 const ANIMATION_TYPES = [
@@ -237,8 +237,9 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
       const result = await generateVideoPrompts({
         input: input.trim(),
         target, style, withVoiceover,
-        charGender: style !== 'broll' && charGender !== 'auto' ? charGender : undefined,
-        charAppearance: style !== 'broll' && charAppearance !== 'auto' ? charAppearance : undefined,
+        // 'none' (No people) only means something for B-roll.
+        charGender: charGender !== 'auto' && (charGender !== 'none' || style === 'broll') ? charGender : undefined,
+        charAppearance: charAppearance !== 'auto' && !(style === 'broll' && charGender === 'none') ? charAppearance : undefined,
         animStyle: style === 'animation' ? animStyle : undefined,
       });
       setScenes(result.scenes || []);
@@ -298,22 +299,26 @@ export default function PromptStudio({ isProUser, onUpgrade, initialInput, onGen
               )}
             </div>
 
-            {style !== 'broll' && (
-              <div>
-                <SectionTitle step="3" hint="optional">Main character</SectionTitle>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Gender</p>
-                <div className="flex flex-wrap gap-2">
-                  {GENDERS.map((g) => <Chip key={g.id} active={charGender === g.id} onClick={() => setCharGender(g.id)}>{g.label}</Chip>)}
-                </div>
-                <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-zinc-400">Look</p>
-                <div className="flex flex-wrap gap-2">
-                  {APPEARANCES.map((a) => <Chip key={a.id} active={charAppearance === a.id} onClick={() => setCharAppearance(a.id)}>{a.label}</Chip>)}
-                </div>
+            <div>
+              <SectionTitle step="3" hint="optional">{style === 'broll' ? 'People in the shots' : 'Main character'}</SectionTitle>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Gender</p>
+              <div className="flex flex-wrap gap-2">
+                {(style === 'broll' ? [...GENDERS, { id: 'none', label: 'No people' }] : GENDERS).map((g) => (
+                  <Chip key={g.id} active={charGender === g.id} onClick={() => setCharGender(g.id)}>{g.label}</Chip>
+                ))}
               </div>
-            )}
+              {!(style === 'broll' && charGender === 'none') && (
+                <>
+                  <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-zinc-400">Look</p>
+                  <div className="flex flex-wrap gap-2">
+                    {APPEARANCES.map((a) => <Chip key={a.id} active={charAppearance === a.id} onClick={() => setCharAppearance(a.id)}>{a.label}</Chip>)}
+                  </div>
+                </>
+              )}
+            </div>
 
             <div>
-              <SectionTitle step={style !== 'broll' ? '4' : '3'}>Video model</SectionTitle>
+              <SectionTitle step="4">Video model</SectionTitle>
               <div className="flex flex-wrap gap-2">
                 {TARGETS.map((t) => <Chip key={t.id} active={target === t.id} onClick={() => setTarget(t.id)}>{t.label}</Chip>)}
               </div>
