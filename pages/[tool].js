@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import { useAuth } from '../context/AuthContext';
 import { TOOL_PAGES, TOOL_SLUGS } from '../lib/toolPages';
+import { FREE_TOOL_SLUGS } from '../lib/freeTools/config';
 import { softwareJsonLd, faqJsonLd, breadcrumbJsonLd, VIDEO_MODELS } from '../lib/seo';
 
 const card = {
@@ -217,7 +218,7 @@ export default function ToolPage({ slug }) {
 }
 
 export async function getStaticPaths() {
-  return { paths: TOOL_SLUGS.map((tool) => ({ params: { tool } })), fallback: false };
+  return { paths: TOOL_SLUGS.filter((s) => !FREE_TOOL_SLUGS.includes(s)).map((tool) => ({ params: { tool } })), fallback: false };
 }
 
 export async function getStaticProps({ params }) {
