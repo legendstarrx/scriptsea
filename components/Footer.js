@@ -17,6 +17,7 @@ const MODEL_LINKS = [
 ];
 
 const COMPANY_LINKS = [
+  { href: '/tools', label: 'Free Tools' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },

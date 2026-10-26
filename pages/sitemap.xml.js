@@ -1,11 +1,14 @@
 import { SITE_URL } from '../lib/seo';
 import { TOOL_SLUGS } from '../lib/toolPages';
+import { FREE_TOOL_SLUGS } from '../lib/freeTools/config';
 
 // Served at /sitemap.xml. Built from the same list as the landing pages,
 // so a new tool page shows up here automatically.
 const PAGES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
   ...TOOL_SLUGS.map((slug) => ({ path: `/${slug}`, priority: '0.9', changefreq: 'weekly' })),
+  { path: '/tools', priority: '0.8', changefreq: 'weekly' },
+  ...FREE_TOOL_SLUGS.filter((s) => !TOOL_SLUGS.includes(s)).map((s) => ({ path: `/${s}`, priority: '0.9', changefreq: 'weekly' })),
   { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
   { path: '/contact', priority: '0.4', changefreq: 'yearly' },
