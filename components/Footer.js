@@ -7,6 +7,10 @@ const TOOL_LINKS = [
   { href: '/youtube-script-generator', label: 'YouTube Script Generator' },
   { href: '/tiktok-script-generator', label: 'TikTok Script Generator' },
   { href: '/ugc-ad-script-generator', label: 'UGC Ad Script Generator' },
+  { href: '/video-hook-generator', label: 'Video Hook Generator' },
+  { href: '/instagram-reels-script-generator', label: 'Instagram Reels Script Generator' },
+  { href: '/youtube-shorts-script-generator', label: 'YouTube Shorts Script Generator' },
+  { href: '/faceless-youtube-script-generator', label: 'Faceless YouTube Script Generator' },
 ];
 
 const MODEL_LINKS = [
@@ -18,6 +22,7 @@ const MODEL_LINKS = [
 
 const COMPANY_LINKS = [
   { href: '/tools', label: 'Free Tools' },
+  { href: '/blog', label: 'Blog' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },

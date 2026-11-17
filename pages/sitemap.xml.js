@@ -1,6 +1,17 @@
 import { SITE_URL } from '../lib/seo';
 import { TOOL_SLUGS } from '../lib/toolPages';
 import { FREE_TOOL_SLUGS } from '../lib/freeTools/config';
+import { SCRIPT_TOOL_SLUGS } from '../lib/scriptTools/config';
+import { getAllPosts } from '../lib/blog/posts';
+
+// Blog posts come from content/blog, so a new post file shows up here too.
+function blogPostPages() {
+  try {
+    return getAllPosts().map((p) => ({ path: `/blog/${p.slug}`, priority: '0.7', changefreq: 'monthly' }));
+  } catch {
+    return [];
+  }
+}
 
 // Served at /sitemap.xml. Built from the same list as the landing pages,
 // so a new tool page shows up here automatically.
@@ -9,6 +20,9 @@ const PAGES = [
   ...TOOL_SLUGS.map((slug) => ({ path: `/${slug}`, priority: '0.9', changefreq: 'weekly' })),
   { path: '/tools', priority: '0.8', changefreq: 'weekly' },
   ...FREE_TOOL_SLUGS.filter((s) => !TOOL_SLUGS.includes(s)).map((s) => ({ path: `/${s}`, priority: '0.9', changefreq: 'weekly' })),
+  ...SCRIPT_TOOL_SLUGS.map((s) => ({ path: `/${s}`, priority: '0.9', changefreq: 'weekly' })),
+  { path: '/blog', priority: '0.7', changefreq: 'weekly' },
+  ...blogPostPages(),
   { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
   { path: '/contact', priority: '0.4', changefreq: 'yearly' },
