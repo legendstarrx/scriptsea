@@ -58,6 +58,20 @@ export default function ToolsIndex({ special, models }) {
 
         <section className="py-8">
           <div className="mx-auto max-w-4xl px-4">
+            <h2 className="text-2xl font-extrabold tracking-tight text-zinc-950">Script tools</h2>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {SCRIPT_TOOL_LINKS.map((t) => (
+                <Link key={t.href} href={t.href} className="rounded-2xl bg-white px-5 py-4 ring-1 ring-zinc-200 transition hover:ring-brand-300">
+                  <span className="block font-bold text-zinc-950">{t.label}</span>
+                  <span className="text-sm text-zinc-500">{t.blurb}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-8">
+          <div className="mx-auto max-w-4xl px-4">
             <h2 className="text-2xl font-extrabold tracking-tight text-zinc-950">Prompt generators by model</h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {models.map((t) => (
@@ -90,6 +104,17 @@ export default function ToolsIndex({ special, models }) {
     </div>
   );
 }
+
+const SCRIPT_TOOL_LINKS = [
+  { href: '/video-hook-generator', label: 'Free Video Hook Generator', blurb: '10 opening lines for any idea, then a full script.' },
+  { href: '/instagram-reels-script-generator', label: 'Free Instagram Reels Script Generator', blurb: 'Reel scripts with a hook and a caption.' },
+  { href: '/youtube-shorts-script-generator', label: 'Free YouTube Shorts Script Generator', blurb: 'Tight Shorts scripts with a loop ending.' },
+  { href: '/faceless-youtube-script-generator', label: 'Free Faceless YouTube Script Generator', blurb: 'Voiceover scripts split into scenes.' },
+  { href: '/ai-script-generator', label: 'AI Script Generator', blurb: 'Full scripts with AI video prompts, in ScriptSea.' },
+  { href: '/youtube-script-generator', label: 'YouTube Script Generator', blurb: 'Long and short YouTube scripts, in ScriptSea.' },
+  { href: '/tiktok-script-generator', label: 'TikTok Script Generator', blurb: 'TikTok scripts with scroll-stopping hooks, in ScriptSea.' },
+  { href: '/ugc-ad-script-generator', label: 'UGC Ad Script Generator', blurb: 'Ad scripts from a product or a link, in ScriptSea.' },
+];
 
 const BLURBS = {
   'ai-video-prompt-generator': 'Every model in one place. Pick a model, describe your idea, get a prompt.',
