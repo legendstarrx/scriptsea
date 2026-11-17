@@ -1,7 +1,7 @@
 ---
 title: "Why Your AI Characters Keep Changing Faces (and How to Fix It)"
 slug: ai-character-consistency
-description: "Your character looks different in every clip. Here's why AI video models do it, and the prompt habits that keep the same face, outfit and voice from start to finish."
+description: "Your AI character looks different in every clip. Here's why it happens, and 7 prompt habits that keep the same face, outfit and voice."
 date: 2026-11-17
 readTime: 7 min read
 heroImage: /blog/ai-character-consistency.webp
