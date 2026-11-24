@@ -1,4 +1,4 @@
-﻿/** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -56,6 +56,25 @@ const nextConfig = {
           }
         ]
       },
+      // Blog pages may show Google AdSense ads. Ads load scripts, frames and images from many
+      // Google ad domains, so the blog gets a wider policy. Everything else keeps the strict one above.
+      ...['/blog', '/blog/:path*'].map((source) => ({
+        source,
+        headers: [{
+          key: 'Content-Security-Policy',
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+            "connect-src 'self' https:",
+            "img-src 'self' data: https:",
+            "frame-src 'self' https:",
+            "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
+            "font-src 'self' fonts.gstatic.com",
+            "media-src 'self'",
+            "object-src 'none'"
+          ].join('; ')
+        }],
+      })),
       {
         source: '/_next/static/:path*',
         headers: [

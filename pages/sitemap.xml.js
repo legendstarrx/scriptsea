@@ -27,6 +27,7 @@ const PAGES = [
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
   { path: '/contact', priority: '0.4', changefreq: 'yearly' },
   { path: '/privacy', priority: '0.2', changefreq: 'yearly' },
+  { path: '/terms', priority: '0.2', changefreq: 'yearly' },
   { path: '/refund', priority: '0.2', changefreq: 'yearly' },
 ];
 

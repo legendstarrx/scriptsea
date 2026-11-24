@@ -4,11 +4,12 @@ import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import SEO from '../../components/SEO';
+import AdSenseScript from '../../components/AdSenseScript';
 import { SITE_URL, absoluteUrl, faqJsonLd, breadcrumbJsonLd } from '../../lib/seo';
 import { getAllPosts, getPost } from '../../lib/blog/posts';
 import { formatDate } from '../../lib/blog/format';
 
-export default function BlogPost({ post }) {
+export default function BlogPost({ post, morePosts }) {
   const path = `/blog/${post.slug}`;
   const ogImage = post.ogImage ? absoluteUrl(post.ogImage) : undefined;
   // Long titles go out without the " | ScriptSea" suffix so search results don't cut them off.
@@ -29,7 +30,7 @@ export default function BlogPost({ post }) {
             description: post.description,
             image: ogImage ? [ogImage] : undefined,
             datePublished: post.date,
-            dateModified: post.date,
+            dateModified: post.updated || post.date,
             author: { '@type': 'Organization', name: 'ScriptSea Team', url: `${SITE_URL}/` },
             publisher: { '@id': `${SITE_URL}/#organization` },
             mainEntityOfPage: absoluteUrl(path),
@@ -46,6 +47,7 @@ export default function BlogPost({ post }) {
         <meta key="article:published_time" property="article:published_time" content={post.date} />
         <meta key="article:author" property="article:author" content="ScriptSea Team" />
       </Head>
+      <AdSenseScript />
       <Navigation />
 
       <main className="flex-1 pt-16">
@@ -64,6 +66,7 @@ export default function BlogPost({ post }) {
             <span className="mx-2">·</span>
             <time dateTime={post.date}>{formatDate(post.date)}</time>
             {post.readTime && <><span className="mx-2">·</span>{post.readTime}</>}
+            {post.updated && post.updated !== post.date && <><span className="mx-2">·</span>Updated {formatDate(post.updated)}</>}
           </p>
 
           {post.heroImage && (
@@ -98,6 +101,17 @@ export default function BlogPost({ post }) {
             </section>
           )}
 
+          <section className="mt-12 flex gap-4 rounded-2xl bg-[#fafafa] p-5 ring-1 ring-zinc-200 sm:p-6">
+            <img src="/favicon.svg" alt="" width={48} height={48} className="h-12 w-12 flex-none rounded-xl" />
+            <div>
+              <p className="font-bold text-zinc-950">Written by the ScriptSea Team</p>
+              <p className="mt-1 text-[15px] leading-relaxed text-zinc-600">
+                We build ScriptSea, an AI script and video prompt generator, and write practical guides on scripts, hooks and
+                AI video for creators and brands. <Link href="/about" className="font-semibold text-brand-600 hover:underline">More about us</Link>
+              </p>
+            </div>
+          </section>
+
           <section className="mt-12 rounded-3xl bg-zinc-950 p-6 text-white sm:p-10">
             <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Write your next script in one click</h2>
             <p className="mt-2 text-zinc-300">Free to try. No card needed.</p>
@@ -113,6 +127,22 @@ export default function BlogPost({ post }) {
                 {post.relatedLinks.slice(0, 2).map((l) => (
                   <Link key={l.href} href={l.href} className="rounded-2xl bg-[#fafafa] px-5 py-4 font-semibold text-zinc-900 ring-1 ring-zinc-200 transition hover:ring-brand-300">
                     {l.title} <span className="text-brand-500">→</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {morePosts.length > 0 && (
+            <section className="mt-12">
+              <h2 className="text-xl font-extrabold tracking-tight text-zinc-950">More from the blog</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {morePosts.map((p) => (
+                  <Link key={p.slug} href={`/blog/${p.slug}`} className="group overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200 transition hover:ring-brand-300">
+                    {p.heroImage && (
+                      <img src={p.heroImage} alt={p.heroAlt} width={1200} height={630} loading="lazy" decoding="async" className="aspect-[1200/630] w-full object-cover" />
+                    )}
+                    <p className="p-4 font-bold leading-snug text-zinc-900 group-hover:text-brand-600">{p.title}</p>
                   </Link>
                 ))}
               </div>
@@ -156,5 +186,6 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const post = getPost(params.slug);
   if (!post) return { notFound: true };
-  return { props: { post } };
+  const morePosts = getAllPosts().filter((p) => p.slug !== params.slug).slice(0, 3);
+  return { props: { post, morePosts } };
 }

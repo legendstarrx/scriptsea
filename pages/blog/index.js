@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import SEO from '../../components/SEO';
+import AdSenseScript from '../../components/AdSenseScript';
 import { SITE_URL, breadcrumbJsonLd } from '../../lib/seo';
 import { getAllPosts } from '../../lib/blog/posts';
 import { formatDate } from '../../lib/blog/format';
@@ -30,6 +31,7 @@ export default function BlogIndex({ posts }) {
           breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }]),
         ]}
       />
+      <AdSenseScript />
       <Navigation />
       <main className="flex-1 pt-16">
         <section className="bg-gradient-to-b from-[#fff5f7] to-[#fafafa] pb-8 pt-10 sm:pt-14">

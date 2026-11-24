@@ -1,4 +1,5 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document';
+import { ADSENSE_CLIENT } from '../lib/ads';
 
 class MyDocument extends Document {
   render() {
@@ -15,6 +16,8 @@ class MyDocument extends Document {
           <meta name="theme-color" content="#FF3366" />
           <meta name="application-name" content="ScriptSea" />
           <meta name="apple-mobile-web-app-title" content="ScriptSea" />
+          {/* AdSense site verification only. It loads no ads; the ad script runs on blog pages only. */}
+          {ADSENSE_CLIENT && <meta name="google-adsense-account" content={ADSENSE_CLIENT} />}
 
           {/* Fonts */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />

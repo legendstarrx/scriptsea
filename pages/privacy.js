@@ -3,7 +3,7 @@ import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 
 const SUPPORT_EMAIL = 'support@scriptsea.com';
-const LAST_UPDATED = 'May 2025';
+const LAST_UPDATED = 'November 2026';
 
 export default function PrivacyPage() {
   return (
@@ -65,24 +65,53 @@ export default function PrivacyPage() {
               <ul style={ulStyle}>
                 <li><strong>Supabase</strong> — authentication and database hosting.</li>
                 <li><strong>Polar.sh</strong> — payment processing.</li>
-                <li><strong>OpenAI</strong> — to process your prompts and generate script content. Your prompts are sent to OpenAI&rsquo;s API in accordance with their usage policies.</li>
+                <li><strong>Anthropic</strong> — to process your prompts and generate scripts and video prompts. Your inputs are sent to Anthropic&rsquo;s API in line with its usage policies.</li>
+                <li><strong>Google</strong> — website analytics (Google Analytics) and, on our blog, advertising (Google AdSense). See sections 5 and 6.</li>
+                <li><strong>Cloudflare</strong> — bot protection (Turnstile) on our free tools.</li>
                 <li><strong>Vercel</strong> — application hosting and edge delivery.</li>
                 <li><strong>Legal authorities</strong> — if required by law or to protect the safety of our users.</li>
               </ul>
             </Section>
 
             <Section title="5. Cookies and Local Storage">
-              ScriptSea uses browser local storage to cache your profile data for a faster experience on each visit.
-              We also use analytics cookies (Google Analytics) to understand how users interact with the product.
-              You may disable cookies in your browser settings, though some features may not function as expected.
+              <p style={pStyle}>
+                ScriptSea uses browser local storage to remember your session and cache your profile for a faster
+                experience. We use analytics tools (Google Analytics and Vercel Analytics) to understand how people use the
+                site, such as which pages are visited and for how long. These tools may set cookies or use similar technology.
+              </p>
+              <p style={pStyle}>
+                You can block or delete cookies in your browser settings. Some parts of the site, like staying logged in,
+                may not work properly without them.
+              </p>
             </Section>
 
-            <Section title="6. Data Retention">
+            <Section title="6. Advertising">
+              <p style={pStyle}>
+                We may show ads on our blog pages through Google AdSense. We do not show ads inside the ScriptSea app.
+              </p>
+              <ul style={ulStyle}>
+                <li>Third-party vendors, including Google, use cookies to serve ads based on your previous visits to this website or other websites.</li>
+                <li>Google&rsquo;s use of advertising cookies enables it and its partners to serve ads to you based on your visits to this site and/or other sites on the Internet.</li>
+                <li>
+                  You can opt out of personalised advertising by visiting{' '}
+                  <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style={linkStyle}>Google Ads Settings</a>.
+                  You can also opt out of some third-party vendors&rsquo; use of cookies for personalised advertising at{' '}
+                  <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" style={linkStyle}>www.aboutads.info</a>.
+                </li>
+                <li>
+                  To learn more, see{' '}
+                  <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer" style={linkStyle}>how Google uses information from sites that use its services</a>.
+                </li>
+                <li>Visitors in the European Economic Area, the UK and Switzerland are asked for consent before personalised ads are shown, where the law requires it.</li>
+              </ul>
+            </Section>
+
+            <Section title="7. Data Retention">
               We retain your account and usage data for as long as your account is active. If you delete your account,
               we will remove your personal data within 30 days, except where retention is required by law.
             </Section>
 
-            <Section title="7. Your Rights">
+            <Section title="8. Your Rights">
               <p style={pStyle}>Depending on your location, you may have the right to:</p>
               <ul style={ulStyle}>
                 <li>Access the personal data we hold about you.</li>
@@ -97,24 +126,24 @@ export default function PrivacyPage() {
               </p>
             </Section>
 
-            <Section title="8. Data Security">
+            <Section title="9. Data Security">
               We use industry-standard measures including encryption in transit (TLS), row-level security on our database,
               and server-side-only admin credentials for any privileged operations. No system is completely secure,
               so we encourage you to use a strong, unique password for your account.
             </Section>
 
-            <Section title="9. Children's Privacy">
+            <Section title="10. Children's Privacy">
               ScriptSea is not directed at children under 13. We do not knowingly collect personal data from anyone
               under 13. If you believe we have done so inadvertently, please contact us and we will delete that data immediately.
             </Section>
 
-            <Section title="10. Changes to This Policy">
+            <Section title="11. Changes to This Policy">
               We may update this Privacy Policy from time to time. We will notify you of significant changes via email
               or a prominent notice on our website. Your continued use of ScriptSea after changes are posted
               constitutes acceptance of the updated policy.
             </Section>
 
-            <Section title="11. Contact">
+            <Section title="12. Contact">
               <p style={pStyle}>
                 If you have questions or concerns about this policy or how we handle your data, please contact us:
               </p>
