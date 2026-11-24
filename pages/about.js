@@ -4,10 +4,10 @@ import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import { SITE_URL } from '../lib/seo';
 
-const p = { color: '#5b5b5b', lineHeight: 1.7, fontSize: '1.05rem' };
-const h2 = { fontSize: '1.3rem', margin: '2rem 0 0.75rem', color: '#111' };
+const p = { color: '#5b5b5b', lineHeight: 1.7, fontSize: '1.05rem', margin: '0 0 1rem' };
+const h2 = { fontSize: '1.3rem', fontWeight: 800, margin: '2rem 0 0.75rem', color: '#111' };
 const a = { color: '#FF3366' };
-const ul = { ...p, paddingLeft: '1.3rem', margin: '0.4rem 0 0' };
+const ul = { ...p, listStyle: 'disc', paddingLeft: '1.3rem', margin: '0.4rem 0 0' };
 
 export default function AboutPage() {
   return (
@@ -44,7 +44,7 @@ export default function AboutPage() {
             <p style={{ margin: 0, color: '#FF3366', fontWeight: 600, letterSpacing: '0.02em' }}>
               About ScriptSea
             </p>
-            <h1 style={{ margin: '0.75rem 0 1rem', fontSize: 'clamp(1.8rem, 5vw, 2.4rem)' }}>
+            <h1 style={{ margin: '0.75rem 0 1rem', fontSize: 'clamp(1.8rem, 5vw, 2.4rem)', fontWeight: 800, lineHeight: 1.15, color: '#111' }}>
               We help creators turn ideas into videos people watch to the end.
             </h1>
             <p style={p}>

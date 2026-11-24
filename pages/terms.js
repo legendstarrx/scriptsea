@@ -31,7 +31,7 @@ export default function TermsPage() {
             <p style={{ margin: 0, color: '#FF3366', fontWeight: 600, letterSpacing: '0.02em', fontSize: '0.85rem' }}>
               Legal
             </p>
-            <h1 style={{ margin: '0.5rem 0 0.4rem', fontSize: 'clamp(1.6rem, 5vw, 2.2rem)', color: '#1a1a1a' }}>
+            <h1 style={{ margin: '0.5rem 0 0.4rem', fontSize: 'clamp(1.6rem, 5vw, 2.2rem)', fontWeight: 800, color: '#1a1a1a' }}>
               Terms of Service
             </h1>
             <p style={{ color: '#888', fontSize: '0.85rem', margin: '0 0 2rem' }}>
@@ -158,5 +158,5 @@ function Section({ title, children }) {
 }
 
 const pStyle = { color: '#555', lineHeight: 1.75, margin: '0 0 0.6rem', fontSize: '0.95rem' };
-const ulStyle = { color: '#555', lineHeight: 1.75, paddingLeft: '1.4rem', margin: '0.3rem 0 0.6rem', fontSize: '0.95rem' };
+const ulStyle = { color: '#555', lineHeight: 1.75, listStyle: 'disc', paddingLeft: '1.4rem', margin: '0.3rem 0 0.6rem', fontSize: '0.95rem' };
 const linkStyle = { color: '#FF3366', textDecoration: 'none' };
