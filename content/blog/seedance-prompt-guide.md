@@ -157,9 +157,9 @@ If you'll add a voiceover later, say "no dialogue" so people in the shot don't s
 >
 > [0-4s] Close-up, handheld. The woman from @Image 1 holds the serum from @Image 2 up to the camera and says, "Okay, I need to talk about this."
 >
-> [4-10s] Medium close-up, static. She presses two drops onto her fingertips and pats them onto her cheek, then says, "It sinks in fast, and my skin feels calm all day."
+> [4-10s] Medium close-up, static. She presses two drops onto her fingertips and pats them onto her cheek, then says, "See? It sinks in straight away, no sticky feeling."
 >
-> [10-15s] Close-up, slow push-in. She smiles and taps the bottle. "Honestly, I'm on my second one."
+> [10-15s] Close-up, slow push-in. She smiles and taps the bottle. "It's on the link if you want to try it."
 >
 > Bright bathroom, soft daylight from a window, realistic phone video look. Audio: her voice, faint bathroom echo. No subtitles. No background music.
 

@@ -132,7 +132,7 @@ For more on keeping a face the same across a whole video, see [why your AI chara
 
 ### 1. UGC-style talking clip (8 seconds, vertical)
 
-> Medium close-up at eye level, static shot, like a phone propped on a shelf. A woman in her late 20s with curly hair and a grey hoodie sits on her bed holding a small skincare bottle up to the camera. She says excitedly, "I've used this every night for a month, and my skin's never been this calm." Natural daylight from a window on the left, a slightly messy bedroom behind her. Realistic, unpolished phone video look. Ambient noise: quiet room tone. No subtitles.
+> Medium close-up at eye level, static shot, like a phone propped on a shelf. A woman in her late 20s with curly hair and a grey hoodie sits on her bed holding a small skincare bottle up to the camera. She says excitedly, "Okay, this is the serum everyone keeps asking about. Two drops, and it sinks in straight away." Natural daylight from a window on the left, a slightly messy bedroom behind her. Realistic, unpolished phone video look. Ambient noise: quiet room tone. No subtitles.
 
 ### 2. Product shot (6 seconds)
 

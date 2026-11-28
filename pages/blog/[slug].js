@@ -168,6 +168,8 @@ export default function BlogPost({ post, morePosts }) {
         .post-body blockquote p + p { margin-top: 0.5em; }
         .post-body code { background: #f4f4f5; border-radius: 6px; padding: 0.1em 0.35em; font-size: 0.92em; }
         .post-body img { border-radius: 18px; width: 100%; height: auto; }
+        .post-body pre { background: #18181b; color: #f4f4f5; border-radius: 16px; padding: 1.1em 1.25em; font-size: 0.93rem; line-height: 1.75; white-space: pre-wrap; word-break: break-word; overflow-x: auto; }
+        .post-body pre code { background: none; padding: 0; font-size: inherit; color: inherit; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
         .post-body .table-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid #e4e4e7; }
         .post-body table { width: 100%; border-collapse: collapse; font-size: 0.95rem; line-height: 1.55; }
         .post-body th { background: #fafafa; text-align: left; font-weight: 700; color: #09090b; }

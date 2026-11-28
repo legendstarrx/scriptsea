@@ -137,7 +137,7 @@ A long list of unrelated words dilutes it. If something keeps going wrong, the f
 
 ### 1. UGC product review (10 seconds, vertical)
 
-> Shot 1 (0-5s): Medium close-up, static, like a phone on a tripod. A man in his 30s with a short beard and a navy t-shirt holds up a pair of wireless earbuds to the camera and says, "I've tried five pairs this year. These are the only ones that stay in when I run."
+> Shot 1 (0-5s): Medium close-up, static, like a phone on a tripod. A man in his 30s with a short beard and a navy t-shirt holds up a pair of wireless earbuds to the camera and says, "These have a little wing that locks them in your ear, so they don't fall out when you run."
 >
 > Shot 2 (5-10s): Close-up, slow dolly in. He presses one earbud into his ear, nods and gives a thumbs up.
 >

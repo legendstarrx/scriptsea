@@ -3,11 +3,24 @@ import { TOOL_SLUGS } from '../lib/toolPages';
 import { FREE_TOOL_SLUGS } from '../lib/freeTools/config';
 import { SCRIPT_TOOL_SLUGS } from '../lib/scriptTools/config';
 import { getAllPosts } from '../lib/blog/posts';
+import { totalPages } from '../lib/blog/paginate';
 
 // Blog posts come from content/blog, so a new post file shows up here too.
 function blogPostPages() {
   try {
     return getAllPosts().map((p) => ({ path: `/blog/${p.slug}`, priority: '0.7', changefreq: 'monthly' }));
+  } catch {
+    return [];
+  }
+}
+
+// Older blog list pages: /blog/page/2 and up.
+function blogListPages() {
+  try {
+    const pages = totalPages(getAllPosts().length);
+    const out = [];
+    for (let n = 2; n <= pages; n += 1) out.push({ path: `/blog/page/${n}`, priority: '0.5', changefreq: 'weekly' });
+    return out;
   } catch {
     return [];
   }
@@ -22,6 +35,7 @@ const PAGES = [
   ...FREE_TOOL_SLUGS.filter((s) => !TOOL_SLUGS.includes(s)).map((s) => ({ path: `/${s}`, priority: '0.9', changefreq: 'weekly' })),
   ...SCRIPT_TOOL_SLUGS.map((s) => ({ path: `/${s}`, priority: '0.9', changefreq: 'weekly' })),
   { path: '/blog', priority: '0.7', changefreq: 'weekly' },
+  ...blogListPages(),
   ...blogPostPages(),
   { path: '/pricing', priority: '0.8', changefreq: 'monthly' },
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
